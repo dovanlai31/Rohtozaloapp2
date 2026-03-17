@@ -1,0 +1,16 @@
+{
+  "cwd": "/Users/duongvu/zte/blog-club",
+  "newProject": true,
+  "name": "ZMP Blog",
+  "framework": "react",
+  "template": "blank",
+  "cssPreProcessor": "scss",
+  "theming": {
+    "customColor": true,
+    "color": "#376AED",
+    "darkTheme": false,
+    "iconFonts": true,
+    "fillBars": false
+  },
+  "customBuild": false
+}

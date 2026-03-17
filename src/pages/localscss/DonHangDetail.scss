@@ -1,0 +1,24 @@
+.otp-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 90%;
+  opacity: 1;
+  visibility: visible;
+  transition: all 0.5s ease;
+}
+
+.otp-container.close {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.box {
+  transition: all 0.3s ease;
+}
+
+.box.open {
+  transition: all 0.3s ease;
+}
