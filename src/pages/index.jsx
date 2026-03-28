@@ -293,7 +293,7 @@ const checkPhonePermissionAndContinue = () => {
       let userId = await getUserID({})
       // trinh duyệt thì mở cái này lên vi nó ko lấy dc user id 
       if (!userId) {
-        userId= '6802644555416690502'
+        userId= '5922757929442215184'
       }
       console.log("userId: ", userId)
 
