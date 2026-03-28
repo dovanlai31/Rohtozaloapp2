@@ -291,7 +291,12 @@ const checkPhonePermissionAndContinue = () => {
       }
 
       let userId = await getUserID({})
-          userId= '1069607299583193337'
+      // trinh duyệt thì mở cái này lên vi nó ko lấy dc user id 
+      if (!userId) {
+        userId= '6802644555416690502'
+      }
+      console.log("userId: ", userId)
+
       const customerData = await getDataCusFromId(userId)
       if (customerData.length > 0) {
       console.log("customerData: ", customerData)
@@ -304,6 +309,8 @@ const checkPhonePermissionAndContinue = () => {
           store.dispatch("login")
           store.dispatch("setCusInfo", customerData[0])
           console.log("customerData[0]", customerData[0]);
+          //tai sp mới nhất
+      
           store.dispatch("getLatestBlogs", {  limit: 20, skip: 0, reset: true })
         })
       } else {

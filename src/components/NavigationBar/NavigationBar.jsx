@@ -21,7 +21,7 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
   const ListCTTLXu = useStore("ListCTTLXu")
   const ListCTTLDiem = useStore("ListCTTLDiem")
    const CusInfo = useStore("getCusInfo")   
-   console.log('CusInfo__log', CusInfo);
+   //console.log('CusInfo__log', CusInfo);
   // console.log('activeTabx', activeTab);
   return (
     <Tabbar id="main-nav" bottom className="app-tabbar shadow-1" hidden={true}>

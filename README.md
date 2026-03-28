@@ -1,29 +1,50 @@
-# ZMP Blog
+# ZaloMiniApp_RoHTo
 
-## ZMP CLI Options
+## Mục tiêu dự án
+Ứng dụng Zalo Mini App cho thương hiệu Rohto, phục vụ khách hàng với các tính năng tích điểm, đổi quà, quản lý đơn hàng, khảo sát, thông báo, và nhiều tiện ích khác.
 
-ZMP app created with following options:
+## Tính năng chính
+- Đăng nhập, quản lý tài khoản khách hàng
+- Tích lũy điểm, đổi quà
+- Xem, đặt và quản lý đơn hàng
+- Theo dõi thông báo, khuyến mãi
+- Khảo sát khách hàng, thu thập ý kiến
+- Xem danh mục sản phẩm, video, blog
+- Tích hợp với hệ sinh thái Zalo
 
-```
-{
-  "cwd": "/Users/duongvu/zte/blog-club",
-  "newProject": true,
-  "name": "ZMP Blog",
-  "framework": "react",
-  "template": "blank",
-  "cssPreProcessor": "scss",
-  "theming": {
-    "customColor": true,
-    "color": "#376AED",
-    "darkTheme": false,
-    "iconFonts": true,
-    "fillBars": false
-  },
-  "customBuild": false
-}
-```
+## Công nghệ sử dụng
+- ReactJS (JSX)
+- Vite
+- TailwindCSS, SCSS
+- Zalo Mini App SDK
+- State management: custom store
 
-## NPM Scripts
+## Cấu trúc thư mục
+- `src/` — Mã nguồn chính
+  - `components/` — Các component giao diện
+  - `pages/` — Các trang chức năng
+  - `services/` — Giao tiếp API, dịch vụ ngoài
+  - `data/` — Dữ liệu mẫu
+  - `hooks/` — Custom hooks
+  - `utils/` — Tiện ích dùng chung
+  - `styles/` — File style SCSS, CSS
+- `assets-src/` — Tài nguyên gốc (ảnh, icon...)
+- `www/` — Thư mục build, deploy
 
-* 🔥 `start` - run development server
-* 🙏 `deploy` - deploy mini app for production
+## Hướng dẫn chạy dự án
+1. Cài đặt Node.js >= 16
+2. Cài dependencies:
+   ```bash
+   npm install
+   ```
+3. Chạy dev:
+   ```bash
+   npm run dev
+   ```
+4. Build production:
+   ```bash
+   npm run build
+   ```
+
+## Đóng góp
+Vui lòng tạo pull request hoặc liên hệ quản trị viên dự án để đóng góp ý kiến, báo lỗi hoặc bổ sung tính năng.

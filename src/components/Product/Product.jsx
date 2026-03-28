@@ -10,6 +10,7 @@ import {
   Title,
   zmp,
   zmpready,
+  
 } from "zmp-framework/react"
 
 const Product = (item) => {
@@ -36,6 +37,7 @@ const Product = (item) => {
     CusInfo,
   } = item
   if (loading) {
+
     return (
       <Box style={style} mx="0" my="3" className="post">
         <Card inset className="overflow-hidden 	p-0">
@@ -63,7 +65,7 @@ const Product = (item) => {
       </Box>
     )
   }
-
+  //console.log("loading san pham", item)
   return (
     <Box style={style} mx="0" my="3" className="post">
       <Card inset className="overflow-hidden shadow-3	p-0">
@@ -127,12 +129,12 @@ const Product = (item) => {
               <Title className="post-title text-Green-Nuti font-extrabold">
                 {ten}
               </Title>
-             {CusInfo?.active !== "0" ?<Text
+              {CusInfo?.active !== "0" ? <Text
                 style={{ paddingTop: "5px" }}
                 className="desc  text-left text-Red-BrandChill text-base overflow-ellipsis "
               >
-                { formatCurrency(dongia, true) + "₫"}
-              </Text> :<Text
+                {formatCurrency(dongia, true) + "₫"}
+              </Text> : <Text
                 style={{ paddingTop: "5px" }}
                 className="desc  text-left text-Red-BrandChill text-base overflow-ellipsis "
               >

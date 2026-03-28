@@ -45,8 +45,8 @@ const DanhmucItemAll = ({ item, seen, loading, index, col }) => {
         mt="0"
         flex
         justifyContent="center"
-        alignItems="center"
-        style={{ width: "100%" }}
+        alignItems='flex-start'
+        style={{ width: "100%", }}
       >
         <Link
           // href="/pagedanhmuc?id="+index

@@ -47,7 +47,7 @@ const AlertNoUser: React.FC<IProps> = ({
 
         <Text size="small">
           Tài khoản Zalo của người dùng chưa được đồng bộ với hệ thống của{" "}
-          <strong>OPC</strong>
+          <strong>ROHTO</strong>
         </Text>
         <Text size="small" style={{ marginTop: 8 }}>
           Ứng dụng cần cung cấp thông tin cần thiết. Bạn có muốn <strong>đồng bộ qua số điện thoại</strong>?

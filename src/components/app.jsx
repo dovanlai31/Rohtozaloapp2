@@ -49,7 +49,7 @@ const MyApp = () => {
 
   // ZMP Parameters
   const zmpparams = {
-    name: "OPC", // App name
+    name: "ROHTO", // App name
     theme: "auto", // Automatic theme detection
     store: store,
     touch: {

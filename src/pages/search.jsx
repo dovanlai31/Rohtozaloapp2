@@ -78,8 +78,9 @@ const SearchPage = ({ zmproute, showToast }) => {
     p.soluong = 1
     p.title = Product.ten
     p.thumbnail = Product.HinhAnh
+    console.log("addToCar__", p)
     store.dispatch("SetAddGioHang", p)
-    showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
+    showToast("Thêm vào giỏ hàng thành công.", "success", 1000, "top")
   }
 
   const openToast = (pos, message) => {

@@ -378,6 +378,7 @@ export const FetchInitData = async (userId) => {
   await getListKM(userId)
   await getListCTTLXu(userId)
   await getListCTTLDiem(userId)
+  await getBlogs(userId)
   // getDataCusFromId(userId)
   return
 }

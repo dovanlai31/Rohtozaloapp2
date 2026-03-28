@@ -172,7 +172,7 @@ const GiohangPage = ({ zmproute }) => {
     if (duplicates.length > 0) {
       zmp.dialog
         .create({
-          title: "OPC - Thông báo",
+          title: "ROHTO - Thông báo",
           content:
             "Có sản phẩm trùng, bạn muốn cộng dồn số lượng trước khi lên đơn không?",
           buttons: [
@@ -760,7 +760,8 @@ const GiohangPage = ({ zmproute }) => {
 
     Giohangx.map((s) => {
       if (s.id && !s.Scheme)
-        listsp.push({ spId: s.id, soluong: s.soluong, dongia:  s.dongia*(1- ((s.chietkhauKM ? s.chietkhauKM / 100 : 0) + (s.nhomCkGam ? s.nhomCkGam / 100 : 0)))  , vat: s.vat, thung: 0, nhomCkGam: s.nhomCkGam ? s.nhomCkGam : 0, chietkhauKM: s.chietkhauKM ? s.chietkhauKM : 0, spMa: s.ma })
+        listsp.push({ spId: s.id, soluong: s.soluong, dongia:  s.dongia*(1- ((s.chietkhauKM ? s.chietkhauKM / 100 : 0) + (s.nhomCkGam ? s.nhomCkGam / 100 : 0)))  , 
+      vat: s.vat, thung: 0, nhomCkGam: s.nhomCkGam ? s.nhomCkGam : 0, chietkhauKM: s.chietkhauKM ? s.chietkhauKM : 0, spMa: s.ma,dvdl_fk: s.dvdl_fk})
     })
     {
       /* [{"id":"100099","SanPhamSuDung":"100246","Scheme":"2019.GAC.THANG2","DienGiai":"2019.GAC.THANG2","sosuat":"2","Loai":"3","HinhThuc":"2","spTen":"[{\\"spId\\":100104,\\"TEN\\":\\"PHARHAMAXE G2\\",\\"HinhAnh\\":\\"http://210.245.21.162:2222/AnhChupPDA/AnhChupAppShop/sanpham/01NM0905.jpg\\",\\"SOLUONG\\":0}]","TongLuong":"1","TongTien":"0","ChonSanPham":"0","DungSanPham":"0","TraKhuyenMai":"100099"}]' } ]    */
@@ -778,6 +779,7 @@ const GiohangPage = ({ zmproute }) => {
       ghichu: "Đơn Zalo miniapp",
       khuyenmai_chuoi: chuoikm,
       SanPhamSuDung: SanPhamSuDung,
+
     }
     console.log('prasm_daonhang', params);
     console.log("params km ", JSON.stringify(khuyenmai))

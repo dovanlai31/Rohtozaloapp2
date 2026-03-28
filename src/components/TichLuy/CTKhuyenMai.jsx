@@ -9,6 +9,7 @@ import {
   Text,
   zmp,
   zmpready,
+  useStore,
 } from "zmp-framework/react"
 import "../../styles/notifypage.scss"
 import { request } from "@utils/networking"
@@ -20,9 +21,14 @@ import { BsCartFill } from "react-icons/bs"
 import { BsReceipt } from "react-icons/bs"
 import { formatDateToDDMMYYYY } from "@utils/util"
 import store from "../../store"
+import { Icon } from "zmp-ui"
+import { showToast } from "zmp-sdk"
+
 
 //import { C } from "../../../www/assets/index.a2bfea25.module"
 const CTKhuyenMai = ({ data, CTKM, listSP }) => {
+  const CusInfo = useStore("getCusInfo")
+  console.log("CusInfo ", CusInfo)
   let dieukien = []
   let tra = []
   let sanphamdk = []
@@ -47,11 +53,69 @@ const CTKhuyenMai = ({ data, CTKM, listSP }) => {
       sanphamtra = JSON.parse(data[1].tra)
     }
   }
+  const GodonhangKM = () => {
+    console.log("data...  ", data)
+    if (dieukien.length > 0) {
+      console.log("dieukien", dieukien)
+      let loaikm = dieukien[0].LOAI
+      if (loaikm == "1" || loaikm == "2") {// tiền
+        if (dieukien[0].TONGTIEN.length > 1) {
+          if (sanphamdk.length > 0) {
+            //console.log("sanphamdk", sanphamdk)
+            let Product = sanphamdk[0]
+            console.log("spmua", Product)
 
+            let p = Product
+            p.soluong = Math.ceil(dieukien[0].TONGTIEN_DKKM||0 / p.dongia);
+            p.title = Product.ten
+            p.thumbnail = Product.HinhAnh
+            store.dispatch("SetAddGioHang", p)
+            showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
+
+          }
+        }
+
+
+      } else if (dieukien[0].TONGLUONG > 0) {// số lượng
+        if (sanphamdk.length > 0) {
+            //console.log("sanphamdk", sanphamdk)
+            let Product = sanphamdk[0]
+            console.log("spmua", Product)
+
+            let p = Product
+            p.soluong = dieukien[0].TONGLUONG_DKKM;
+            p.title = Product.ten
+            p.thumbnail = Product.HinhAnh
+            store.dispatch("SetAddGioHang", p)
+            showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
+
+          } 
+
+      }
+
+
+    }
+    backHome();
+
+  }
+  const backHome = () => {
+    zmp.views.current.router.back()
+    zmp.views.main?.router?.clearPreviousHistory()
+    if (zmp.views.main?.router?.currentRoute?.path !== "/") {
+      zmp.views.main.router.navigate("/", {
+        reloadCurrent: true,
+      })
+    }
+    setTimeout(() => {
+      zmp.tab.show("#view-giohang")
+    }, 250)
+
+  }
   return (
     <>
       <Box m={0} p={0}>
         <div className="flex justify-around items-center w-auto primary-background p-1 m-2 rounded shadow-lg">
+
           <Box className="m-0">
             <Text className="text-sm font-medium m-0" style={{ color: "#f8f8f8" }}>
               {CTKM?.diengiai}
@@ -63,11 +127,15 @@ const CTKhuyenMai = ({ data, CTKM, listSP }) => {
               {formatDateToDDMMYYYY(CTKM?.TUNGAY || "", "/")} -{" "}
               {formatDateToDDMMYYYY(CTKM?.DENNGAY || "", "/")}
             </Text>
+
+
           </Box>
           <Box className="RoundIcon">
             <BiSolidDiscount fill="#ff6a5b" size={32} />
           </Box>
+
         </div>
+
         <Box className="bg-white">
           <Tabbar
             inner={false}
@@ -123,6 +191,8 @@ const CTKhuyenMai = ({ data, CTKM, listSP }) => {
             ></Link>
           </Tabbar>
         </Box>
+
+
       </Box>
 
       <Box
@@ -526,6 +596,30 @@ const CTKhuyenMai = ({ data, CTKM, listSP }) => {
           </Tab>
         </Tabs>
       </Box>
+
+      {/* Flag Button dưới cùng */}
+    {CusInfo?.active !== "0"  != 0 && (
+      <Box style={{ position: "fixed", bottom: 0, left: 0, width: "96%", zIndex: 1000, background: "transparent" }} display="flex" justifyContent="center" alignItems="center" p={2}>
+        <button
+          onClick={() => {
+            GodonhangKM()
+          }}
+          style={{
+            background: Color.textAPPGreen2,
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            padding: "12px 32px",
+            fontSize: 14,
+            fontWeight: 600,
+            boxShadow: "0 2px 8px #0001",
+            cursor: "pointer"
+          }}
+        >
+          Lên đơn hàng gợi ý theo khuyến mãi này
+        </button>
+      </Box>
+    )}
     </>
   )
 }

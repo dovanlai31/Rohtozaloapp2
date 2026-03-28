@@ -105,7 +105,7 @@ const TichLuyDetail = ({ zmproute }) => {
       setLoading(true)
       Promise.all([getKhuyenMaiDetail(), getSPKhuyenMai()])
         .then((res) => {
-          console.log(res)
+         // console.log('getKhuyenMaiDetail(), getSPKhuyenMai()',res[0].content)
 
           if (res.length > 0) {
             const dk = JSON.parse(res[0].content)[0] || {}

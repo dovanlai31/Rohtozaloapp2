@@ -224,6 +224,7 @@ const store = createStore({
     },
     //
     async getLatestBlogs({ state }, { skip, limit, showSkeleton, reset = false }) {
+     
       if (showSkeleton) {
         state.loadingBlogs = true
       }

@@ -202,7 +202,7 @@ const Khachhang = ({ zmproute }) => {
                     marginBottom: 8,
                   }}
                 >
-                  {"OPC - Khách hàng"}
+                  {"ROHTO - Khách hàng"}
                 </Text>
                 <Box
                   flex

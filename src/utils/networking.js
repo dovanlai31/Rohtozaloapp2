@@ -1,8 +1,7 @@
-// const url = 'https://salesup.com.vn:61266/'//test 
-// const url = 'https://dms2.imexpharm.com:3524/'//thậts
-// const url = "https://salesup.com.vn:61266/" //test
-//const url = "https://pgms.nutifood.net:4123/" //thật
- const url = "https://dms.opcpharma.com:1238/" //thật
+
+//const url = "http://1.53.252.173:7777/" //test
+const url = "https://dms.rohto.com.vn:9113/" //thật rohtoa
+// const url = "https://dms.opcpharma.com:1238/" //thật
 
 // link ảnh https://dms1.imexpharm.com:9443/
 

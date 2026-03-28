@@ -28,6 +28,7 @@ const ListPost = ({ zmproute }) => {
   let pageContent = null
 
   useEffect(() => {
+ 
     if (!data.length) {
       store.dispatch("getLatestBlogs", { skip: 0, limit: 30, showSkeleton: true })
     }
