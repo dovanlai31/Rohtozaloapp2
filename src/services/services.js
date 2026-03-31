@@ -14,6 +14,7 @@ import categories from "../data/categories.json"
 import stories from "../data/stories.json"
 import store from "../store"
 
+
 const base = config.BASE_URL
 const DEFAULT_DELAY = 100
 const token = ""
@@ -305,6 +306,7 @@ export const getBlogs = async ({ userId }) => {
       console.log("getBlogs__", response);
     if (response) {
       console.log("khachhang/getListSP: ", response)
+
       let res = {
         blogs: [],
         total: 0,
@@ -375,10 +377,11 @@ export const CapNhatDonHang = async (khId) => {
 }
 
 export const FetchInitData = async (userId) => {
+    await getBlogs(userId)
   await getListKM(userId)
   await getListCTTLXu(userId)
   await getListCTTLDiem(userId)
-  await getBlogs(userId)
+
   // getDataCusFromId(userId)
   return
 }

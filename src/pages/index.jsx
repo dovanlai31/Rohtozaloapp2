@@ -43,7 +43,7 @@ const HomePage = ({ showToast }) => {
   const user = useStore("user") || ""
 
   useEffect(() => {
-   
+
     if (!store.getters["stories"].value.length) {
       store.dispatch("getStories")
     }
@@ -62,23 +62,23 @@ const HomePage = ({ showToast }) => {
       content: '<div className="dialog-text">' + sms + "</div>",
       buttons: btn
         ? [
-            {
-              text: "Đóng",
+          {
+            text: "Đóng",
+          },
+          {
+            text: btn ? "Đăng ký" : "",
+            //close: false,
+            onClick() {
+              console.log("main actions")
+              if (btn) dk(0)
             },
-            {
-              text: btn ? "Đăng ký" : "",
-              //close: false,
-              onClick() {
-                console.log("main actions")
-                if (btn) dk(0)
-              },
-            },
-          ]
+          },
+        ]
         : [
-            {
-              text: "Đóng",
-            },
-          ],
+          {
+            text: "Đóng",
+          },
+        ],
     })
     if (dialog.current) {
       dialog.current.open()
@@ -96,65 +96,65 @@ const HomePage = ({ showToast }) => {
         avatar: userInfo.avatar,
       })
     }
-  }  
+  }
 
-const requestPermission = () => {
-  authorize({
-    scopes: ["scope.userInfo", "scope.userPhonenumber"],
-    success: async (res) => {
-      console.log("res2___", res);
-      const isEmpty = Object.keys(res || {}).length === 0
-      if (isEmpty) {
-        return   showDialog('Không thể lấy thông tin người dùng. Vui lòng thử lại sau.')
-      }
-      return checkPhonePermissionAndContinue()
-
-
-    },
-    fail: (err) => {
-      const code = err?.code?.toString()
-      const message = zaloErrorMessages[code] || `Lỗi không xác định (code: ${code})`
-      showDialog(message)
-    },
-  })
-}  
-const checkPhonePermissionAndContinue = () => {
-  getSetting({
-    success: async (res) => {
-      const auth = res.authSetting || {}
-      const hasPhonePermission = auth["scope.userPhonenumber"]
-      console.log("Qu___2 ", hasPhonePermission)
-      if (hasPhonePermission) {
-        try {
-            getUser()
-            return  store.dispatch("setLogged", true).then(() => {
-            setAlertNoUser(false)
-
-            zmp.tab.show("#view-main")
-            zmp.toolbar.hide("#main-nav")
-            zmp.views.current.router.navigate("taomoiKh/", {
-              transition: "zmp-cover",
-              animate: true,
-            })
-          })
-
-
-
-        } catch (err) {
-          console.error("Lỗi khi gọi getPhoneNumber: ", err)
-          showDialog("Không thể lấy số điện thoại.")
+  const requestPermission = () => {
+    authorize({
+      scopes: ["scope.userInfo", "scope.userPhonenumber"],
+      success: async (res) => {
+        console.log("res2___", res);
+        const isEmpty = Object.keys(res || {}).length === 0
+        if (isEmpty) {
+          return showDialog('Không thể lấy thông tin người dùng. Vui lòng thử lại sau.')
         }
-      } else {
-          
-        requestPermission()
-      }
-    },
-    fail: (err) => {
-      console.error("Lỗi khi gọi getSetting: ", err)
-      showDialog("Không thể kiểm tra quyền. Vui lòng thử lại.")
-    },
-  })
-}
+        return checkPhonePermissionAndContinue()
+
+
+      },
+      fail: (err) => {
+        const code = err?.code?.toString()
+        const message = zaloErrorMessages[code] || `Lỗi không xác định (code: ${code})`
+        showDialog(message)
+      },
+    })
+  }
+  const checkPhonePermissionAndContinue = () => {
+    getSetting({
+      success: async (res) => {
+        const auth = res.authSetting || {}
+        const hasPhonePermission = auth["scope.userPhonenumber"]
+        console.log("Qu___2 ", hasPhonePermission)
+        if (hasPhonePermission) {
+          try {
+            getUser()
+            return store.dispatch("setLogged", true).then(() => {
+              setAlertNoUser(false)
+
+              zmp.tab.show("#view-main")
+              zmp.toolbar.hide("#main-nav")
+              zmp.views.current.router.navigate("taomoiKh/", {
+                transition: "zmp-cover",
+                animate: true,
+              })
+            })
+
+
+
+          } catch (err) {
+            console.error("Lỗi khi gọi getPhoneNumber: ", err)
+            showDialog("Không thể lấy số điện thoại.")
+          }
+        } else {
+
+          requestPermission()
+        }
+      },
+      fail: (err) => {
+        console.error("Lỗi khi gọi getSetting: ", err)
+        showDialog("Không thể kiểm tra quyền. Vui lòng thử lại.")
+      },
+    })
+  }
 
   const dk = async (value) => {
 
@@ -277,14 +277,14 @@ const checkPhonePermissionAndContinue = () => {
   // }
 
   const onPageBeforeIn = () => {
-     console.log('ckeckzalon', zmp.views);
+    console.log('ckeckzalon', zmp.views);
     if (!logged || chonkh.current) {
       zmp.toolbar.hide("#main-nav")
     }
   }
 
   const onPageAfterIn = async () => {
-     console.log("onPageAfterIn_onPageAfterIn", logged);
+    console.log("onPageAfterIn_onPageAfterIn", logged);
     try {
       if (logged) {
         return
@@ -292,14 +292,16 @@ const checkPhonePermissionAndContinue = () => {
 
       let userId = await getUserID({})
       // trinh duyệt thì mở cái này lên vi nó ko lấy dc user id 
+      //1269173850562980540 hide
+      //5922757929442215184
       if (!userId) {
-        userId= '5922757929442215184'
+        userId = '12691738505629805401'
       }
       console.log("userId: ", userId)
 
       const customerData = await getDataCusFromId(userId)
       if (customerData.length > 0) {
-      console.log("customerData: ", customerData)
+        console.log("customerData: ", customerData)
         store.dispatch("setLogged", true).then(() => {
           zmp.toolbar.show("#main-nav")
 
@@ -310,10 +312,15 @@ const checkPhonePermissionAndContinue = () => {
           store.dispatch("setCusInfo", customerData[0])
           console.log("customerData[0]", customerData[0]);
           //tai sp mới nhất
-      
-          store.dispatch("getLatestBlogs", {  limit: 20, skip: 0, reset: true })
+
+          store.dispatch("getLatestBlogs", { limit: 20, skip: 0, reset: true })
         })
       } else {
+         // FetchInitData(115780)
+        store.dispatch("setLogged", true).then(() => {
+          FetchInitData(115780)
+          store.dispatch("getLatestBlogs", { limit: 20, skip: 0, reset: true })
+        })
         if (!logged) {
           setAlertNoUser(true)
           store.dispatch("setLogged", true)
@@ -329,8 +336,8 @@ const checkPhonePermissionAndContinue = () => {
     <Page
       ptr
       onPtrRefresh={() => {
-         handleReload()
-          FetchInitData(CusInfo?.KHACHHANG_fk).then(() => {
+        handleReload()
+        FetchInitData(CusInfo?.KHACHHANG_fk).then(() => {
           zmp.ptr.done()
         })
       }}
@@ -355,7 +362,7 @@ const checkPhonePermissionAndContinue = () => {
             mt={6}
             pt={9}
           >
-             <HeaderHello CusInfo={CusInfo} logoMain={logoMain}  user={user} />
+            <HeaderHello CusInfo={CusInfo} logoMain={logoMain} user={user} />
           </Box>
         </Box>
         <Box

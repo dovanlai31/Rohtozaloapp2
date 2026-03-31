@@ -46,7 +46,7 @@ const AlertNoUser: React.FC<IProps> = ({
         />
 
         <Text size="small">
-          Tài khoản Zalo của người dùng chưa được đồng bộ với hệ thống của{" "}
+         Tài khoản Zalo của người dùng chưa được đồng bộ với hệ thống của{" "}
           <strong>ROHTO</strong>
         </Text>
         <Text size="small" style={{ marginTop: 8 }}>
@@ -85,7 +85,7 @@ const AlertNoUser: React.FC<IProps> = ({
             }}
             fullWidth onClick={() => signup()}
           >
-            Đồng bộ
+            Đồng bộ 
           </Button>
         </Box>
       </Box>
