@@ -5,12 +5,22 @@ import { request } from "@utils/networking"
 import { formatDateToDDMMYYYY } from "@utils/util"
 import moment from "moment"
 import { useEffect, useRef, useState } from "react"
-import { BsClockFill } from "react-icons/bs"
+import { BsBellFill, BsClockFill } from "react-icons/bs"
 import { Box, Link, Page, Text, useStore, zmp } from "zmp-framework/react"
 import { Modal } from "zmp-ui"
 import "../styles/notifypage.scss"
 
-const thongbaoPage = ({ zmproute }) => {
+// Object mau theo dung cac field dang dung trong UI thong bao.
+const THONGBAO_SAMPLE = {
+  TIEUDE: "Thong bao mau",
+  NOIDUNG: "Noi dung thong bao mau de ban xu ly tiep.",
+  NGAYBATDAU: "2026-03-30T00:00:00",
+  NGAYKETTHUC: "2026-04-30T23:59:59",
+  NGAYTAO: "2026-03-30T08:30:00",
+  scheme: "",
+}
+
+const ThongbaoPage = ({ zmproute }) => {
   useEffect(() => {
     getListThongbao()
   }, [])
@@ -22,7 +32,6 @@ const thongbaoPage = ({ zmproute }) => {
   const [curItem, setcurItem] = useState({ NOIDUNG: "", TIEUDE: "" })
 
   const [customSheetOpened, setCustomSheetOpened] = useState(false)
-  const sheet = useRef(null)
   const dialog = useRef(null)
 
   const getListThongbao = async () => {
@@ -55,12 +64,6 @@ const thongbaoPage = ({ zmproute }) => {
       setLoading(false)
     }
   }
-  const openSheet = () => {
-    if (sheet.current) {
-      sheet.current.zmpSheet().open()
-    }
-  }
-
   const showDialog = (msg) => {
     dialog.current = zmp.dialog.create({
       title: "Thông báo",
@@ -71,9 +74,7 @@ const thongbaoPage = ({ zmproute }) => {
         },
       ],
     })
-    if (dialog.current) {
-      dialog.current.open()
-    }
+    dialog.current?.open()
   }
 
   return (
@@ -85,15 +86,14 @@ const thongbaoPage = ({ zmproute }) => {
     >
       <HeaderBack slot={"fixed"} title="Thông báo" />
 
-      <Box className="view-center-gh" style={{ marginBottom: 1 }}>
+      <Box className="view-center-gh mb-[1px]">
         {loading && <LoadingSpinner></LoadingSpinner>}
-        {ListThongbao &&
-          ListThongbao.map((km) => {
+        {ListThongbao?.map((km) => {
             return (
               <Box
                 className="list-item-km2 shadown-app-1"
                 key={km.TIEUDE}
-                style={{ padding: 0, borderRadius: 15, background: "white" }}
+                style={{ padding: 0 }}
               >
                 <Link
                   // href={`/search?ctkmid=${km.scheme}`}
@@ -107,7 +107,7 @@ const thongbaoPage = ({ zmproute }) => {
                   }}
                 >
                   <Box flex alignItems="center">
-                    <Box className="list-icon2" style={{ width: "20%" }}>
+                    <Box className="list-icon2 w-1/5">
                       <span className="RoundIcon4">
                         <Alert
                           color={{
@@ -121,7 +121,7 @@ const thongbaoPage = ({ zmproute }) => {
                       {/* <img className="giohang-img"
                           style={{ width: 55, height: 55, }} src={icongif2}></img> */}
                     </Box>
-                    <Box style={{ width: "100%" }}>
+                    <Box className="w-full">
                       <Text className="font-extrabold text-blue-imex text-sm">
                         {km.TIEUDE}
                       </Text>
@@ -133,23 +133,14 @@ const thongbaoPage = ({ zmproute }) => {
                         flex
                         flexDirection="column"
                         justifyContent="space-between"
-                        style={{ gap: 8 }}
+                        className="gap-2"
                       >
-                        <Text mx="0" className="text-xs" style={{ color: "#ccc" }}>
+                        <Text mx="0" className="text-xs text-[#ccc]">
                           {formatDateToDDMMYYYY(km.NGAYBATDAU, "/") +
                             " - " +
                             formatDateToDDMMYYYY(km.NGAYKETTHUC, "/")}
                         </Text>
-                        <Text
-                          mx="0"
-                          className="text-xs"
-                          style={{
-                            color: "#ccc",
-                            display: "flex",
-                            gap: 8,
-                            alignItems: "center",
-                          }}
-                        >
+                        <Text mx="0" className="text-xs text-[#ccc] flex gap-2 items-center">
                           <BsClockFill size={15} />
                           {!!km?.NGAYTAO && moment(km.NGAYTAO).fromNow()}
                         </Text>
@@ -160,6 +151,15 @@ const thongbaoPage = ({ zmproute }) => {
               </Box>
             )
           })}
+        {!loading && !ListThongbao?.length && (
+          <Box className="min-h-[60vh] w-full flex flex-col justify-center items-center gap-2 text-[#808080]">
+            <BsBellFill size={30} color="#808080" />
+            <Text className="font-bold text-[#808080] text-base">Không có thông báo</Text>
+            <Text className="text-[#808080] text-sm text-center">
+              Bạn chưa có thông báo nào. Hãy quay lại sau nhé!
+            </Text>
+          </Box>
+        )}
       </Box>
       <Modal
         visible={customSheetOpened}
@@ -200,4 +200,4 @@ const styles = {
     borderColor: "#dbdfe2",
   },
 }
-export default thongbaoPage
+export default ThongbaoPage

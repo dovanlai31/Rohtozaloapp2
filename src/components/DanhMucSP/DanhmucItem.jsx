@@ -13,6 +13,8 @@ const DanhmucItem = ({ item, seen, loading, index, col }) => {
 
   let vt = index % 21
 
+  console.log(item)
+
   if (loading) {
     return (
       <Box m="0" className="story" flex flexDirection="column" alignItems="center">
@@ -53,30 +55,29 @@ const DanhmucItem = ({ item, seen, loading, index, col }) => {
           noLinkClass
           className="avatar-wrapper"
         >
-          <Box
-            m="0"
-            p="1"
-            className=" avatar-wrapperHome"
-            style={{
-              backgroundColor: item.COLORS ? item.COLORS : colorsArr[vt],
-              borderColor: colors.amber,
-              borderTopRightRadius: 10,
-              borderBottomLeftRadius: 5,
+          <div className="flex flex-col">
+            <div className="border border-[#E0E0E0] border-2 rounded-2xl p-3">
+              <img loading="lazy" className="max-h-[65px]" src={item?.HINHANH}></img>
+            </div>
 
-
-            }}
-          >
-            <img loading="lazy" className="imgCatalog" src={item?.HINHANH}></img>
-          </Box>
+            {/* <Box
+              m="0"
+              p="1"
+              className=" avatar-wrapperHome"
+              style={{
+                backgroundColor: item.COLORS ? item.COLORS : colorsArr[vt],
+                borderColor: colors.amber,
+                borderTopRightRadius: 10,
+                borderBottomLeftRadius: 5,
+              }}
+            >
+              <img loading="lazy" className="imgCatalog" src={item?.HINHANH}></img>
+            </Box> */}
+          </div>
         </Link>
       </Box>
       <Box>
-        <Text
-          className="textline2"
-          style={{ fontSize: 12, textAlign: "center", padding: 0, margin: 0 ,  }}
-        >
-          {item.TEN || ""}
-        </Text>
+        <Text className="font-extrabold text-sm">{item.TEN || ""}</Text>
       </Box>
     </Box>
   )

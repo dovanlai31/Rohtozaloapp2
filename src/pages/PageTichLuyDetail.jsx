@@ -1,20 +1,18 @@
-import { Box, Page, Text, useStore, zmp, Button } from "zmp-framework/react"
+import { Box, Button, Page, Text, zmp } from "zmp-framework/react"
 import { useEffect, useState } from "react"
 import {
   MdCardGiftcard,
-  MdRemoveShoppingCart,
   MdShoppingCart,
   MdOutlineArrowDropDown,
   MdOutlineArrowDropUp,
 } from "react-icons/md"
 import { FaGift, FaInbox } from "react-icons/fa"
-import Color from "@components/common/Color"
 import { formatCurrency, request } from "@utils/networking"
-import { formatDateToDDMMYYYY } from "@utils/util"
 import store from "../store"
 import HeaderBack from "@components/Header/HeaderBack"
-import ProgressBar from "@ramonak/react-progress-bar"
 import LoadingSpinner from "@components/LoadingSpinner"
+import KhachhangTichLuyCard from "@components/Account/KhachhangTichLuyCard"
+
 
 const PageTichLuyDetail = ({ zmproute }) => {
   const CusInfo = store.getters.getCusInfo.value || {}
@@ -26,11 +24,9 @@ const PageTichLuyDetail = ({ zmproute }) => {
   const [quaDaNhan, setQuaDaNhan] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // 🔹 Thu gọn / Mở rộng
   const [showQuaChuaNhan, setShowQuaChuaNhan] = useState(true)
   const [showQuaDaNhan, setShowQuaDaNhan] = useState(true)
 
-  // 🔹 Gọi API lấy chi tiết chương trình
   const getCTTLKHInfo = async () => {
     const method = "khuyenmai/getCTTLKH_info"
     const params = {
@@ -41,16 +37,11 @@ const PageTichLuyDetail = ({ zmproute }) => {
     try {
       const post = await request("POST", method, params)
       const response = await post.json()
-      console.log("loxg_", response)
-      if (response?.result && response?.message) {
         const result = JSON.parse(response.message)
         const info = result.ThongTinCT?.[0]
         setDataCT(info)
         setQuaChuaNhan(result.QuaChuaNhan || [])
         setQuaDaNhan(result.QuaDaNhan || [])
-      } else {
-        setDataCT(null)
-      }
     } catch (error) {
       console.log("❌ Lỗi getCTTLKH_info:", error)
     } finally {
@@ -62,66 +53,196 @@ const PageTichLuyDetail = ({ zmproute }) => {
     getCTTLKHInfo()
   }, [])
 
-  const renderQuaItem = (item, index, isDaNhan = false) => (
-    <Box
-      p="0"
-      m="0"
-      key={index}
-      // className="shadown-app-1"
-      style={{
-        background: "#e4ebe442",
-        borderRadius: 5,
-        padding: 5,
-        marginBottom: 5,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        border: "0.5px solid #c0cfb25d",
-      }}
-    >
-      <Box flexDirection="column" style={{ width: "70%" }}>
-        <Text
-          style={{
-            fontSize: 11,
-            fontWeight: "600",
-            color: Color.textAPPBlue,
-            marginBottom: 4,
-            wordWrap: "break-word",
-          }}
-        >
-          {item.TenSP}
-        </Text>
-        <Text style={{ fontSize: 12, color: Color.ColorGesoNewLight }}>
-          <b>SL</b> {item.SOLUONG} x {formatCurrency(item.DONGIA, true)}
-        </Text>
+  const renderQuaSection = ({
+    title,
+    expanded,
+    onToggle,
+    list,
+    emptyText,
+    isDaNhan,
+  }) => {
+    const arrowIcon = expanded ? (
+      <MdOutlineArrowDropDown color="#9ca3af" size={24} />
+    ) : (
+      <MdOutlineArrowDropUp color="#9ca3af" size={24} />
+    )
 
-        <Text
-          style={{ fontSize: 12, color: Color.textAPPRedChill, fontWeight: 500 }}
-        >
-          <b>Thành tiền:</b> {formatCurrency(item.THANHTIEN, true)}
-        </Text>
-        {/* {isDaNhan && item.DONHANG_FK && (
-          <Text style={{ fontSize: 11, color: "#888" }}>
-            Đơn hàng: #{item.DONHANG_FK}
-          </Text>
-        )} */}
-      </Box>
+    let sectionContent = null
+    if (list.length === 0) {
+      sectionContent = (
+        <Box className="flex min-h-[160px] flex-col items-center justify-center gap-2">
+          <MdShoppingCart size={34} color="#9c9c9c" />
+          <Text className="text-[16px] font-bold text-[#8b8b8b]">{emptyText}</Text>
+        </Box>
+      )
+    } else if (isDaNhan) {
+      sectionContent = (
+        <Box className="py-1">
+          {list.map((item, index) => (
+            <Box
+              key={`${item?.TenSP || "gift"}-${index}`}
+              className="border-b border-[#eceef1] py-3"
+            >
+              <Text className="text-[16px] font-semibold text-[#2d2f43]">
+                {item?.TenSP}
+              </Text>
+              <Text className="mt-1 text-[13px] text-[#525460]">
+                SL {item?.SOLUONG} x {formatCurrency(item?.DONGIA, true)}
+              </Text>
+            </Box>
+          ))}
+        </Box>
+      )
+    } else {
+      sectionContent = (
+        <Box className="pt-3 m-0">
+          <div className="overflow-hidden rounded-lg  border-[#eceef1]">
+            <table className="w-full table-fixed border-collapse">
+              <thead>
+                <tr className="bg-[#f3f5f8]">
+                  <th className="w-[58%] px-3 py-2 text-left text-[11px] font-bold text-[#a0a5ad]">
+                    TÊN QUÀ
+                  </th>
+                  <th className="w-[14%] px-2 py-2 text-center text-[11px] font-bold text-[#a0a5ad]">
+                    SL
+                  </th>
+                  <th className="w-[28%] px-3 py-2 text-right text-[11px] font-bold text-[#a0a5ad]">
+                    THÀNH TIỀN
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((item, index) => (
+                  <tr
+                    key={`${item?.TenSP || "gift"}-${index}`}
+                    className="border-t border-[#eceef1]"
+                  >
+                    <td className="px-3 py-3 align-top">
+                      <div className="flex items-start gap-2">
+                        <span className="mt-2 h-2 w-2 rounded-full bg-[#2f61b6]" />
+                        <Text className="text-[16px] font-semibold leading-tight text-[#2d2f43]">
+                          {item?.TenSP}
+                        </Text>
+                      </div>
+                    </td>
+                    <td className="px-2 py-3 text-center align-top">
+                      <Text className="text-[16px] font-semibold text-[#474b57]">
+                        {item?.SOLUONG}
+                      </Text>
+                    </td>
+                    <td className="px-3 py-3 text-right align-top">
+                      <Text className="text-[16px] font-bold text-[#2f61b6]">
+                        {formatCurrency(item?.THANHTIEN, true)}
+                      </Text>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-[#eceef1] bg-white">
+                  <td className="px-3 py-3 text-[18px] font-bold text-[#4b4f59]">
+                    Tổng cộng
+                  </td>
+                  <td />
+                  <td className="px-3 py-3 text-right text-[18px] font-bold text-[#2f61b6]">
+                    {formatCurrency(
+                      list.reduce((sum, it) => sum + Number(it?.THANHTIEN || 0), 0),
+                      true
+                    )}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Box>
+      )
+    }
 
-      <Box
-        style={{
-          backgroundColor: isDaNhan ? "#E6F7E6" : "#fff4e5cc",
-          width: 34,
-          height: 34,
-          borderRadius: 5,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <FaGift size={18} color={isDaNhan ? "#4caf50" : "#f9b349"} />
+    return (
+      <Box className="my-4 rounded-2xl bg-white m-0 p-2">
+        <Button
+          className="w-full cursor-pointer !p-0"
+          style={{ justifyContent: "space-between" }}
+          flex
+          alignItems="center"
+          onClick={onToggle}
+        >
+          <Box className="flex items-center gap-2 m-0">
+            <Box
+              className={`h-9 w-9 rounded-xl flex items-center justify-center ${
+                isDaNhan ? "bg-[#2f61b6]" : "bg-[#e6ab2f]"
+              }`}
+            >
+              {isDaNhan ? (
+                <FaGift size={16} color="#fff" />
+              ) : (
+                <MdCardGiftcard size={18} color="#fff" />
+              )}
+            </Box>
+            <Text className="text-[21px] font-bold text-[#202239]">{title}</Text>
+            <Box className="min-w-6 rounded-full bg-[#e8eef7] px-2 py-[1px] text-center">
+              <Text className="text-[12px] font-bold text-[#2f61b6]">
+                {list.length}
+              </Text>
+            </Box>
+          </Box>
+          {arrowIcon}
+        </Button>
+        {expanded && (
+          <Box mt={3}>
+            <Box className="h-px w-full bg-[#ebedf0]" />
+            {sectionContent}
+          </Box>
+        )}
       </Box>
-    </Box>
-  )
+    )
+  }
+
+  let pageBody = null
+  if (loading) {
+    pageBody = (
+      <div className="flex items-center justify-center gap-2">
+        <LoadingSpinner />
+        <span className="font-semibold">Đang tải dữ liệu...</span>
+      </div>
+    )
+  } else if (!dataCT) {
+    pageBody = (
+      <div className="flex flex-col items-center justify-center">
+        <FaInbox size={25} color="#ccc" />
+        <Text className="mt-2 text-[13px] text-[#ccc]">
+          Không có chương trình đang tham gia
+        </Text>
+      </div>
+    )
+  } else {
+    pageBody = (
+      <Box p={0} className="px-1">
+        <KhachhangTichLuyCard
+          loading={false}
+          dataTichLuy={{ ...dataCT, PK_SEQ: dataCT?.PK_SEQ || CTTL_FK }}
+          cusInfo={CusInfo}
+        />
+        {renderQuaSection({
+          title: "Quà đã nhận",
+          expanded: showQuaDaNhan,
+          onToggle: () => setShowQuaDaNhan((v) => !v),
+          list: quaDaNhan,
+          emptyText: "Chưa có quà đã nhận",
+          isDaNhan: true,
+        })}
+
+        {renderQuaSection({
+          title: "Quà chưa nhận",
+          expanded: showQuaChuaNhan,
+          onToggle: () => setShowQuaChuaNhan((v) => !v),
+          list: quaChuaNhan,
+          emptyText: "Không có quà chưa nhận",
+          isDaNhan: false,
+        })}
+      </Box>
+    )
+  }
 
   return (
     <Page
@@ -136,267 +257,8 @@ const PageTichLuyDetail = ({ zmproute }) => {
         title="Chi tiết tích lũy"
       />
 
-      {loading ? (
-        <div className="flex items-center justify-center">
-          <LoadingSpinner />{" "}
-          <span className="font-semibold">Đang tải dữ liệu...</span>
-        </div>
-      ) : !dataCT ? (
-        <div className="flex flex-col justify-center items-center">
-          <FaInbox size={25} color="#ccc" />
-          <Text style={{ fontSize: 13, marginTop: 8, color: "#ccc" }}>
-            Không có chương trình đang tham gia
-          </Text>
-        </div>
-      ) : (
-        <Box p={0}>
-          {/* 🧩 Thông tin chương trình */}
-          <Box
-            // className="shadown-app-1"
-            style={{
-              background: "linear-gradient(135deg, #ffffff, #f8fbff)",
-              borderRadius: 12,
-              padding: 16,
-              marginBottom: 20,
-              border: "1px solid #e4e9f0",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: "700",
-                color: Color.ColorGesoNewLight,
-                marginBottom: 4,
-                wordWrap: "break-word",
-              }}
-            >
-              {dataCT?.TenChuongTrinh}
-            </Text>
-            <Text style={{ fontSize: 12, color: Color.textAPPGray }}>
-              {formatDateToDDMMYYYY(dataCT?.TuNgay)} đến ngày{" "}
-              {formatDateToDDMMYYYY(dataCT?.DenNgay)}
-            </Text>
-
-            <Box m={0} p={0} mt={1}>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "bold",
-                  color: Color.ColorGesoBlueBold,
-                  marginBottom: 4,
-                  flexDirection: "row",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                {formatCurrency(dataCT?.DoanhThuCamKet ?? 0, true)} -{" "}
-                <Text fontSize={11}>Doanh thu cam kết</Text>{" "}
-              </Text>
-
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "bold",
-                  color: Color.ColorGesoBlueBold,
-                  marginBottom: 4,
-                  flexDirection: "row",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                {formatCurrency(dataCT?.DoanhThuThucHien ?? 0, true)} -{" "}
-                <Text fontSize={11}>Doanh thu thực hiện</Text>{" "}
-              </Text>
-
-              {/* Progress bar */}
-              <Box mt={2}>
-                <ProgressBar
-                  completed={dataCT?.PhanTram ?? 0}
-                  bgColor={
-                    (dataCT?.PhanTram ?? 0) >= 100
-                      ? "linear-gradient(90deg, #4caf50, #81c784)"
-                      : "linear-gradient(90deg, #42a5f5, #64b5f6)"
-                  }
-                  baseBgColor="#e0e0e0"
-                  height="12px"
-                  borderRadius="6px"
-                  animateOnRender
-                  isLabelVisible={false}
-                />
-              </Box>
-
-              <Text style={{ fontSize: 12, color: Color.mainColor, marginTop: 4 }}>
-                <b>Hoàn thành:</b> {(dataCT?.PhanTram ?? 0).toFixed(1)}%
-              </Text>
-               <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "bold",
-                  color: Color.ColorNutiMain,
-                  marginBottom: 4,
-                  flexDirection: "row",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                {formatCurrency(dataCT?.TongThuong ?? 0, true)} -{" "}
-                <Text style={{color: Color.ColorNutiMain, fontWeight: 'bold'}} fontSize={11}>Thưởng tích lũy</Text>{" "}
-              </Text>
-            </Box>
-          </Box>
-          <Box
-            // className="shadown-app-1"
-            style={{
-              background: "#fff",
-              borderRadius: 5,
-              padding: 16,
-              border: "1px solid #e0e0e0",
-            }}
-          >
-            <Button
-              style={{
-                cursor: "pointer",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-              flex
-              alignItems="center"
-              onClick={() => setShowQuaDaNhan(!showQuaDaNhan)}
-            >
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: "600",
-                  color: Color.primary,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <FaGift size={16} color={Color.primary} />
-                Quà đã nhận
-              </Text>
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: "bold",
-                  color: Color.textAPPRedChill,
-                  flexDirection: "row",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                Hiện quà{" "}
-                {showQuaDaNhan ? (
-                  <MdOutlineArrowDropDown color={Color.textAPPRedChill} size={24} />
-                ) : (
-                  <MdOutlineArrowDropUp color={Color.textAPPRedChill} size={24} />
-                )}
-              </Text>
-            </Button>
-
-            {showQuaDaNhan && (
-              <Box mt={3}>
-                {quaDaNhan.length === 0 ? (
-                  <Box
-                    flex
-                    justifyContent="center"
-                    alignItems="center"
-                    style={{ padding: 10 }}
-                  >
-                    <MdShoppingCart size={13} color="#ccc" />
-                    <Text style={{ fontSize: 12, marginLeft: 8, color: "#aaa" }}>
-                      Chưa có quà đã nhận
-                    </Text>
-                  </Box>
-                ) : (
-                  quaDaNhan.map((item, index) => renderQuaItem(item, index, true))
-                )}
-              </Box>
-            )}
-          </Box>
-
-          <Box
-            // className="shadown-app-1"
-            style={{
-              background: "#fff",
-              borderRadius: 5,
-              padding: 16,
-              marginBottom: 20,
-              border: "1px solid #e0e0e0",
-            }}
-          >
-            <Button
-              style={{
-                cursor: "pointer",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-              flex
-              alignItems="center"
-              onClick={() => setShowQuaChuaNhan(!showQuaChuaNhan)}
-            >
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: "600",
-                  color: Color.primary,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <FaGift size={16} color={Color.primary} />
-                Quà chưa nhận
-              </Text>
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: "bold",
-                  color: Color.textAPPRedChill,
-                  flexDirection: "row",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                Hiện quà{" "}
-                {showQuaChuaNhan ? (
-                  <MdOutlineArrowDropDown color={Color.textAPPRedChill} size={24} />
-                ) : (
-                  <MdOutlineArrowDropUp color={Color.textAPPRedChill} size={24} />
-                )}
-              </Text>
-            </Button>
-
-            {showQuaChuaNhan && (
-              <Box mt={3}>
-                {quaChuaNhan.length === 0 ? (
-                  <Box
-                    flex
-                    justifyContent="center"
-                    alignItems="center"
-                    style={{ padding: 10 }}
-                  >
-                    <MdShoppingCart size={13} color="#ccc" />
-                    <Text style={{ fontSize: 12, marginLeft: 8, color: "#aaa" }}>
-                      Không có quà chưa nhận
-                    </Text>
-                  </Box>
-                ) : (
-                  quaChuaNhan.map((item, index) => renderQuaItem(item, index, false))
-                )}
-              </Box>
-            )}
-          </Box>
-        </Box>
-        
-      )}
-            <Box
+      {pageBody}
+      <Box
         className=""
         noSpace={true}
         flex

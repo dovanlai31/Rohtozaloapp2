@@ -2,7 +2,7 @@ const StatusBarTextColors = { dark: "dark", light: "light" }
 
 export default {
   statusBarTextColors: StatusBarTextColors,
-  primary: "#169658",
+  primary: "#005DAA",
   secondPrimary: "#fa6152",
   accent: "#004b91",
   accentLight: "#00b14f",
@@ -108,7 +108,7 @@ export default {
   textAPPGreen: "#70ac2d",
   textAPPGreen2: "#00b14f",
   textAPPBlue: "#004b91",
-  textAPPBlueHeavy: "#052848",
+  textAPPBlueHeavy: "#6B7280",
   textAPPCopper: "#f79741",
   textAPPCopper2: "#b06b2a",
   textAPPCopper3: "#f3650f",

@@ -91,7 +91,6 @@ const MyApp = () => {
           NotifyGH={Giohang.length > 0 ? true : false}
         />
         <View
-     
           id="view-main"
           onTabShow={() => {
             setActiveTab("main")
@@ -120,13 +119,15 @@ const MyApp = () => {
           initRouterOnTabShow
           onTabShow={() => {
             setActiveTab("giohang")
-            if( Giohang?.length > 0) {
-              zmp.toolbar.hide("#main-nav")
               zmp.views.giohang.router.updateCurrentUrl("/giohang/")
-            } else {
-              zmp.toolbar.show("#main-nav")
-              zmp.views.giohang.router.updateCurrentUrl("/giohang/")
-            }
+
+            // if (Giohang?.length > 0) {
+            //   zmp.toolbar.hide("#main-nav")
+            //   zmp.views.giohang.router.updateCurrentUrl("/giohang/")
+            // } else {
+            //   zmp.toolbar.show("#main-nav")
+            //   zmp.views.giohang.router.updateCurrentUrl("/giohang/")
+            // }
             // zmp.toolbar.hide("#main-nav");
           }}
           name="giohang"
@@ -166,6 +167,7 @@ const MyApp = () => {
             zmp.views.menu.router.updateCurrentUrl("/taikhoan/")
           }}
         ></View>
+      
       </TabView>
     </App>
   )

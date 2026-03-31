@@ -1,190 +1,111 @@
-import {
-  Box,
-  Link,
-  Page,
-  Tab,
-  Tabbar,
-  Tabs,
-  Text,
-  useStore,
-} from "zmp-framework/react"
+import React, { useState } from "react"
+import { Box, Link, Page, Text } from "zmp-framework/react"
 
 import store from "../store"
 
 import HeaderBox from "@components/Header/HeaderBox"
-import { Voucher } from "@components/Icons"
-import Color from "@components/common/Color"
-import { formatDateToDDMMYYYY } from "@utils/util"
+import { MdDiscount, MdChevronRight, MdStorefront } from "react-icons/md"
 import { FaInbox } from "react-icons/fa6"
-import { MdDiscount } from "react-icons/md"
 import "../styles/notifypage.scss"
 
 const KhuyenMaiPage = ({ zmproute }) => {
   const ListKM = store.getters.ListKM.value || []
-  const ListCTTLXu = store.getters.ListCTTLXu.value || []
-  const ListCTTLDiem = store.getters.ListCTTLDiem.value || []
-  const CusInfo = store.getters.getCusInfo.value || {}
-  const userInfo = useStore("user")
+  const [activeTab, setActiveTab] = useState("km")
 
-  // useEffect(() => {
-  //   if(ListKM.length == 0) {
-  //     getListKM(CusInfo?.KHACHHANG_fk)
-  //   }
-
-  //   if(ListCTTLXu.length == 0) {
-  //     getListCTTLXu(CusInfo?.KHACHHANG_fk)
-  //   }
-
-  //   if(ListCTTLDiem.length == 0) {
-  //     getListCTTLDiem(CusInfo?.KHACHHANG_fk)
-  //   }
-  // }, [])
+  // Lưu lại originalIndex để khi chuyển trang không bị lỗi index
+  const filteredList = ListKM.map((km, index) => ({ ...km, originalIndex: index })).filter((km) => {
+    if (activeTab === "km") return km.loaict == 0 || km.loaict == null
+    if (activeTab === "tichluy") return km.loaict == 2
+    if (activeTab === "trungbay") return km.loaict == 1
+    return false
+  })
 
   return (
-    <Page className="detail-page">
+    <Page className="detail-page bg-[#f7f8fa]">
       <HeaderBox
         slot="fixed"
-        icon={<MdDiscount size={25} className="text-blue-imex" />}
-        HeaderBoxName={"Khuyến Mãi"}
+        icon={<MdDiscount size={25} className="text-[#4a73b9]" />}
+        HeaderBoxName="Khuyến mãi"
       />
-            <Box
-              className="view-center-gh"
-              m="0"
-              p="0"
-              style={{ paddingBottom: 200 }}
-            >
-              {/* {CusInfo?.mucduyet != 2 && (
-                <div className="flex flex-col justify-center items-center">
-                  <RiUserForbidFill size={25} color="#ccc" />
-                  <Text style={{ fontSize: 13, marginTop: 8, color: "#ccc" }}>
-                    Duyệt để xem chương trình khuyến mãi
-                  </Text>
-                </div>
-              )} */}
-              {ListKM?.length == 0 && (
-                // && CusInfo?.mucduyet == 2
-                <div className="flex flex-col justify-center items-center">
-                  <FaInbox size={25} color="#ccc" />
-                  <Text style={{ fontSize: 13, marginTop: 8, color: "#ccc" }}>
-                    Không có khuyến mãi
-                  </Text>
-                </div>
-              )}
-              {ListKM?.length > 0 &&
-                // CusInfo?.mucduyet == 2 &&
-                ListKM.map((km, index) => {
-                  return (
-                    <Box
-                      className="list-item-km2 shadown-app-2"
-                      key={km.scheme}
-                      style={{
-                        padding: 0,
-                        borderRadius: 10,
-                        background: "white",
-                        width: "100%",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <Link
-                        animate
-                        noLinkClass
-                        href={`/tichluydetail?loai=2&item=${km.pk_seq}&index=${index}`}
-                        //  onClick={() => {
-                        //   zmp.views.main.router.navigate("/search/?ctkmid=" + km.scheme+'')
-                        //   zmp.tab.show("#view-main")
-                        // }}
-                      >
-                        <Box flex alignItems="center">
-                          <Box className="list-icon2" style={{ width: "20%" }}>
-                            <span className="RoundIcon4">
-                              <Voucher
-                                color={{
-                                  id: "RedGradientx",
-                                  start: "#e60f0f",
-                                  end: "#e0887d",
-                                }}
-                              />
-                            </span>
 
-                            {/* <img className="giohang-img"
-                          style={{ width: 55, height: 55, }} src={icongif2}></img> */}
-                          </Box>
+      <Box className="view-center-gh  px-4 pt-4 " m="0" p="0" style={{ paddingBottom: 150, margin: "auto" }}>
+        {/* Tabs Container */}
+        <div className="flex bg-[#f5f6f8] p-1 rounded-[10px] mb-5">
+          <button
+            onClick={() => setActiveTab("km")}
+            className={`flex-1 py-2.5 text-center text-[13px] font-semibold rounded-lg transition-all duration-300 ${activeTab === "km"
+              ? "bg-[#4a73b9] text-white shadow"
+              : "text-[#8a92a3] bg-transparent"
+              }`}
+          >
+            CT Khuyến Mãi
+          </button>
+          <button
+            onClick={() => setActiveTab("tichluy")}
+            className={`flex-1 py-2.5 text-center text-[13px] font-semibold rounded-lg transition-all duration-300 ${activeTab === "tichluy"
+              ? "bg-[#4a73b9] text-white shadow"
+              : "text-[#8a92a3] bg-transparent"
+              }`}
+          >
+            CT Tích Lũy
+          </button>
+          <button
+            onClick={() => setActiveTab("trungbay")}
+            className={`flex-1 py-2.5 text-center text-[13px] font-semibold rounded-lg transition-all duration-300 ${activeTab === "trungbay"
+              ? "bg-[#4a73b9] text-white shadow"
+              : "text-[#8a92a3] bg-transparent"
+              }`}
+          >
+            CT Trưng Bày
+          </button>
+        </div>
 
-                          <Box
-                            className="customText"
-                            style={{ width: "100%" }}
-                            flex
-                            flexDirection="column"
-                            justifyContent="flex-start"
-                            flexWrap
-                          >
-                            <Box>
-                              <Text
-                                size="small"
-                                style={{ color: Color.textAPPBlue }}
-                                className="font-extrabold bg-text-second"
-                              >
-                                {km.scheme}
-                              </Text>
-                            </Box>
-
-                            <Box alignItems="center">
-                              <Text
-                                style={{ color: Color.textAPPDefault, fontSize: 12 }}
-                                mx="0"
-                              
-                              >
-                                {km.TUNGAY + " đến " + km.DENNGAY}
-                              </Text>
-
-                              {/* <Text  mx="5" size="small">
-                          Đến: {km.DENNGAY}
-                          </Text> */}
-                              <Text
-                                style={{ color: Color.textTra, fontSize: 13 }}
-                                mx="0"
-                                size="small"
-                              >
-                                {km.diengiai}
-                              </Text>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Link>
-                    </Box>
-                  )
-                })}
-              <Box
-                className=""
-                noSpace={true}
-                flex
-                alignItems="center"
-                justifyContent="space-between"
+        {/* List Content */}
+        {filteredList.length === 0 ? (
+          <div className="flex flex-col justify-center items-center mt-20">
+            <FaInbox size={40} color="#ccc" className="mb-3" />
+            <Text className="text-[14px] text-[#999]">
+              Không có chương trình nào
+            </Text>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3.5">
+            {filteredList.map((km) => (
+              <Link
+                key={km.scheme || km.originalIndex}
+                animate
+                noLinkClass
+                href={`/tichluydetail?loai=2&item=${km.pk_seq}&index=${km.originalIndex}`}
+                className="w-full block"
               >
-                <Box flex alignItems="center" m={5} py={7}></Box>
-              </Box>
-            </Box>
-      {/* <Header  title = {'Khuyến mãi'}></Header> */}
+                <div className="bg-white rounded-[14px] p-4 flex items-center shadow-[0_2px_10px_rgba(0,0,0,0.03)] active:bg-gray-50 transition-colors">
+                  {/* Icon Left */}
+                  <div className="w-[44px] h-[44px] min-w-[44px] rounded-xl bg-[#eef5ef] flex items-center justify-center mr-3.5">
+                    <MdStorefront size={22} className="text-[#3c7882]" />
+                  </div>
 
+                  {/* Content Middle */}
+                  <div className="flex-1 min-w-0 pr-3">
+                    <p className="m-0 text-[14px] font-bold text-[#2d5bb9] leading-[1.4] mb-1.5 break-words">
+                      {km.scheme} {km.diengiai && km.scheme !== km.diengiai ? `- ${km.diengiai}` : ""}
+                    </p>
+                    <p className="m-0 text-[12px] text-[#888]">
+                      {km.TUNGAY} đến {km.DENNGAY}
+                    </p>
+                  </div>
+
+                  {/* Icon Right */}
+                  <div className="flex items-center justify-center h-full">
+                    <MdChevronRight size={22} className="text-[#3ea44e]" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Box>
     </Page>
   )
 }
-const styles = {
-  ButtonBack: {
-    position: "absolute",
-    top: 17,
-    left: 17,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(82, 130, 255, 0.2)",
-  },
-  btnViewGiohang: {
-    width: "93%",
-    position: "absolute",
-    bottom: 0,
-    borderTopWidth: 1,
-    borderColor: "#dbdfe2",
-  },
-}
+
 export default KhuyenMaiPage

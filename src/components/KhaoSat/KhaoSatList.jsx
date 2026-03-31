@@ -4,6 +4,8 @@ import { FaInbox } from "react-icons/fa6"
 import { Box, List, ListItem, Text } from "zmp-framework/react"
 import "../../styles/tailwind.css"
 import { Pages } from "./Constants"
+import BgSurvey from "@static/images/bg-survey.png"
+import { AiOutlineArrowRight } from "react-icons/ai"
 
 const KhaoSatList = (props) => {
   const { listKhaoSat, setPages, setCurrentItem } = props
@@ -16,7 +18,7 @@ const KhaoSatList = (props) => {
   }
 
   return (
-    <Box className="w-full flex items-center flex-col" p="1">
+    <Box className="w-full flex items-center flex-col m-0 px-2">
       {/* <div className="flex justify-around items-center w-full primary-background p-1 rounded shadow-lg">
           <Box className="m-0">
             <Text className="mb-3 text-sm" style={{ color: "#eee" }}>
@@ -38,48 +40,64 @@ const KhaoSatList = (props) => {
           </Text>
         </div>
       )}
-      <List
-        className="w-full rounded"
-        style={{
-          marginTop: 16,
-          borderRadius: 8,
-          borderColor: "#376aed",
-          height: 500,
-          overflow: "scroll",
-        }}
-      >
-        {listKhaoSat.length > 0 &&
-          listKhaoSat.map((item) => (
-            <ListItem
-              style={{ padding: "5px" }}
-              className=""
-              key={item.pK_SEQ}
-              onClick={() => handleSelectItem(item)}
-            >
-              <div className="w-full">
-                <Text style={{ fontSize: "14px" }} className="text-base">
-                  {item?.diengiai}
-                </Text>
-                <div className="flex items-center justify-between">
-                  <Text
-                    className="m-0 flex items-center gap-2 text-sm"
-                    style={{ color: "#555" }}
-                  >
-                    <Number height={30} width={30} fill="#555" />
-                    {item?.socauhoi} câu hỏi
-                  </Text>
-                  <Text
-                    className="m-0 flex items-center gap-2 text-sm"
-                    style={{ color: "#555" }}
-                  >
-                    <Department height={25} width={25} fill="#555" />
-                    {item?.bophan}
-                  </Text>
-                </div>
-              </div>
-            </ListItem>
-          ))}
-      </List>
+
+      {listKhaoSat.length > 0 &&
+        listKhaoSat.map((item) => (
+          <div
+            key={item.pK_SEQ}
+            className="w-full bg-cover bg-center bg-no-repeat p-6 text-white min-h-[200px] flex flex-col items-between  justify-between"
+            style={{
+              backgroundImage: `url(${BgSurvey})`,
+              backgroundSize: "100% 100%",
+              height: "auto",
+              borderRadius: 8,
+              border: "1px solid #376aed",
+            }}
+          >
+            <div className="flex flex-col gap-2">
+              <p className="text-[24px] font-bold">Chia sẻ ý kiến của bạn</p>
+              <p>Giúp chúng tôi cải thiện dịch vụ tốt hơn</p>
+            </div>
+            <div className="flex w-full justify-end items-end">
+              <button
+                className="bg-primary text-white px-4 py-3 rounded-full w-fit flex items-center gap-2 leading-2"
+                onClick={() => handleSelectItem(item)}
+              >
+                Tham gia khảo sát
+                <AiOutlineArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+          // <ListItem
+          //   style={{ padding: "5px" }}
+          //   className=""
+          //   key={item.pK_SEQ}
+          //   onClick={() => handleSelectItem(item)}
+          // >
+          //   <div className="w-full">
+          //     <Text style={{ fontSize: "14px" }} className="text-base">
+          //       {item?.diengiai}
+          //     </Text>
+          //     <div className="flex items-center justify-between">
+          //       <Text
+          //         className="m-0 flex items-center gap-2 text-sm"
+          //         style={{ color: "#555" }}
+          //       >
+          //         <Number height={30} width={30} fill="#555" />
+          //         {item?.socauhoi} câu hỏi
+          //       </Text>
+          //       <Text
+          //         className="m-0 flex items-center gap-2 text-sm"
+          //         style={{ color: "#555" }}
+          //       >
+          //         <Department height={25} width={25} fill="#555" />
+          //         {item?.bophan}
+          //       </Text>
+          //     </div>
+          //   </div>
+          // </ListItem>
+        ))}
+
       {/* <button
           title="Lưu khảo sát"
           onClick={() => saveKhaoSat()}
@@ -90,16 +108,6 @@ const KhaoSatList = (props) => {
           <AiOutlineFileDone size={30} color="#eee" />
         </button> */}
       {/* <SuccessButton title="Lưu khảo sát" onClick={saveKhaoSat} icon="zi-check-circle-solid" styles={{ marginTop: 8 }} /> */}
-
-      <Box
-        className=""
-        noSpace={true}
-        flex
-        alignItems="center"
-        justifyContent="space-between"
-      >
-        <Box flex alignItems="center" m={5} py={7}></Box>
-      </Box>
     </Box>
   )
 }

@@ -1,8 +1,7 @@
 import LoadingSpinner from "@components/LoadingSpinner"
 import Color from "@components/common/Color"
-import { formatCurrency, requestWithAbortController } from "@utils/networking"
-import { BiSolidCartAdd } from "react-icons/bi"
-import { useEffect, useRef, useState } from "react"
+import { requestWithAbortController } from "@utils/networking"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   Box,
   Icon,
@@ -12,14 +11,20 @@ import {
   Text,
   useStore,
   zmp,
-  zmpready,
 } from "zmp-framework/react"
 import useDebounce from "../hooks/useDebounce"
 import store from "../store"
 import "./../styles/giohang.scss"
 import withOverlay from "@components/HOC/withOverlay"
 import { TiShoppingCart } from "react-icons/ti"
-import { ConvertOpacity } from "@utils/ConvertOpacity"
+import Post from "@components/Product"
+import {
+  MdArrowDownward,
+  MdArrowUpward,
+  MdCheck,
+  MdSearch,
+  MdSwapVert,
+} from "react-icons/md"
 const SearchPage = ({ zmproute, showToast }) => {
   const abortController = useRef(new AbortController())
 
@@ -28,12 +33,39 @@ const SearchPage = ({ zmproute, showToast }) => {
   const [quantity, setQuantity] = useState(0)
   const [loading, setLoading] = useState(false)
   const [lastPage, setLastPage] = useState(false)
+  const [sortKey, setSortKey] = useState("default")
+  const [sortOpen, setSortOpen] = useState(true)
   const SInput = useRef(null)
   const CusInfo = useStore("getCusInfo")
   const ListGiohang = useStore("getGioHang")
+  const cartItemCount = useMemo(() => {
+    const list = ListGiohang || []
+    return list.reduce(
+      (sum, it) => sum + (Number(it?.soluong) > 0 ? Number(it.soluong) : 1),
+      0
+    )
+  }, [ListGiohang])
   console.log("zmproute.query", listData)
   const keywordDebounce = useDebounce(keyword, 400)
   const Giohangx = store.getters.getGioHang.value || []
+
+  const parseDongia = (v) => {
+    const s = String(v ?? "")
+    // remove non-digit except dot/comma then convert
+    const n = Number(s.replace(/[^\d]/g, ""))
+    return Number.isNaN(n) ? 0 : n
+  }
+
+  const sortedListData = (() => {
+    if (!Array.isArray(listData)) return []
+    const arr = [...listData]
+    if (sortKey === "lowToHigh") {
+      arr.sort((a, b) => parseDongia(a?.dongia) - parseDongia(b?.dongia))
+    } else if (sortKey === "highToLow") {
+      arr.sort((a, b) => parseDongia(b?.dongia) - parseDongia(a?.dongia))
+    }
+    return arr
+  })()
   useEffect(() => {
     console.log("zmproute.query__", zmproute.query)
     if (Giohangx?.length > 0) {
@@ -205,8 +237,8 @@ const SearchPage = ({ zmproute, showToast }) => {
         slot="fixed"
         // style={{ height: 150 }}
       >
-        <Box flex alignItems="center" m={5}>
-          <Box flex justifyContent="space-between" m="0">
+        <Box flex alignItems="center" m={5} style={{ width: "100%" }}>
+          <Box className="center flex justify-between w-full" m="0">
             <Box m={0} flex justifyContent="center" alignItems="center">
               <Link
                 back
@@ -223,11 +255,22 @@ const SearchPage = ({ zmproute, showToast }) => {
                   alignContent="center"
                   size="large"
                   style={{ fontWeight: "800" }}
-                  className=" text-blue-imex"
+                  className="text-primary"
                 >
                   {quantity} Sản phẩm
                 </Text>
               </Box>
+            </Box>
+
+            <Box flex alignItems="center">
+              <span className="relative noti-icon-wrapper h-auto">
+                {cartItemCount > 0 && (
+                  <span className="absolute giohang-tab-badge border-2 border-white leading-none text-white bg-red">
+                    {cartItemCount > 99 ? "99+" : cartItemCount}
+                  </span>
+                )}
+                <TiShoppingCart color={Color.primary} size={22} />
+              </span>
             </Box>
           </Box>
         </Box>
@@ -252,127 +295,91 @@ const SearchPage = ({ zmproute, showToast }) => {
         />
       </Box>
 
-      <Box px="0" p="0" m="0">
-        {listData.length > 0 ? (
-          <Box className="view-center-gh">
-            {listData.map((item, index) => (
-              <Box
-                className="box-shadow-Pure"
-                key={index}
-                mb="3"
-                p="2"
-                style={{ borderRadius: 10, background: "white" }}
-              >
-                <Box flex alignItems="center" className="gap-1">
-                  <Box
-                    style={{
-                      backgroundColor: "#ffffff",
-                      borderRadius: "8px",
-                      width: "80px",
-                      height: "80px",
-                      objectFit: "cover",
-                      boxShadow: "0 0 0 1px #99a3ad2a",
-                    }}
-                  >
-                    <Box
-                      style={{
-                        width: 60,
-                        height: 60,
-                        overflow: "hidden",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Box
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          backgroundImage: `url(${encodeURI(
-                            item?.HinhAnh ||
-                              item?.HinhAnh1 ||
-                              item?.HinhAnh2 ||
-                              item?.HinhAnhgoc
-                          )})`,
-                          backgroundSize: "contain",
-                          backgroundPosition: "center",
-                          backgroundRepeat: "no-repeat",
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                  <Link
-                    style={{ width: "100%" }}
-                    onClick={() => {
-                      console.log("checker_", zmp.views)
+      {/* Sort filter */}
+      <Box px="5" className="mb-3 overflow-hidden w-[200px] p-0 hidden">
+        <Box className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+          <Box
+            className="flex items-center justify-between px-4 py-3"
+            onClick={() => setSortOpen((v) => !v)}
+          >
+            <Box className="flex items-center gap-2">
+              <MdSwapVert color={Color.primary} size={20} />
+              <Text className="text-[16px] font-bold text-primary">Sắp xếp</Text>
+            </Box>
+            <MdArrowDownward
+              color={Color.primary}
+              size={20}
+              className={sortOpen ? "" : "rotate-180"}
+            />
+          </Box>
 
-                      // zmpready(() => {
-                      //   store.dispatch("SetCurentProduct", {
-                      //     title: item.ten,
-                      //     thumbnail: item.HinhAnh,
-                      //     ...item,
-                      //   })
-                      // })
-                      zmp.views.current.router.navigate("/detail/?id=" + item.id)
-                    }}
-                    animate
-                    transition="zmp-cover-v"
-                    noLinkClass
-                  >
-                    <Box style={{ width: "100%", margin: 0 }}>
-                      <Box alignItems="center">
-                        <Text
-                          size="normal"
-                          className="font-extrabold text-blue-imex "
-                          style={{
-                            width: "100%",
-                            fontSize: "13px",
-                            marginBottom: 12,
-                          }}
-                        >
-                          {item.ten}
-                        </Text>
-
-                        <Box m="0">
-                          <Text
-                            className="desc text-blue-dark overflow-ellipsis "
-                            style={{
-                              width: "100%",
-                              fontSize: "13px",
-                              color: Color.textAPPGray,
-                            }}
-                          >
-                            Mã {item.ma}
-                          </Text>
-                          <Text
-                            className="desc overflow-ellipsis "
-                            style={{
-                              width: "100%",
-                              fontSize: "13px",
-                              color: Color.textAPPGreen,
-                            }}
-                          >
-                            {formatCurrency(item.dongia, true) + "₫"}
-                          </Text>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Link>
-                  <Box mx="0" my="0" style={{}}>
-                    {CusInfo?.active !== "0" && (
-                      <Link onClick={() => addToCar(item)} className="btnAdd">
-                        <BiSolidCartAdd
-                          size={20}
-                          color={ConvertOpacity(Color.textAPPCopper3, 0.8)}
-                        />
-                      </Link>
-                    )}
+          {sortOpen && (
+            <Box>
+              {[
+                {
+                  key: "default",
+                  label: "Mặc định",
+                  icon: <MdSwapVert color={Color.primary} size={20} />,
+                },
+                {
+                  key: "lowToHigh",
+                  label: "Giá thấp tới cao",
+                  icon: <MdArrowDownward color={Color.primary} size={20} />,
+                },
+                {
+                  key: "highToLow",
+                  label: "Giá cao tới thấp",
+                  icon: <MdArrowUpward color={Color.primary} size={20} />,
+                },
+              ].map((opt) => (
+                <Box
+                  key={opt.key}
+                  className="flex items-center justify-between px-4 py-3"
+                  style={{
+                    background:
+                      sortKey === opt.key ? "rgba(45,91,185,0.06)" : "transparent",
+                  }}
+                  onClick={() => setSortKey(opt.key)}
+                >
+                  <Box className="flex items-center gap-3">
+                    {opt.icon}
+                    <Text className="text-[15px] font-semibold text-[#222]">
+                      {opt.label}
+                    </Text>
                   </Box>
+                  {sortKey === opt.key && (
+                    <MdCheck color={Color.primary} size={22} />
+                  )}
                 </Box>
-              </Box>
-            ))}
+              ))}
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      <Box px="0" p="0" m="0">
+        {sortedListData.length > 0 ? (
+          <Box className="view-center-gh">
+            <Box
+              className="wrapCatalogs      
+          justify-center 
+          flex-wrap flex
+         
+          "
+            >
+              {sortedListData.map((item, index) => (
+                <Post
+                  key={item?.id || index + ""}
+                  {...item}
+                  CusInfo={CusInfo}
+                  mucduyet={1}
+                />
+              ))}
+            </Box>
+
             {loading && <LoadingSpinner />}
-            {!loading && !lastPage && listData.length > 0 && (
+
+            {!loading && !lastPage && sortedListData.length > 0 && (
               <button
                 className="py-3 flex flex-row items-center justify-center"
                 onClick={() => Searching(true)}
@@ -386,7 +393,6 @@ const SearchPage = ({ zmproute, showToast }) => {
                 >
                   Xem thêm
                 </Text>
-                {/* <Icon color={Color.textAPPDefault} zmp="zi-arrow-down"></Icon> */}
               </button>
             )}
           </Box>
@@ -401,9 +407,18 @@ const SearchPage = ({ zmproute, showToast }) => {
                 <LoadingSpinner></LoadingSpinner>
               </Box>
             ) : (
-              <Text size="xSmall" className="text-gray">
-                Không tìm thấy kết quả. Vui lòng thử lại
-              </Text>
+              <Box
+                flex
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                style={{ width: "100%", minHeight: 200, gap: 10 }}
+              >
+                <MdSearch color="#808080" size={32} />
+                <Text size="xSmall" className="text-[#808080]">
+                  Không tìm thấy sản phẩm
+                </Text>
+              </Box>
             )}
           </Box>
         )}
@@ -438,29 +453,7 @@ const SearchPage = ({ zmproute, showToast }) => {
               })
             }, 150)
           }}
-        >
-          <Box
-            className="floating-cart-btn box-shadow-Pure"
-            style={{
-              position: "fixed",
-              bottom: 10,
-              left: "50%",
-              transform: "translateX(-50%)",
-              backgroundColor: Color.textAPPCopper,
-              borderRadius: 5,
-              padding: "10px 16px",
-              display: "flex",
-              alignItems: "center",
-
-              zIndex: 999,
-            }}
-          >
-            <TiShoppingCart color="white" size={20} style={{ marginRight: 8 }} />
-            <Text style={{ color: "white", fontWeight: "600", fontSize: 14 }}>
-              Giỏ hàng ({ListGiohang.length})
-            </Text>
-          </Box>
-        </Link>
+        ></Link>
       )}
     </Page>
   )

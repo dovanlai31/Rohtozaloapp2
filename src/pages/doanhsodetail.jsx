@@ -1,4 +1,3 @@
-import Color from "@components/common/Color"
 import Header from "@components/Header"
 import useDebounce from "@hooks/useDebounce"
 import { datePickerData } from "@static/values"
@@ -18,6 +17,7 @@ import {
   Text,
   useStore,
   zmp,
+  Icon,
 } from "zmp-framework/react"
 import "../styles/app.scss"
 
@@ -37,95 +37,106 @@ const DoanhSoDetail = ({ zmproute }) => {
   const fromDateDebounce = useDebounce(fromDate, 400)
   const toDateDebounce = useDebounce(toDate, 400)
 
-  const user = useStore("user")
   const CusInfo = useStore("getCusInfo")
 
-const getDoanhSo = useCallback(() => {
-  const param = {
-    userId: validateString(CusInfo?.KHACHHANG_fk + "", true),
-    tungay: validateString(
-      zmproute.query?.loai == 0
-        ? moment(fromDateDebounce).format("YYYY-MM-DD")
-        : String(fromDateDebounce)
-    ),
-    denngay: validateString(
-      zmproute.query?.loai == 0
-        ? moment(toDateDebounce).format("YYYY-MM-DD")
-        : String(toDateDebounce)
-    ),
-    loai: zmproute.query?.loai + "",
-  };
+  const isYearMode = zmproute.query?.loai == 1
+  const timeLabel = isYearMode ? "năm" : "tháng"
 
-  return getAPI("khachhang/getDoanhSoDetail", "POST", param)
-    .then(({ data, error }) => {
-      console.log("getDoanhSoDetail", data, param);
+  const getDoanhSo = useCallback(() => {
+    const param = {
+      userId: validateString(CusInfo?.KHACHHANG_fk + "", true),
+      tungay: validateString(
+        zmproute.query?.loai == 0
+          ? moment(fromDateDebounce).format("YYYY-MM-DD")
+          : String(fromDateDebounce)
+      ),
+      denngay: validateString(
+        zmproute.query?.loai == 0
+          ? moment(toDateDebounce).format("YYYY-MM-DD")
+          : String(toDateDebounce)
+      ),
+      loai: zmproute.query?.loai + "",
+    }
 
-      if (error) {
-        zmp.toast
-          .create({
-            position: "top",
-            closeTimeout: 300,
-            text: data.message,
-          })
-          .open();
-      } else {
-        try {
-       
-          const parsed = JSON.parse(data.content);
-          setData(parsed);
-        } catch (e) {
-          console.log("JSON parse error:", e);
-          setData([]);
+    return getAPI("khachhang/getDoanhSoDetail", "POST", param)
+      .then(({ data, error }) => {
+        console.log("getDoanhSoDetail", data, param)
+
+        if (error) {
+          zmp.toast
+            .create({
+              position: "top",
+              closeTimeout: 300,
+              text: data.message,
+            })
+            .open()
+        } else {
+          try {
+            const parsed = JSON.parse(data.content)
+            setData(parsed)
+          } catch (e) {
+            console.log("JSON parse error:", e)
+            setData([])
+          }
         }
-      }
-    })
-    .catch((err) => console.log(err));
-}, [fromDateDebounce, toDateDebounce]);
+      })
+      .catch((err) => console.log(err))
+  }, [fromDateDebounce, toDateDebounce])
 
   useEffect(() => {
     getDoanhSo()
   }, [fromDateDebounce, toDateDebounce, getDoanhSo])
+  const handleBack = () => {
+    const currentRouter = zmp.views?.current?.router
+    if (currentRouter?.history?.length > 1) {
+      currentRouter.back()
+      return
+    }
 
+    if (zmp.views?.main?.router?.history?.length > 1) {
+      zmp.views.main.router.back()
+      return
+    }
+
+    if (
+      typeof globalThis.window !== "undefined" &&
+      globalThis.window.history.length > 1
+    ) {
+      globalThis.window.history.back()
+    }
+  }
   return (
     <Page
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
-      className="detail-page relative customBackgound"
-      style={{ background: "#f8f8f8" }}
+      className="detail-page relative customBackgound p-2 m-0"
+      style={{ background: "#F4F9FE" }}
     >
-      <Header back>Doanh số </Header>
-      <Card className="shadown-app-1" title="Báo cáo doanh số" inset px="5">
-        <Box
-          m={0}
-          p={0}
-          style={{
-            width: "100%",
-            height: "5px",
-            // backgroundColor: 'red',
-
-            paddingBottom: "10px",
-            WebkitBoxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-            boxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-          }}
-          className="BoxLine"
-        ></Box>
-        <Box className="flex gap-3 mt-10 items-center">
+      <Box className="flex items-center justify-between p-0 m-0">
+        <Box className="flex items-center gap-3 m-0">
+          <Link
+            noLinkClass
+            className="h-9 w-9 rounded-full bg-white shadow-sm flex items-center justify-center "
+            onClick={handleBack}
+          >
+            <Icon zmp="zi-close" size={18} />
+          </Link>
+          <Text className="text-[20px] font-extrabold text-[#23408f]">Doanh số</Text>
+        </Box>
+      </Box>
+      <Card
+        className="!m-0 !mt-[50px] px-2 bg-white rounded-2xl shadow-lg shadow-inherit border border-[#E0E0E0]"
+        title="Báo cáo doanh số"
+      >
+        <Box m={0} p={0} className=" w-full border-b border-[#E0E0E0]" />
+        <Box className="flex gap-3 mt-5 items-center ">
           <Box m="0" className="relative">
-            {zmproute.query?.loai == 1 && (
+            {isYearMode && (
               <Box m="0">
                 <Box
                   m="0"
-                  className="absolute font-medium"
-                  style={{
-                    color: Color.textAPPBlue,
-                    backgroundColor: "#fff",
-                    zIndex: 2,
-                    top: -10,
-                    left: 10,
-                    padding: "0 10px",
-                    fontSize: "13px",
-                  }}
+                  className="absolute left-[10px] top-[-10px] z-[2] bg-white px-[10px] text-[13px] font-medium text-[#2455b4]"
                 >
                   Năm
                 </Box>
@@ -146,20 +157,11 @@ const getDoanhSo = useCallback(() => {
                 />
               </Box>
             )}
-            {zmproute.query?.loai == 0 && (
+            {!isYearMode && (
               <>
                 <Box
                   m="0"
-                  className="absolute font-medium"
-                  style={{
-                    color: Color.textAPPBlue,
-                    backgroundColor: "#fff",
-                    zIndex: 2,
-                    top: -10,
-                    left: 10,
-                    padding: "0 10px",
-                    fontSize: "13px",
-                  }}
+                  className="absolute left-[10px] top-[-10px] z-[2] bg-white px-[10px] text-[13px] font-bold text-[#2455b4]"
                 >
                   Từ ngày
                 </Box>
@@ -184,26 +186,17 @@ const getDoanhSo = useCallback(() => {
           </Box>
           <BsDashLg fontWeight={"bold"} />
           <Box m="0" className="relative">
-            {zmproute.query?.loai == 1 && (
+            {isYearMode && (
               <Box m="0">
                 <Box
                   m="0"
-                  className="absolute font-medium"
-                  style={{
-                    color: Color.textAPPBlue,
-                    backgroundColor: "#fff",
-                    zIndex: 2,
-                    top: -10,
-                    left: 10,
-                    padding: "0 10px",
-                    fontSize: "13px",
-                  }}
+                  className="absolute left-[10px] top-[-10px] z-[2] bg-white px-[10px] text-[13px] font-medium text-[#2455b4]"
                 >
                   Năm
                 </Box>
                 <Picker
                   style={{ zIndex: 1, fontSize: "12px" }}
-                  selected={[String(fromDate)]}
+                  selected={[String(toDate)]}
                   data={[
                     {
                       textAlign: "center",
@@ -218,24 +211,16 @@ const getDoanhSo = useCallback(() => {
                 />
               </Box>
             )}
-            {zmproute.query?.loai == 0 && (
+            {!isYearMode && (
               <Box m="0">
                 <Box
                   m="0"
-                  className="absolute font-medium"
-                  style={{
-                    color: Color.textAPPBlue,
-                    backgroundColor: "#fff",
-                    zIndex: 2,
-                    top: -10,
-                    left: 10,
-                    padding: "0 10px",
-                    fontSize: "13px",
-                  }}
+                  className="absolute left-[10px] top-[-10px] z-[2] bg-white px-[10px] text-[13px] font-bold text-[#2455b4]"
                 >
                   Đến ngày
                 </Box>
                 <DatePicker
+                  className="text-base font-bold"
                   title="Đến ngày"
                   value={toDate}
                   style={{ zIndex: 1, fontSize: "12px" }}
@@ -255,34 +240,26 @@ const getDoanhSo = useCallback(() => {
           </Box>
         </Box>
         <Box
-          m={0}
-          p={0}
+          className="BoxLine mb-8 h-[5px] w-full"
           style={{
-            width: "100%",
-            height: "5px",
-            marginBottom: "25px",
             WebkitBoxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
             boxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
           }}
-          className="BoxLine"
-        ></Box>
-        <Box style={{ minHeight: "30%" }}>
-          <Box m="0" className="customBackgoundInner " style={{ height: 200 }}>
-            <Box p="5" style={{ background: "", width: "100%", Height: "auto" }}>
+        />
+        <Box className="min-h-[30%]">
+          <Box m="0" className="bg-[#D5E6F5] rounded-2xl h-[200px]">
+            <Box p="5" className="w-full">
               <Box
                 m="0"
                 my="4"
                 flexWrap
                 className="flex justify-between items-center relative"
               >
-                <Text
-                  className="text-base"
-                  style={{ color: Color.textAPPBlack, fontWeight: "normal" }}
-                >
-                  Doanh số {zmproute.query?.loai == 1 ? "năm" : "tháng"}
+                <Text className="text-base font-bold text-[#111]">
+                  Doanh số {timeLabel}
                 </Text>
-                <Text className="text-xl font-semibold text-blue-imex">
-                  {formatCurrency(data[1]?.soluong ? data[1]?.soluong : 0)}
+                <Text className="text-xl font-semibold text-primary">
+                  {formatCurrency(data[1]?.soluong ? data[1]?.soluong : 0, true)} đ
                 </Text>
               </Box>
               <Box
@@ -291,61 +268,32 @@ const getDoanhSo = useCallback(() => {
                 flexWrap
                 className="flex justify-between items-center relative mt-16"
               >
-                <Text
-                  className="text-base"
-                  style={{ color: Color.textAPPBlack, fontWeight: "normal" }}
-                >
-                  Số lượng SKU {zmproute.query?.loai == 1 ? "năm" : "tháng"}
+                <Text className="text-base font-bold text-[#111]">
+                  Số lượng SKU {timeLabel}
                 </Text>
-                <Text className="text-xl font-semibold text-blue-imex">
+                <Text className="text-xl font-semibold text-primary">
                   {formatCurrency(data[0]?.soluong ? data[0]?.soluong : "0", true)}
                 </Text>
               </Box>
-              <Box
-                m={0}
-                p={0}
-                style={{
-                  width: "100%",
-                  height: "5px",
-                  WebkitBoxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-                  boxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-                }}
-                className="BoxLine"
-              ></Box>
+              <Box className="BoxLine h-[5px] border-b border-[#E0E0E0] !mb-4 w-full" />
               <Link
                 animate
                 noLinkClass
                 href={`/listdonhang/?tungay=${fromDate}&denngay=${toDate}&loaids=${zmproute.query?.loai}&frombc=1`}
               >
-                <Box
-                  className="flex items-end mt-4"
-                  flex
-                  justifyContent="flex-end"
-                  style={{}}
-                >
+                <Box className="mt-4 flex items-end" flex justifyContent="flex-end">
                   <Box
                     m="0"
                     flex
                     pr="2"
                     justifyContent="center"
                     alignItems="center"
-                    style={{
-                      height: 30,
-                      // background: '#78cd231f'
-                      borderRadius: 5,
-                    }}
+                    className="h-[30px] rounded-[5px]"
                   >
-                    <Box
-                      className=""
-                      style={{
-                        color: Color.primary,
-                        fontStyle: "italic",
-                        fontSize: "13px",
-                      }}
-                    >
+                    <Box className="text-[13px] italic text-primary font-bold">
                       Chi tiết đơn hàng
                     </Box>
-                    <IoIosArrowRoundForward size={20} color={Color.textAPPBlue} />
+                    <IoIosArrowRoundForward size={20} color="#2455b4" />
                   </Box>
                 </Box>
               </Link>

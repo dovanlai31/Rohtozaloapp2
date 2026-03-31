@@ -25,6 +25,7 @@ const ListPost = ({ zmproute }) => {
   const [loading, setLoading] = useState(false)
   const [listData, setListData] = useState([])
   const [lastPage, setLastPage] = useState(false)
+  const [activeCategory, setActiveCategory] = useState(null)
 
   let pageContent = null
   useEffect(() => {
@@ -47,6 +48,7 @@ const ListPost = ({ zmproute }) => {
     let id = vlData.items[index].PK_SEQ
     let ten = vlData.items[index].TEN
     setTendanhmuc(ten)
+    setActiveCategory(vlData.items[index])
     let queryString = {
       userId: CusInfo?.KHACHHANG_fk,
       spId: "",
@@ -98,6 +100,9 @@ const ListPost = ({ zmproute }) => {
       className="detail-page"
     >
       <HeaderBack slot="fixed" title={tendanhmuc}></HeaderBack>
+
+
+
       <Box className="latest ">
         <Tabs className="home-page" animated>
           {vlData.items.map((category, index) => (
@@ -107,6 +112,65 @@ const ListPost = ({ zmproute }) => {
               className="page-content-danhmuc"
               tabLinkActive={index == tabLinkActive}
             >
+              {/* Box mô tả danh mục */}
+              {activeCategory && (
+                <Box
+                  m="4"
+                  mt="0"
+                  style={{
+                    backgroundColor: "#fff",
+                    borderRadius: 14,
+                    padding: "16px",
+                    boxShadow: "0px 2px 10px rgba(0,0,0,0.07)",
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                >
+                  {/* Nội dung chữ bên trái */}
+                  <div style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontWeight: 800,
+                        fontSize: "16px",
+                        color: "#005DAA",
+                        marginBottom: 8,
+                        display: "block",
+                      }}
+                    >
+                      {activeCategory?.DIENGIAI || activeCategory?.TEN}
+                    </Text>
+                    {activeCategory?.MOTA && (
+                      <Text
+                        style={{
+                          fontSize: "13px",
+                          color: "#444",
+                          lineHeight: "1.6",
+                          display: "block",
+                        }}
+                      >
+                        {activeCategory.MOTA}
+                      </Text>
+                    )}
+                  </div>
+                  {/* Hình ảnh bên phải */}
+                  {activeCategory?.HINHANH && (
+                    <img
+                      src={activeCategory.HINHANH}
+                      alt={activeCategory.TEN}
+                      style={{
+                        width: 72,
+                        height: 72,
+                        objectFit: "contain",
+                        borderRadius: 8,
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                </Box>
+              )}
+
               <Box
                 flexWrap
                 m="2"
@@ -121,24 +185,6 @@ const ListPost = ({ zmproute }) => {
                   <NoDataMessage />
                 )}
                 {loading && <LoadingSpinner />}
-                {!loading && !lastPage && listData.length > 0 && (
-                  <button
-                    className="py-3 flex flex-row items-center justify-center"
-                    onClick={() => getListSPDanhMuc(zmproute.query.index)}
-                  >
-                    <Text
-                      className="text-brown-dark-text-size8 "
-                      style={{
-                        color: Color.textAPPGray,
-                        fontSize: "13px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Xem thêm
-                    </Text>
-                    {/* <Icon color={Color.primary} zmp="zi-arrow-down"></Icon> */}
-                  </button>
-                )}
               </Box>
             </Tab>
           ))}
