@@ -248,12 +248,12 @@ export function formatCurrency(value, hideVND) {
   try {
     try {
       if (hideVND) {
-        value = new Intl.NumberFormat("en-US").format(parseFloat(value))
+        value = new Intl.NumberFormat("en-US").format(Number.parseFloat(value))
       } else {
         value = value.toLocaleString("en-US", { style: "currency", currency: "VND" })
-        return value.replace(/(.*)(₫)(.*)/, "$1$3 $2")
+        return value.replace(/(.*)(đ)(.*)/, "$1$3 $2")
       }
-      return value
+      return value.replaceAll(",", ".")
     } catch (ex) {}
   } catch (error) {
     console.log("formatCurrency" + error, error)

@@ -8,7 +8,7 @@ import Color from "@components/common/Color"
 const Latest = (props) => {
   const { data } = useStore("latestBlogs")
   const loading = useStore("loadingBlogs")
- const CusInfo = useStore("getCusInfo")
+  const CusInfo = useStore("getCusInfo")
 
   if (loading) {
     return (
@@ -33,7 +33,12 @@ const Latest = (props) => {
       {data?.length > 0 ? (
         <Box flexWrap m="0" flex flexDirection="row" justifyContent="space-between">
           {data.map((item) => (
-            <Post {...item} CusInfo={CusInfo} key={item.id} mucduyet={props?.mucduyet || 1} />
+            <Post
+              {...item}
+              CusInfo={CusInfo}
+              key={item.id}
+              mucduyet={props?.mucduyet || 1}
+            />
           ))}
         </Box>
       ) : (

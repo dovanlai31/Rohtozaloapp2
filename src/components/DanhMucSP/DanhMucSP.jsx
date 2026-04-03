@@ -17,11 +17,11 @@ const Stories = () => {
   const data = useStore("categories")
   const [listChungloai, setlistChungloai] = useState(data)
 
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     console.log("categories ttttttttttttttttt", data)
-  //   }, 1000)
-  // }, [])
+
+  console.log(data)
+
+
+
 
   if (data && data.length > 0)
     return (

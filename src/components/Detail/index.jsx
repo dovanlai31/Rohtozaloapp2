@@ -1,0 +1,6 @@
+export { default as ImageBanner } from "./ImageBanner"
+export { default as ProductInfo } from "./ProductInfo"
+export { default as ProductTabs } from "./ProductTabs"
+export { default as DetailFooter } from "./DetailFooter"
+export { default as KhuyenMai } from "./KhuyenMai"
+export { default as RelatedProducts } from "./RelatedProducts"

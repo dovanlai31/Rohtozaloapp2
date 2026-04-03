@@ -1,4 +1,4 @@
-import Header from "@components/Header"
+import HeaderBack from "@components/Header/HeaderBack"
 import LoadingSpinner from "@components/LoadingSpinner"
 import CTKhuyenMai from "@components/TichLuy/CTKhuyenMai"
 import CTTichLuy from "@components/TichLuy/CTTichLuy"
@@ -105,7 +105,7 @@ const TichLuyDetail = ({ zmproute }) => {
       setLoading(true)
       Promise.all([getKhuyenMaiDetail(), getSPKhuyenMai()])
         .then((res) => {
-         // console.log('getKhuyenMaiDetail(), getSPKhuyenMai()',res[0].content)
+          // console.log('getKhuyenMaiDetail(), getSPKhuyenMai()',res[0].content)
 
           if (res.length > 0) {
             const dk = JSON.parse(res[0].content)[0] || {}
@@ -131,7 +131,8 @@ const TichLuyDetail = ({ zmproute }) => {
       className="detail-page"
       style={{ background: "#f8f8f8" }}
     >
-      <Header back>Chi tiết {loai != 2 ? "tích luỹ" : "khuyến mãi"}</Header>
+      <HeaderBack slot="fixed" title={`Chi tiết ${loai != 2 ? "tích luỹ" : "khuyến mãi"}`}></HeaderBack>
+
       {loai == 2 && <CTKhuyenMai data={data} CTKM={CTKM} listSP={listSP} />}
       {loai != 2 && (
         <CTTichLuy loai={loai} data={data} tenCTTL={tenCTTL} hinhthuc={hinhthuc} />

@@ -1,4 +1,4 @@
-import store from "../../store"
+import store from "../../../store"
 
 import React, { useState, useEffect, forwardRef, useRef } from "react"
 import {
@@ -14,7 +14,7 @@ import {
   ListItem,
   Link,
 } from "zmp-framework/react"
-import "./../../styles/giohang.scss"
+import "./../../../styles/giohang.scss"
 import icongiohang from "@static/images/shoppingbag.png"
 import { formatCurrency } from "@utils/networking"
 import Color from "@components/common/Color"

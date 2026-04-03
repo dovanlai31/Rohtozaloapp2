@@ -45,7 +45,7 @@ const DanhmucItemAll = ({ item, seen, loading, index, col }) => {
         mt="0"
         flex
         justifyContent="center"
-        alignItems='flex-start'
+        alignItems='flex-center'
         style={{ width: "100%", }}
       >
         <Link
@@ -57,20 +57,19 @@ const DanhmucItemAll = ({ item, seen, loading, index, col }) => {
           //  animate
           //  transition='zmp-cover-v'
           noLinkClass
-          className="avatar-wrapper"
+          className="avatar-wrapper rounded-2xl"
         >
           <Box
             m="0"
             p="1"
             my="2"
-            className=" avatar-wrapperAll"
+            className="rounded-2xl avatar-wrapperAll"
             style={{
-              backgroundColor: item?.COLORS ? item.colors : colorsArr[vt],
+              backgroundColor: item?.COLORS ? item.colors : (index % 2 == 0 ? '#005DAA' : '#00A3D5'),
               borderColor: "#F2F2F2",
-              borderRadius: 10,
             }}
           >
-            <img loading="lazy" className="imgCatalogAll" src={item?.HINHANH}></img>
+            <img loading="lazy" className="p-[20px]" src={item?.HINHANH}></img>
             <Box py={1}>
               <Text
                 className="textline2   text-white "

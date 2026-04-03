@@ -114,8 +114,21 @@ const HomePage = ({ showToast }) => {
       fail: (err) => {
         const code = err?.code?.toString()
         const message = zaloErrorMessages[code] || `Lỗi không xác định (code: ${code})`
-        showDialog(message)
+        console.log("res2___", res)
+        const isEmpty = Object.keys(res || {}).length === 0
+        if (isEmpty) {
+          return showDialog(
+            "Không thể lấy thông tin người dùng. Vui lòng thử lại sau."
+          )
+        }
+        return checkPhonePermissionAndContinue()
       },
+      // fail: (err) => {
+      //   const code = err?.code?.toString()
+      //   const message =
+      //     zaloErrorMessages[code] || `Lỗi không xác định (code: ${code})`
+      //   showDialog(message)
+      // },
     })
   }
   const checkPhonePermissionAndContinue = () => {
@@ -157,9 +170,7 @@ const HomePage = ({ showToast }) => {
   }
 
   const dk = async (value) => {
-
     checkPhonePermissionAndContinue()
-
   }
   // const dk = async (value) => {
   //   const { userInfo } = await getUserInfo({})
@@ -278,6 +289,7 @@ const HomePage = ({ showToast }) => {
 
   const onPageBeforeIn = () => {
     console.log('ckeckzalon', zmp.views);
+   
     if (!logged || chonkh.current) {
       zmp.toolbar.hide("#main-nav")
     }
@@ -285,6 +297,7 @@ const HomePage = ({ showToast }) => {
 
   const onPageAfterIn = async () => {
     console.log("onPageAfterIn_onPageAfterIn", logged);
+  
     try {
       if (logged) {
         return
@@ -294,8 +307,12 @@ const HomePage = ({ showToast }) => {
       // trinh duyệt thì mở cái này lên vi nó ko lấy dc user id 
       //1269173850562980540 hide
       //5922757929442215184
+
+      // trinh duyệt thì mở cái này lên vi nó ko lấy dc user id
       if (!userId) {
-        userId = '12691738505629805401'
+        userId = "5922757929442215184"
+
+        // user not registered yet 1269173850562980540
       }
       console.log("userId: ", userId)
 
@@ -310,7 +327,7 @@ const HomePage = ({ showToast }) => {
           CapNhatDonHang(customerData[0]?.KHACHHANG_fk)
           store.dispatch("login")
           store.dispatch("setCusInfo", customerData[0])
-          console.log("customerData[0]", customerData[0]);
+          console.log("customerData[0]", customerData[0])
           //tai sp mới nhất
 
           store.dispatch("getLatestBlogs", { limit: 20, skip: 0, reset: true })
@@ -365,18 +382,12 @@ const HomePage = ({ showToast }) => {
             <HeaderHello CusInfo={CusInfo} logoMain={logoMain} user={user} />
           </Box>
         </Box>
-        <Box
-          m="20"
-          flex
-          flexDirection="row"
-          alignItems="center"
-          justifyContent="center"
-        >
+        <Box flex flexDirection="row" alignItems="center" justifyContent="center">
           {/*section search */}
           <SearchBox />
         </Box>
         {/*section slider */}
-        <Box my="1" mx="5" p="0">
+        <Box my="5" mx="5" p="0">
           <Banner user={user} cusInfo={CusInfo} />
         </Box>
       </Box>

@@ -79,7 +79,7 @@ const AllDanhmuc = ({ zmproute }) => {
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
-      className="detail-page"
+      className=""
     >
       <HeaderBack slot="fixed" title={"Danh mục"} />
 

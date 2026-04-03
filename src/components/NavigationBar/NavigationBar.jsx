@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react"
+import React, { useMemo, useRef, useState, useEffect } from "react"
 import propTypes from "prop-types"
 import { Link, Tabbar, Text, zmp, Icon, Box, useStore } from "zmp-framework/react"
 import {
@@ -20,11 +20,19 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
   const ListKM = useStore("ListKM")
   const ListCTTLXu = useStore("ListCTTLXu")
   const ListCTTLDiem = useStore("ListCTTLDiem")
-   const CusInfo = useStore("getCusInfo")   
-   //console.log('CusInfo__log', CusInfo);
+  const CusInfo = useStore("getCusInfo")
+  const cartItemCount = useMemo(() => {
+    const list = Giohangx || []
+    return list.reduce(
+      (sum, it) => sum + (Number(it.soluong) > 0 ? Number(it.soluong) : 1),
+      0
+    )
+  }, [Giohangx])
+
+  //console.log('CusInfo__log', CusInfo);
   // console.log('activeTabx', activeTab);
   return (
-    <Tabbar id="main-nav" bottom className="app-tabbar shadow-1" hidden={true}>
+    <Tabbar id="main-nav" bottom className="app-tabbar " hidden={true}>
       <Link
         noLinkClass
         className="flex flex-col items-center	"
@@ -72,15 +80,24 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
           Đơn hàng
         </Text>
       </Link> */}
-      {CusInfo?.active !== '0' && (
-        <Link noLinkClass className="flex flex-col items-center" tabLink="#view-giohang" badge="2">
+      {CusInfo?.active !== "0" && (
+        <Link
+          noLinkClass
+          className="flex flex-col items-center"
+          tabLink="#view-giohang"
+        >
           <span className="relative noti-icon-wrapper h-auto">
-            {Giohangx?.length > 0 && (
-              <span className="absolute rounded-full bg-red noti-badge border-2 border-white"></span>
+            {cartItemCount > 0 && (
+              <span className="absolute giohang-tab-badge border-2 border-white  leading-none text-white bg-red">
+                {cartItemCount > 99 ? "99+" : cartItemCount}
+              </span>
             )}
             <Giohang active={activeTab === "giohang"} />
           </span>
-          <Text size="xxxsmall" className="navbar-item-label text-gray-dark font-extrabold">
+          <Text
+            size="xxxsmall"
+            className="navbar-item-label text-gray-dark font-extrabold"
+          >
             Giỏ hàng
           </Text>
         </Link>

@@ -38,3 +38,4 @@ yarn.lock
 package-lock.json
 www
 
+.doc/

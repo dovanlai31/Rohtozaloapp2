@@ -15,9 +15,9 @@ const HeaderBox = ({
       alignItems="center"
       justifyContent="space-between"
       slot="fixed"
-      //  style={{ height: 150 }}
+    //  style={{ height: 150 }}
     >
-      <Box flex alignItems="center" >
+      <Box flex alignItems="center" mb="0" >
         {!bottomOnPress ? (
           <Box style={{ background: "#dcedf7dc", borderRadius: 5 }} p={2}>
             {iconName.length > 0 ? (
