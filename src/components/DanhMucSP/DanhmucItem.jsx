@@ -5,7 +5,7 @@ import propTypes, { any, string } from "prop-types"
 import colors from "tailwindcss/colors"
 import { Box, Link, SkeletonBlock, SkeletonText, Text } from "zmp-framework/react"
 
-const DanhmucItem = ({ item, seen, loading, index, col }) => {
+const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
   const classes = classNames("absolute avatar-border", {
     "avatar-seen": seen,
     "avatar-not-seen": !seen,
@@ -13,7 +13,9 @@ const DanhmucItem = ({ item, seen, loading, index, col }) => {
 
   let vt = index % 21
 
-  console.log(item)
+  console.log('xxxxxxxxxxxtiem x ',item)
+  let i = (loai ? item.PK_SEQ : index)
+  
 
   if (loading) {
     return (
@@ -46,7 +48,7 @@ const DanhmucItem = ({ item, seen, loading, index, col }) => {
       >
         <Link
           // href="/pagedanhmuc?id="+index
-          href={`/pagedanhmuc?index=${index}`}
+          href={`/pagedanhmuc?index=${i}&loai=${loai}`}
           onClick={() => {
             // zmp.views.main.router.navigate("/search/?id=" + user.pk_seq+'&clten='+user.ten)
           }}
@@ -54,11 +56,11 @@ const DanhmucItem = ({ item, seen, loading, index, col }) => {
           //  transition='zmp-cover-v'
           noLinkClass
           className="avatar-wrapper"
-            style={{
-                        backgroundColor: item?.COLORS ? item.colors : (index % 2 == 0 ? '#005DAA' : '#00A3D5'),
-                        borderColor: "#F2F2F2",
-                        borderRadius: 20,
-                      }}
+          style={{
+            backgroundColor: item?.COLORS ? item.colors : (index % 2 == 0 ? '#005DAA' : '#00A3D5'),
+            borderColor: "#F2F2F2",
+            borderRadius: 20,
+          }}
         >
           <div className="flex flex-col">
             <div className="border border-[#E0E0E0] border-2 rounded-2xl p-3">
@@ -82,7 +84,7 @@ const DanhmucItem = ({ item, seen, loading, index, col }) => {
         </Link>
       </Box>
       <Box>
-        <Text className="font-extrabold text-sm">{item.TEN || ""}</Text>
+        <Text className="font-normal text-sm" style={{ textAlign: "center" }}>{item.TEN || ""}</Text>
       </Box>
     </Box>
   )

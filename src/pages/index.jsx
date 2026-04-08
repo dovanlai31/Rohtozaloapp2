@@ -310,7 +310,7 @@ const HomePage = ({ showToast }) => {
 
       // trinh duyệt thì mở cái này lên vi nó ko lấy dc user id
       if (!userId) {
-        userId = "5922757929442215184"
+        userId = "1506757135383665608"
 
         // user not registered yet 1269173850562980540
       }

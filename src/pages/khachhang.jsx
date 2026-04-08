@@ -75,8 +75,8 @@ const Khachhang = () => {
   useEffect(() => {
     const getListKhaoSat = async () => {
       try {
-        const { data, error } = await getAPI("khaosat/getKhaoSat", "POST", {}, {})
 
+        const { data, error } = await getAPI("khaosat/getKhaoSat", "POST", {}, {})
         if (error || !data?.result) {
           console.error("getKhaoSat error:", data)
           return

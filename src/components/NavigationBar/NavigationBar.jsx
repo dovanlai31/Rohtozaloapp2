@@ -23,10 +23,11 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
   const CusInfo = useStore("getCusInfo")
   const cartItemCount = useMemo(() => {
     const list = Giohangx || []
-    return list.reduce(
-      (sum, it) => sum + (Number(it.soluong) > 0 ? Number(it.soluong) : 1),
-      0
-    )
+    return  Giohangx.length||0
+    //  list.reduce(
+    //   (sum, it) => sum + (Number(it.soluong) > 0 ? Number(it.soluong) : 1),
+    //   0
+    // )
   }, [Giohangx])
 
   //console.log('CusInfo__log', CusInfo);

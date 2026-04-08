@@ -170,7 +170,7 @@ export const prepareOrderPayload = (Giohangx, datakm, number, CusInfo, SanPhamSu
     khuyenmai: JSON.stringify(khuyenmai),
     ghichu: "Đơn Zalo miniapp",
     khuyenmai_chuoi: chuoikm,
-    SanPhamSuDung: SanPhamSuDung,
+    SanPhamSuDung: SanPhamSuDung? SanPhamSuDung : "",
   }
 }
 
@@ -192,6 +192,7 @@ export const checkMissingPromoProducts = (datakm) => {
 }
 
 export const formatPromotionData = (dataArray, dieuchinh, listsp_original, storeObj) => {
+  console.log("formatPromotionData input", { dataArray, dieuchinh, listsp_original })
   let SanPhamSuDung = ''
   let chuoiSort = []
   

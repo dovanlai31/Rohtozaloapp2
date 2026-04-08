@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react"
 import { Box, Icon, Page, Tab, Tabs, Text, useStore, zmp } from "zmp-framework/react"
 import "../styles/app.scss"
 import Color from "@components/common/Color"
+import DanhmucItem from "@components/DanhMucSP/DanhmucItem"
 
 const ListPost = ({ zmproute }) => {
   const datasp = useStore("latestBlogs")
@@ -29,12 +30,14 @@ const ListPost = ({ zmproute }) => {
 
   let pageContent = null
   useEffect(() => {
-    console.log("xxxxxxxxxxxxxxxxxx", datasp)
+
+    console.log("xxxxxxxxxxxxxxxxxx", zmproute.query)
     if (zmproute.query && zmproute.query.index) {
       console.log("activeIndex: ", zmproute.query.index)
       settabLinkActive(zmproute.query.index)
       scroll(zmproute.query.index)
       zmp.tab.show("#tab-" + zmproute.query.index, true)
+      setListData([])
       getListSPDanhMuc(zmproute.query.index)
     } else getListSPDanhMuc(0)
   }, [])
@@ -44,11 +47,24 @@ const ListPost = ({ zmproute }) => {
   }
   console.log("vlData.items: ", vlData)
   const getListSPDanhMuc = async (index) => {
-    setLoading(true)
-    let id = vlData.items[index].PK_SEQ
-    let ten = vlData.items[index].TEN
-    setTendanhmuc(ten)
-    setActiveCategory(vlData.items[index])
+
+    if (zmproute.query.loai !== 'NHANHANG') {
+      let data = JSON.parse(vlData.items[index].jsonNHANHANG)
+      setListData(data)
+      // setLoading(true)
+      let id = vlData.items[index].PK_SEQ
+      let ten = vlData.items[index].TEN
+      setTendanhmuc(ten)
+      setActiveCategory(vlData.items[index])
+
+      return
+    }
+
+
+
+    let id =zmproute.query.index
+
+
     let queryString = {
       userId: CusInfo?.KHACHHANG_fk,
       spId: "",
@@ -179,11 +195,27 @@ const ListPost = ({ zmproute }) => {
                 justifyContent="center"
                 className="gap-3"
               >
-                {listData.length > 0 ? (
-                  listData.map((item, i) => <Post {...item} key={i + ""} />)
-                ) : (
-                  <NoDataMessage />
-                )}
+                {listData.length > 0 && zmproute.query.loai !== 'NHANHANG' ? (
+                  listData.map((item, i) => <DanhmucItem
+                    key={i + ""}
+                    seen={item.seen}
+                    item={item}
+                    index={i}
+                    loai={'NHANHANG'}
+
+                  />
+                    //  <Post {...item} key={i + ""} />
+                  )
+                ) :
+
+                  listData.length > 0 && zmproute.query.loai === 'NHANHANG' ? (
+                    listData.map((item, i) =>
+                      <Post {...item} key={i + ""} />
+                    )
+                  ) : (
+                    <NoDataMessage />
+                  )
+                }
                 {loading && <LoadingSpinner />}
               </Box>
             </Tab>

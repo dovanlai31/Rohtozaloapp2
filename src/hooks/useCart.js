@@ -2,19 +2,19 @@ import { useState, useRef, useEffect } from "react"
 import { zmp } from "zmp-framework/react"
 import store from "../store"
 import { cartService } from "../services/cartService"
-import { 
-  calculateTotals, 
-  getDuplicatesInCart, 
-  mergeDuplicateCartItems, 
-  prepareOrderPayload, 
-  checkMissingPromoProducts, 
-  formatPromotionData 
+import {
+  calculateTotals,
+  getDuplicatesInCart,
+  mergeDuplicateCartItems,
+  prepareOrderPayload,
+  checkMissingPromoProducts,
+  formatPromotionData
 } from "../utils/cartHelper"
 
 export const useCart = (CusInfo) => {
   const Giohangx = store.getters.getGioHang.value || []
   const refres = store.getters.refres.value || false
-  
+
   const [Giohang, updateGiohang] = useState(Giohangx)
   const [TongTien, updateTongTien] = useState(0)
   const [datakm, updateDatakm] = useState([])
@@ -122,14 +122,14 @@ export const useCart = (CusInfo) => {
     }))
 
     if (listsp.length <= 0) {
-       updateLoading(false)
-       if (currentDieuChinh === 0) showDialog("Giỏ hàng chưa có sản phẩm để áp dụng khuyến mãi!")
-       return
+      updateLoading(false)
+      if (currentDieuChinh === 0) showDialog("Giỏ hàng chưa có sản phẩm để áp dụng khuyến mãi!")
+      return
     }
 
     if (!appKm) {
-       onClickLuu("")
-       return
+      onClickLuu("")
+      return
     }
 
     if (currentDieuChinh === 0) {
@@ -161,9 +161,13 @@ export const useCart = (CusInfo) => {
         if (data.data.length == 0) {
           if (currentDieuChinh === 0) onClickLuu("")
         } else {
+
           const rawPromos = JSON.parse(data.data)
+         // console.log("applyPromotion response", rawPromos)
+
           const { promotions, SanPhamSuDung: newSPSD, chuoiSort } = formatPromotionData(rawPromos, currentDieuChinh, Giohangx, store)
-          
+
+          console.log("Formatted promotions", promotions)
           if (currentDieuChinh === 0) {
             setdieuchinh(1)
             applyPromotionsAPI(chuoiSort, 1)
@@ -188,20 +192,20 @@ export const useCart = (CusInfo) => {
     const duplicates = getDuplicatesInCart(Giohangx)
     if (duplicates.length > 0) {
       zmp.dialog.create({
-          title: "ROHTO - Thông báo",
-          content: "Có sản phẩm trùng, bạn muốn cộng dồn số lượng trước khi lên đơn không?",
-          buttons: [
-            { text: "Không", onClick() { } },
-            {
-              text: "Cộng dồn",
-              onClick() {
-                const merged = mergeDuplicateCartItems(Giohangx, duplicates)
-                store.dispatch("AddAllGioHang", merged)
-                updateGiohang(merged)
-              },
+        title: "ROHTO - Thông báo",
+        content: "Có sản phẩm trùng, bạn muốn cộng dồn số lượng trước khi lên đơn không?",
+        buttons: [
+          { text: "Không", onClick() { } },
+          {
+            text: "Cộng dồn",
+            onClick() {
+              const merged = mergeDuplicateCartItems(Giohangx, duplicates)
+              store.dispatch("AddAllGioHang", merged)
+              updateGiohang(merged)
             },
-          ],
-        }).open()
+          },
+        ],
+      }).open()
     } else {
       Appkm()
     }
@@ -244,7 +248,7 @@ export const useCart = (CusInfo) => {
     TongtieKm,
     ViewMore,
     isShowModalKm,
-    
+
     // Actions
     updateGiohang,
     updateViewMore,
