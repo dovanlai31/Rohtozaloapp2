@@ -42,7 +42,7 @@ const DanhmucItem = ({ item, seen, loading, index, col }) => {
         flex
         justifyContent="center"
         alignItems="center"
-        style={{ width: "100%" }}
+        style={{ width: "100%", }}
       >
         <Link
           // href="/pagedanhmuc?id="+index
@@ -54,6 +54,11 @@ const DanhmucItem = ({ item, seen, loading, index, col }) => {
           //  transition='zmp-cover-v'
           noLinkClass
           className="avatar-wrapper"
+            style={{
+                        backgroundColor: item?.COLORS ? item.colors : (index % 2 == 0 ? '#005DAA' : '#00A3D5'),
+                        borderColor: "#F2F2F2",
+                        borderRadius: 20,
+                      }}
         >
           <div className="flex flex-col">
             <div className="border border-[#E0E0E0] border-2 rounded-2xl p-3">
