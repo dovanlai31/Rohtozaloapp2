@@ -229,8 +229,6 @@ const RowItemKMBanhang = forwardRef((data, ref) => {
                                 )
                               }
 
-
-
                             } else {
 
                               return (

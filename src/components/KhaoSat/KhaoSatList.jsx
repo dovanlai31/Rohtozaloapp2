@@ -1,19 +1,30 @@
 import Department from "@components/Icons/Department"
 import Number from "@components/Icons/Number"
 import { FaInbox } from "react-icons/fa6"
-import { Box, List, ListItem, Text } from "zmp-framework/react"
+import { Box, List, ListItem, Text, zmp } from "zmp-framework/react"
 import "../../styles/tailwind.css"
 import { Pages } from "./Constants"
 import BgSurvey from "@static/images/bg-survey.png"
 import { AiOutlineArrowRight } from "react-icons/ai"
-
+import { useState, useRef, useEffect } from "react"
 const KhaoSatList = (props) => {
   const { listKhaoSat, setPages, setCurrentItem } = props
   // const phoneNumber = useStore("getPhoneNumner")
-
+  const dialog = useRef(null)
   const handleSelectItem = (item) => {
+    let msg = "Chưa có khảo sát nào"
+    dialog.current = zmp.dialog.create({
+      title: "Thông báo",
+      content: '<div className="dialog-text">' + msg + "</div>",
+      buttons: [
+        {
+          text: "Đóng",
+        },
+      ],
+    })
+return dialog.current.open()
     setCurrentItem(item)
-    console.log(item)
+    console.log("Selected item:", item)
     setPages((prev) => [...prev, Pages.Detail])
   }
 

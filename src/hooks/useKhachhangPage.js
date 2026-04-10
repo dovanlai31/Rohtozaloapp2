@@ -45,6 +45,7 @@ export function useKhachhangPage() {
   }
 
   const openChatScreen = async () => {
+    console.log("Opening chat screen with OA ID:", config.OA_ID)
     try {
       await openChat({
         type: "oa",

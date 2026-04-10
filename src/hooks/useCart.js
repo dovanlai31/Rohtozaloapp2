@@ -163,7 +163,7 @@ export const useCart = (CusInfo) => {
         } else {
 
           const rawPromos = JSON.parse(data.data)
-         // console.log("applyPromotion response", rawPromos)
+         console.log("applyPromotion response", rawPromos)
 
           const { promotions, SanPhamSuDung: newSPSD, chuoiSort } = formatPromotionData(rawPromos, currentDieuChinh, Giohangx, store)
 

@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react"
 import { FaBook, FaGlobe, FaListAlt, FaRegComments, FaVideo } from "react-icons/fa"
 import { MdDescription } from "react-icons/md"
 import { Box, Card, Link, Page, Text } from "zmp-framework/react"
-
+import { openWebview } from "zmp-sdk"  // Thêm import ở đầu file
 const Khachhang = () => {
   const {
     CusInfo,
@@ -68,9 +68,19 @@ const Khachhang = () => {
     setLinksProgress(node.scrollLeft / maxScroll)
   }
 
-  const openExternalLink = (url) => {
-    globalThis.location.href = url
-  }
+
+
+const openExternalLink = (url) => {
+  openWebview({
+    url: url,
+    type: "browser",  // Mở bằng trình duyệt ngoài
+    fail: (error) => {
+      console.error("Open link failed:", error)
+      // Fallback: thử cách khác
+      window.open(url, "_blank")
+    }
+  })
+}
 
   useEffect(() => {
     const getListKhaoSat = async () => {
@@ -205,7 +215,7 @@ const Khachhang = () => {
           <button
             key={item.key}
             onClick={() => openExternalLink(item.url)}
-            className="min-w-[35%] snap-start rounded-3xl bg-white px-4 py-6 text-center shadow-sm"
+            className="min-w-[32%] snap-start rounded-3xl bg-white px-4 py-6 text-center shadow-sm"
           >
             <span
               className={`mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-[22px] text-white ${item.iconBg}`}
