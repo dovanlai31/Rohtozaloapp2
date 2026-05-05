@@ -9,7 +9,7 @@ const SearchBox = () => {
       >
         <div className="flex  w-full items-center justify-between gap-2 p-[13px]">
           <Box className="m-0 flex min-w-0 flex-1 items-center gap-1 p-0">
-            <Icon zmp="zi-search" className="shrink-0 text-[#98A1B3]" />
+            <Icon zmp="zi-search" className="shrink-0 text-[#ffffff]" />
             <Text className="min-w-0 ml-2 text-[#98A1B3]">Tìm kiếm sản phẩm...</Text>
           </Box>
           <div className="iconsearchWrap shrink-0">

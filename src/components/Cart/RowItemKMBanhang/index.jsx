@@ -24,7 +24,7 @@ import { ConvertOpacity } from "@utils/ConvertOpacity"
 
 const RowItemKMBanhang = forwardRef((data, ref) => {
   const elRef = useRef(null)
-  const { item, index, updateGiohang, tinhtien, length, updateItemKM, setIsShowModalKm } = data
+  const { item, index, updateGiohang, tinhtien, length, updateItemKM, setIsShowModalKm, handleShowvongQuay } = data
   const Giohang = store.getters.getGioHang.value || []
   const [soluong, updateItem] = useState(data.item.soluong)
   const [MaxTT, setMaxTT] = useState(0)
@@ -162,8 +162,14 @@ const RowItemKMBanhang = forwardRef((data, ref) => {
                       zmp={value.loai == 1 || value.loai == 2 ? "zi-star-solid" : "zi-send-solid"}
                       size="14px"
                     />
+                    {/* <Box
+                      style={{
+                        width: 10,
+                      }}
+                    /> */}
+
                     <Link
-                      //onClick={() => handleShowSpKm(value, item, index, i, (value.HanMucTien || 0))}
+                    //onClick={() => handleShowSpKm(value, item, index, i, (value.HanMucTien || 0))}
                     >
                       <Box m="0" p="0">
                         <Text
@@ -171,8 +177,8 @@ const RowItemKMBanhang = forwardRef((data, ref) => {
                           style={{ color: Color.textAPPGray, fontSize: "13px", padding: '10px 0px' }}
                           className="desc text-blue-dark overflow-ellipsis text-wrap "
                         >
-                          Trả: {value.diengiai}
-                          {value.loai == 2 || value.loai == 1
+                          {value.spTra_vongquay.length < 1 && `Trả: ${value.diengiai}`}
+                          {value.spTra_vongquay.length < 1 && (value.loai == 2 || value.loai == 1)
                             ? <Text
                               style={{ color: Color.textAPPRed, fontSize: "10px", }}
                               className="desc text-blue-dark overflow-ellipsis text-wrap "
@@ -182,7 +188,7 @@ const RowItemKMBanhang = forwardRef((data, ref) => {
                             : null}
                         </Text>
                         {/* "Chiết khấu từng dòng quy đổi sản phẩm" */}
-                        {value.loai == 3 && value.IS_TRASP_HanMucTien == 1 ? (
+                        {value.loai == 3 && value.IS_TRASP_HanMucTien == 1 && value.spTra_vongquay.length < 1 ? (
                           //thêm btn chọn sp trả
                           <Link onClick={() => handleShowSpKm(value, item, index, i, (value.HanMucTien || 0))}>
                             <Box m="0" p="0">
@@ -212,7 +218,7 @@ const RowItemKMBanhang = forwardRef((data, ref) => {
                               ) : null}
                             </Box>
                           </Link>
-                        ) : value.loai == 3 && value.IS_TRASP_HanMucTien == 0 && value.pheptoan == 1 ? (
+                        ) : value.loai == 3 && value.IS_TRASP_HanMucTien == 0 && value.pheptoan == 1 && value.spTra_vongquay.length < 1 ? (
                           //hiện sp trả theo số lượng  phép toán 1 là trả and(trả tất cả)
                           value.spTra.map((sp, i) => {
                             if (value.hinhthuc == 2)// bất kỳ trong là hienj 1 dòng thôi khỏi chọn cho nhanh
@@ -244,7 +250,78 @@ const RowItemKMBanhang = forwardRef((data, ref) => {
                           }
 
                           )
+                        ) : value.spTra_vongquay.length > 0 && !item.ketqua_vongquay ? (
+
+                          <Link
+
+                            onClick={() => handleShowvongQuay(value, item)} style={{ textDecoration: 'none', width: '100%' }}>
+                            <Box
+                              m="0"
+                              p="0"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="flex-end"
+                              style={{
+                                background: 'linear-gradient(90deg, #FFD700 0%, #FFB300 100%)',
+                                borderRadius: '18px',
+                                padding: '6px 16px',
+                                boxShadow: '0 2px 8px rgba(255, 193, 7, 0.15)',
+                                border: '1.5px solid #FFB300',
+                                cursor: 'pointer',
+                                transition: 'box-shadow 0.2s',
+                                minWidth: '110px',
+                                margin: '4px 0',
+                              }}
+                              className="quay-thuong-btn"
+                              onMouseOver={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(255, 193, 7, 0.25)'}
+                              onMouseOut={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.15)'}
+                            >
+                              {/* <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px' }}>
+                                <circle cx="12" cy="12" r="10" fill="#FFF8E1" stroke="#FFB300" strokeWidth="2" />
+                                <path d="M12 6v6l4 2" stroke="#FFB300" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg> */}
+                              <Text
+                                key={i}
+                                style={{
+                                  color: '#B26A00',
+                                  fontWeight: 700,
+                                  fontSize: '13px',
+                                  letterSpacing: '0.5px',
+                                  textShadow: '0 1px 0 #FFFDE7',
+                                }}
+                                className="desc text-blue-dark overflow-ellipsis text-wrap"
+                              >
+                                Quay thưởng
+                              </Text>
+                            </Box>
+                          </Link>
+
                         ) : null}
+                        {item.ketqua_vongquay && item.ketqua_vongquay?.map((sp, i) => (
+                          <Box key={i} m="0" p="0" style={{ marginBottom: 4 }}>
+                            <Text
+                              style={{ color: Color.textAPPBlueHeavy, fontSize: "12px", fontWeight: 600 }}
+                              className="desc text-blue-dark text-wrap"
+                            >
+                              Vòng quay {i + 1}:
+                            </Text>
+                            {sp.LOAI === 1 && (
+                              <Text style={{ color: Color.textAPPGreen2, fontSize: "12px", marginLeft: 8 }}>
+                                Tổng tiền: {formatCurrency(sp.tongTien, true)}
+                              </Text>
+                            )}
+                            {sp.LOAI === 2 && (
+                              <Text style={{ color: Color.textAPPRed, fontSize: "12px", marginLeft: 8 }}>
+                                Chiết khấu: {sp.chietKhau}
+                              </Text>
+                            )}
+                            {sp.LOAI === 3 && (
+                              <Text style={{ color: Color.textAPPCopper3, fontSize: "12px", marginLeft: 8 }}>
+                                Phần thưởng: {sp.traDIENGIAI}
+                              </Text>
+                            )}
+                          </Box>
+                        ))}
                       </Box>
                     </Link>
                   </Box>

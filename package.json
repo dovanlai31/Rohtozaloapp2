@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@ramonak/react-progress-bar": "^5.4.0",
+    "canvas-confetti": "^1.9.4",
     "classnames": "^2.5.1",
     "intl": "^1.2.5",
     "moment": "^2.30.1",

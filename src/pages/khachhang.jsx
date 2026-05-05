@@ -33,6 +33,7 @@ const Khachhang = () => {
       url: "https://zalo.me/2005153025265810776",
       icon: <FaRegComments size={26} />,
       iconBg: "bg-[#4d6fd1]",
+      urlImg: "https://dms.rohto.com.vn:7999/AnhSanPham/Zalo.png",
     },
     {
       key: "website",
@@ -40,6 +41,7 @@ const Khachhang = () => {
       url: "https://rohto.com.vn/",
       icon: <FaGlobe size={26} />,
       iconBg: "bg-[#6c63ff]",
+      urlImg: "https://dms.rohto.com.vn:7999/AnhSanPham/Website.png",
     },
     {
       key: "catalog",
@@ -47,6 +49,7 @@ const Khachhang = () => {
       url: "https://rohto.com.vn/catalogue2026/",
       icon: <FaBook size={26} />,
       iconBg: "bg-[#70c281]",
+      urlImg: "https://dms.rohto.com.vn:7999/AnhSanPham/Catalog.png",
     },
     {
       key: "tailieu",
@@ -54,6 +57,7 @@ const Khachhang = () => {
       url: "https://rohto.com.vn/tai-lieu",
       icon: <MdDescription size={26} />,
       iconBg: "bg-[#e39a42]",
+      urlImg: "https://dms.rohto.com.vn:7999/AnhSanPham/TaiLieu.png",
     },
   ]
 
@@ -70,17 +74,17 @@ const Khachhang = () => {
 
 
 
-const openExternalLink = (url) => {
-  openWebview({
-    url: url,
-    type: "browser",  // Mở bằng trình duyệt ngoài
-    fail: (error) => {
-      console.error("Open link failed:", error)
-      // Fallback: thử cách khác
-      window.open(url, "_blank")
-    }
-  })
-}
+  const openExternalLink = (url) => {
+    openWebview({
+      url: url,
+      type: "browser",  // Mở bằng trình duyệt ngoài
+      fail: (error) => {
+        console.error("Open link failed:", error)
+        // Fallback: thử cách khác
+        window.open(url, "_blank")
+      }
+    })
+  }
 
   useEffect(() => {
     const getListKhaoSat = async () => {
@@ -141,8 +145,8 @@ const openExternalLink = (url) => {
       <SubTitle title="Khảo sát khách hàng" />
       <KhaoSatList
         listKhaoSat={listKhaoSat}
-        setPages={() => {}}
-        setCurrentItem={() => {}}
+        setPages={() => { }}
+        setCurrentItem={() => { }}
       />
 
       <SubTitle title="Thông tin tích lũy" />
@@ -194,7 +198,7 @@ const openExternalLink = (url) => {
         </Box>
       </Card>
 
-      <SubTitle
+      {CusInfo?.active !== "0" && <SubTitle
         title="Liên kết khách hàng"
         rightContent={
           <div className="relative h-1.5 w-14 rounded-full bg-[#cfcfd6] overflow-hidden">
@@ -204,25 +208,30 @@ const openExternalLink = (url) => {
             />
           </div>
         }
-      />
+      />}
       <div
         ref={linksRef}
         onScroll={onLinksScroll}
         className="mx-4 mb-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {customerLinks.map((item) => (
+        {CusInfo?.active !== "0" && customerLinks.map((item) => (
           <button
             key={item.key}
             onClick={() => openExternalLink(item.url)}
-            className="min-w-[32%] snap-start rounded-3xl bg-white px-4 py-6 text-center shadow-sm"
+            className="min-w-[32%] snap-start rounded-3xl px-4 py-2 text-center shadow-sm bg-white"
           >
             <span
-              className={`mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-[22px] text-white ${item.iconBg}`}
+              className={`mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-[22px]`}
             >
-              {item.icon}
+              <img
+                src={item.urlImg}
+                alt={item.title}
+                className="h-14 w-14 object-contain rounded-[18px] "
+                style={{ background: 'white' }}
+              />
             </span>
-            <div className="text-[17px] font-bold text-[#222]">{item.title}</div>
+            {/* <div className="text-[17px] font-bold text-[#222]">{item.title}</div> */}
           </button>
         ))}
       </div>

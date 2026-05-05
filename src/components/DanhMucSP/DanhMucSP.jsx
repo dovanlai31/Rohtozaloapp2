@@ -10,6 +10,7 @@ import {
 import DanhmucItem from "./DanhmucItem"
 
 import { Section } from "@components/common/Section"
+import { TbBackground } from "react-icons/tb"
 
 const Stories = () => {
   const loading = useStore("loadingStories")
@@ -31,11 +32,14 @@ const Stories = () => {
         titleSecond="Tất cả"
         RouterSecond="/pagedanhmucAll"
         padding="title-only"
+        style={{  padding: "0 0px"   }}
+    
       >
         <Box
           className="wrapCatalogs      
           justify-center 
           flex-wrap flex
+ 
          
           "
         >

@@ -18,17 +18,16 @@ const CartFooter = ({
   return (
     <Box
       className={`bg-white border-t border-[#f0f0f0] px-4 pt-4 x w-full z-[999] shadow-[0_-4px_16px_rgba(0,0,0,0.04)] h-full m-0
-        transition-transform duration-[350ms] ease-[cubic-bezier(.4,0,.2,1)] ${
-          !isShowModalKm
-            ? "translate-y-0 opacity-100 pointer-events-auto"
-            : "translate-y-full opacity-0 pointer-events-none"
+        transition-transform duration-[350ms] ease-[cubic-bezier(.4,0,.2,1)] ${!isShowModalKm
+          ? "translate-y-0 opacity-100 pointer-events-auto"
+          : "translate-y-full opacity-0 pointer-events-none"
         }`}
     >
-      <Box className="flex justify-between items-end m-0  ">
-        <Box className="flex flex-col gap-1 hidden">
+      <Box className=" justify-between items-end m-0  ">
+        <Box className="flex flex-col gap-1 w-full justify-between items-end m-0 p-0">
           {TongtieKm > 0 && (
-            <Box className="flex items-center gap-2">
-              <Text className="text-[13px] text-[#8a92a3] m-0">Khuyến mãi:</Text>
+            <Box className="flex gap-1 w-full justify-between items-center m-0 p-0">
+              <Text className="text-[13px] text-[#8a92a3] m-0">  Khuyến mãi:</Text>
               <Text className="text-[13px] text-[#e74c3c] font-bold m-0">
                 -{formatCurrency(TongtieKm, true)}
               </Text>
@@ -37,7 +36,7 @@ const CartFooter = ({
         </Box>
         <Box className="flex gap-1 w-full justify-between items-center m-0 p-0">
           <Text className="text-[18px] text-primary font-bold m-0">
-            Tổng tiền TT:
+          Tổng tiền TT:
           </Text>
           <Text className="text-[18px] font-bold text-primary m-0">
             {formatCurrency(
@@ -47,6 +46,7 @@ const CartFooter = ({
             VNĐ
           </Text>
         </Box>
+
       </Box>
 
       {loading ? (

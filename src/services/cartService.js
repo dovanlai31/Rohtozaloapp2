@@ -31,5 +31,15 @@ export const cartService = {
       console.log("__request createOrder api error:", error)
       throw error
     }
+  },
+  LogKmQuay: async (params) => {
+    try {
+      const response = await request("POST", "khachhang/LogKmQuay", params)
+      const json = await response.json()
+      return json
+    } catch (error) {
+      console.log("__request LogKmQuay api error:", error)
+      throw error
+    }
   }
 }

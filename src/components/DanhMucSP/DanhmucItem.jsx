@@ -4,6 +4,10 @@ import classNames from "classnames"
 import propTypes, { any, string } from "prop-types"
 import colors from "tailwindcss/colors"
 import { Box, Link, SkeletonBlock, SkeletonText, Text } from "zmp-framework/react"
+import { useState,useEffect  } from "react"
+
+
+
 
 const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
   const classes = classNames("absolute avatar-border", {
@@ -13,20 +17,43 @@ const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
 
   let vt = index % 21
 
-  console.log('xxxxxxxxxxxtiem x ',item)
+  //console.log('xxxxxxxxxxxtiem dm x ',item)
   let i = (loai ? item.PK_SEQ : index)
   
 
-  if (loading) {
-    return (
-      <Box m="0" className="story" flex flexDirection="column" alignItems="center">
-        <Box m="0" className="relative avatar-wrapper">
-          <SkeletonBlock borderRadius="24px" width={68} height={68} />
-        </Box>
-        <SkeletonText className="story-name text-blue-dark-text"></SkeletonText>
-      </Box>
-    )
+  // Hiển thị ảnh từ danh sách jsonNHANHANG nếu có, tự động chuyển mỗi 3s
+  const [currentImgIdx, setCurrentImgIdx] =useState(0);
+  let imgList = [];
+  try {
+    if (item?.jsonNHANHANG) {
+      imgList = JSON.parse(item.jsonNHANHANG);
+     // console.log("Parsed imgList: ", imgList);
+      if (!Array.isArray(imgList)) imgList = [];
+    }
+  } catch (e) {
+    imgList = [];
   }
+
+  useEffect(() => {
+    if (!imgList.length) return;
+    setCurrentImgIdx(0); // reset về ảnh đầu khi đổi danh sách
+    const interval = setInterval(() => {
+      setCurrentImgIdx((prev) => (prev + 1) % imgList.length);
+    }, 4000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.jsonNHANHANG]);
+
+  const showImg = imgList.length > 0 ? imgList[currentImgIdx] : item?.HINHANH;
+  const [fade, setFade] = useState(true);
+  useEffect(() => {
+    setFade(false);
+    const timeout = setTimeout(() => setFade(true), 100);
+    return () => clearTimeout(timeout);
+  }, [currentImgIdx]);
+
+  // Lấy src đúng định dạng (object hoặc string)
+  const imgSrc = typeof showImg === 'object' && showImg !== null ? showImg.HINHANH : showImg;
 
   return (
     <Box
@@ -36,7 +63,7 @@ const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
       flex
       flexDirection="column"
       alignItems="center"
-      style={{ width: "25%" }}
+      style={{ width: "25%", height: 110 }}
     >
       <Box
         pt="0"
@@ -47,13 +74,10 @@ const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
         style={{ width: "100%", }}
       >
         <Link
-          // href="/pagedanhmuc?id="+index
           href={`/pagedanhmuc?index=${i}&loai=${loai}`}
           onClick={() => {
             // zmp.views.main.router.navigate("/search/?id=" + user.pk_seq+'&clten='+user.ten)
           }}
-          //  animate
-          //  transition='zmp-cover-v'
           noLinkClass
           className="avatar-wrapper"
           style={{
@@ -64,22 +88,14 @@ const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
         >
           <div className="flex flex-col">
             <div className="border border-[#E0E0E0] border-2 rounded-2xl p-3">
-              <img loading="lazy" className="max-h-[65px]" src={item?.HINHANH}></img>
+              <img
+                loading="lazy"
+                className={`max-h-[65px] transition-opacity duration-500 ${fade ? 'opacity-100' : 'opacity-0'}`}
+                src={imgSrc}
+                // alt={item?.TEN || ''}
+                style={{ transition: 'opacity 0.5s' }}
+              />
             </div>
-
-            {/* <Box
-              m="0"
-              p="1"
-              className=" avatar-wrapperHome"
-              style={{
-                backgroundColor: item.COLORS ? item.COLORS : colorsArr[vt],
-                borderColor: colors.amber,
-                borderTopRightRadius: 10,
-                borderBottomLeftRadius: 5,
-              }}
-            >
-              <img loading="lazy" className="imgCatalog" src={item?.HINHANH}></img>
-            </Box> */}
           </div>
         </Link>
       </Box>
@@ -88,6 +104,17 @@ const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
       </Box>
     </Box>
   )
+  //           >
+  //             <img loading="lazy" className="imgCatalog" src={item?.HINHANH}></img>
+  //           </Box> */}
+  //         </div>
+  //       </Link>
+  //     </Box>
+  //     <Box>
+  //       <Text className="font-normal text-sm" style={{ textAlign: "center" }}>{item.TEN || ""}</Text>
+  //     </Box>
+  //   </Box>
+  // )
 }
 
 DanhmucItem.propTypes = {

@@ -9,6 +9,8 @@ import CartEmpty from "@components/Cart/CartEmpty"
 import CartFooter from "@components/Cart/CartFooter"
 
 import { useCart } from "../hooks/useCart"
+import { Button } from "zmp-ui"
+import LuckyWheelModal from "@components/Vongquay/LuckyWheelModal"
 
 const GiohangPage = ({ zmproute }) => {
   const CusInfo = useStore("getCusInfo")
@@ -22,6 +24,10 @@ const GiohangPage = ({ zmproute }) => {
     TongtieKm,
     ViewMore,
     isShowModalKm,
+    showWheel,
+    prizes,
+    targetPrize,
+    maxSpins,
 
     updateGiohang,
     updateViewMore,
@@ -33,6 +39,10 @@ const GiohangPage = ({ zmproute }) => {
     backHome,
     onClickDangnhap,
     updateItemKM,
+    setShowWheel,
+    handleSpinEnd,
+    handleShowvongQuay
+
   } = useCart(CusInfo)
 
   return (
@@ -40,6 +50,18 @@ const GiohangPage = ({ zmproute }) => {
       <div className="flex flex-col h-full">
         <div className="flex flex-col flex-1">
           <CartHeader cartLength={Giohang.length} CusInfo={CusInfo} />
+          {/* <div style={{ marginTop: 40, textAlign: 'center' }}>
+            <Button
+              size="large"
+              onClick={() => setShowWheel(true)}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                padding: '12px 32px',
+              }}
+            >
+              🎡 QUAY THƯỞNG NGAY
+            </Button>
+          </div> */}
           {Giohang.length > 0 ? (
             <Box className={` `}>
               <CartProductList
@@ -52,6 +74,7 @@ const GiohangPage = ({ zmproute }) => {
                 tinhtien={tinhtien}
               />
               <CartPromotionList
+                handleShowvongQuay={handleShowvongQuay}
                 datakm={datakm}
                 appKm={appKm}
                 setIsShowModalKm={setIsShowModalKm}
@@ -79,6 +102,19 @@ const GiohangPage = ({ zmproute }) => {
           )}
         </div>
       </div>
+      {/* Modal vòng quay */}
+      {prizes && prizes.length > 0 && (
+        <LuckyWheelModal
+          visible={showWheel}
+          onClose={() => setShowWheel(false)}
+          prizes={prizes}
+          targetPrize={targetPrize}  // Set trước quà trúng
+          handleSpinEnd={(v) => handleSpinEnd(v)}
+          size={window.innerWidth * 0.7}
+          maxSpins={maxSpins}
+        />)}
+
+
     </Page>
   )
 }

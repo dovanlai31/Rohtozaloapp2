@@ -310,7 +310,7 @@ const HomePage = ({ showToast }) => {
 
       // trinh duyệt thì mở cái này lên vi nó ko lấy dc user id
       if (!userId) {
-        userId = "1506757135383665608"
+        userId = "7766309018809027302"
 
         // user not registered yet 1269173850562980540
       }
@@ -363,7 +363,7 @@ const HomePage = ({ showToast }) => {
       name="home"
       className={logged && "home-page"}
     >
-      <Box className="headerHome" m="0" px="0" style={{}}>
+      <Box className="headerHome" m="0" p="0" style={{}}>
         <Box
           className="HeaderBoxHome"
           noSpace={true}
@@ -371,6 +371,10 @@ const HomePage = ({ showToast }) => {
           alignItems="center"
           justifyContent="space-between"
           slot="fixed"
+          backgroundColor="#fff"
+          padding="0 16px"
+          height="116px"
+          
         >
           <Box
             flex
@@ -382,7 +386,7 @@ const HomePage = ({ showToast }) => {
             <HeaderHello CusInfo={CusInfo} logoMain={logoMain} user={user} />
           </Box>
         </Box>
-        <Box flex flexDirection="row" alignItems="center" justifyContent="center">
+        <Box p={0} flex flexDirection="row" alignItems="center" justifyContent="center">
           {/*section search */}
           <SearchBox />
         </Box>

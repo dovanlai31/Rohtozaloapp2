@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from "react"
+import React, { useMemo, useRef, useState, useEffect, use } from "react"
 import propTypes from "prop-types"
 import { Link, Tabbar, Text, zmp, Icon, Box, useStore } from "zmp-framework/react"
 import {
@@ -22,13 +22,13 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
   const ListCTTLDiem = useStore("ListCTTLDiem")
   const CusInfo = useStore("getCusInfo")
   const cartItemCount = useMemo(() => {
-    const list = Giohangx || []
-    return  Giohangx.length||0
-    //  list.reduce(
-    //   (sum, it) => sum + (Number(it.soluong) > 0 ? Number(it.soluong) : 1),
-    //   0
-    // )
-  }, [Giohangx])
+    const list = Giohangx || [];
+    return list.reduce(
+      (sum, it) => sum + (Number(it.soluong) > 0 ? Number(it.soluong) : 1),
+      0
+    );
+  }, [Giohangx, JSON.stringify(Giohangx)]);
+
 
   //console.log('CusInfo__log', CusInfo);
   // console.log('activeTabx', activeTab);

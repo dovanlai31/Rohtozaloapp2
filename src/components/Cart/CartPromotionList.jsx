@@ -8,7 +8,9 @@ const CartPromotionList = ({
   setIsShowModalKm, 
   updateGiohang, 
   tinhtien, 
-  updateItemKM 
+  updateItemKM ,
+  handleShowvongQuay
+
 }) => {
   if (datakm.length > 0) {
     return (
@@ -27,6 +29,7 @@ const CartPromotionList = ({
             updateGiohang={(a) => updateGiohang(a)}
             tinhtien={() => tinhtien()}
             updateItemKM={(km) => updateItemKM(km)}
+            handleShowvongQuay={handleShowvongQuay}
           />
         ))}
       </Box>
