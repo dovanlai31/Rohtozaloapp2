@@ -67,6 +67,7 @@ const SearchPage = ({ zmproute, showToast }) => {
     return arr
   })()
   useEffect(() => {
+    
     console.log("zmproute.query__", zmproute.query)
     if (Giohangx?.length > 0) {
       zmp.toolbar.hide("#main-nav")
@@ -209,10 +210,27 @@ const SearchPage = ({ zmproute, showToast }) => {
     }
   }
 
+
   useEffect(() => {
     setLastPage(false)
     Searching(false)
   }, [keywordDebounce])
+
+  // Infinite scroll: load more when scroll to bottom
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loading || lastPage || sortedListData.length === 0) return;
+      const scrollY = window.scrollY || window.pageYOffset;
+      const viewportHeight = window.innerHeight;
+      const fullHeight = document.documentElement.scrollHeight;
+      // Nếu user kéo gần cuối trang (cách 100px)
+      if (scrollY + viewportHeight >= fullHeight - 100) {
+        Searching(true);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, lastPage, sortedListData.length]);
 
   return (
     <Page
@@ -377,7 +395,13 @@ const SearchPage = ({ zmproute, showToast }) => {
               ))}
             </Box>
 
-            {loading && <LoadingSpinner />}
+
+            {/* Hiển thị loading khi đang gọi API load thêm */}
+            {loading && (
+              <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
+                <LoadingSpinner />
+              </div>
+            )}
 
             {!loading && !lastPage && sortedListData.length > 0 && (
               <button
