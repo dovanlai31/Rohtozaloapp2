@@ -757,6 +757,9 @@ video {
 .ml-\[5px\] {
   margin-left: 5px;
 }
+.ml-auto {
+  margin-left: auto;
+}
 .mr-0 {
   margin-right: 0px;
 }
@@ -1332,6 +1335,10 @@ video {
 .border-\[\#ffd5d5\] {
   --tw-border-opacity: 1;
   border-color: rgb(255 213 213 / var(--tw-border-opacity, 1));
+}
+.border-\[\#ffffff\] {
+  --tw-border-opacity: 1;
+  border-color: rgb(255 255 255 / var(--tw-border-opacity, 1));
 }
 .border-emerald-100 {
   --tw-border-opacity: 1;

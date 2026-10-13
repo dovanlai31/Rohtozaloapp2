@@ -30,6 +30,7 @@ const DanhmucItemAll = ({ item, seen, loading, index, col }) => {
   })
 
   let vt = index % 21
+  console.log("xxxxxxxxxxxtiem dm x ", item)
 
   return (
     <Box
@@ -65,7 +66,7 @@ const DanhmucItemAll = ({ item, seen, loading, index, col }) => {
             my="2"
             className="rounded-2xl avatar-wrapperAll"
             style={{
-              backgroundColor: item?.COLORS ? item.colors : (index % 2 == 0 ? '#005DAA' : '#00A3D5'),
+              backgroundColor:  (index % 2 == 0 ? '#005DAA' : '#00A3D5'),
               borderColor: "#F2F2F2",
             }}
           >

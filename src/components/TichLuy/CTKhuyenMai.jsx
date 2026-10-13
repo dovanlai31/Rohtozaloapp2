@@ -58,19 +58,59 @@ const CTKhuyenMai = ({ data, CTKM, listSP }) => {
     if (dieukien.length > 0) {
       console.log("dieukien", dieukien)
       let loaikm = dieukien[0].LOAI
-      if (loaikm == "1" || loaikm == "2") {// tiền
-        if (dieukien[0].TONGTIEN.length > 1) {
+      if (loaikm == "1" || loaikm == "2") {//
+        if (dieukien[0].TONGTIEN_DKKM > 1) {
           if (sanphamdk.length > 0) {
-            //console.log("sanphamdk", sanphamdk)
+
+            console.log("sanphamdk", sanphamdk)
             let Product = sanphamdk[0]
             console.log("spmua", Product)
 
             let p = Product
-            p.soluong = Math.ceil(dieukien[0].TONGTIEN_DKKM||0 / p.dongia);
-            p.title = Product.ten
-            p.thumbnail = Product.HinhAnh
+            console.log("sanphamdk", dieukien[0].TONGTIEN_DKKM, p.dongia, Math.ceil((dieukien[0].TONGTIEN_DKKM || 0) / p.dongia))
+            p.soluong = Math.ceil((dieukien[0].TONGTIEN_DKKM || 0) / p.dongia)
+            p.title = Product.ten || Product.TEN_SP
+            p.thumbnail = Product.HinhAnh || Product.HINHANH
+            p.ma = Product.ma || Product.MA_SP
+            p.dongia = Product.dongia,
+              p.id = Product.id || Product.SANPHAM_FK
+              
+            console.log("spmua", p)
             store.dispatch("SetAddGioHang", p)
             showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
+
+          }
+        } else {
+
+          if (dieukien[0].TONGLUONG_DKKM > 0) {// số lượng
+            if (sanphamdk.length > 0) {
+              //console.log("sanphamdk", sanphamdk)
+              let Product = sanphamdk[0]
+              console.log("spmua sp", Product)
+
+              let p = Product
+              p.soluong = dieukien[0].TONGLUONG_DKKM;
+              p.title = Product.ten || Product.TEN_SP
+              p.thumbnail = Product.HinhAnh || Product.HINHANH
+              p.ma = Product.MA_SP,
+                p.dongia = Product.dongia,
+                p.id = Product.id || Product.SANPHAM_FK
+
+
+              // spId: s.id,
+              //       soluong: s.soluong,
+              //       dongia: s.dongia * (1 - ((s.chietkhauKM ? s.chietkhauKM / 100 : 0) + (s.nhomCkGam ? s.nhomCkGam / 100 : 0))),
+              //       vat: s.vat,
+              //       thung: 0,
+              //       nhomCkGam: s.nhomCkGam ? s.nhomCkGam : 0,
+              //       chietkhauKM: s.chietkhauKM ? s.chietkhauKM : 0,
+              //       spMa: s.ma,
+              //       dvdl_fk: s.dvdl_fk
+
+              store.dispatch("SetAddGioHang", p)
+              showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
+
+            }
 
           }
         }
@@ -78,18 +118,18 @@ const CTKhuyenMai = ({ data, CTKM, listSP }) => {
 
       } else if (dieukien[0].TONGLUONG > 0) {// số lượng
         if (sanphamdk.length > 0) {
-            //console.log("sanphamdk", sanphamdk)
-            let Product = sanphamdk[0]
-            console.log("spmua", Product)
+          //console.log("sanphamdk", sanphamdk)
+          let Product = sanphamdk[0]
+          console.log("spmua", Product)
 
-            let p = Product
-            p.soluong = dieukien[0].TONGLUONG_DKKM;
-            p.title = Product.ten
-            p.thumbnail = Product.HinhAnh
-            store.dispatch("SetAddGioHang", p)
-            showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
+          let p = Product
+          p.soluong = dieukien[0].TONGLUONG_DKKM;
+          p.title = Product.ten
+          p.thumbnail = Product.HinhAnh
+          store.dispatch("SetAddGioHang", p)
+          showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
 
-          } 
+        }
 
       }
 
@@ -598,28 +638,28 @@ const CTKhuyenMai = ({ data, CTKM, listSP }) => {
       </Box>
 
       {/* Flag Button dưới cùng */}
-    {CusInfo?.active !== "0"  != 0 && (
-      <Box style={{ position: "fixed", bottom: 0, left: 0, width: "96%", zIndex: 1000, background: "transparent" }} display="flex" justifyContent="center" alignItems="center" p={2}>
-        <button
-          onClick={() => {
-            GodonhangKM()
-          }}
-          style={{
-            background: Color.textAPPGreen2,
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            padding: "12px 32px",
-            fontSize: 14,
-            fontWeight: 600,
-            boxShadow: "0 2px 8px #0001",
-            cursor: "pointer"
-          }}
-        >
-          Lên đơn hàng gợi ý theo khuyến mãi này
-        </button>
-      </Box>
-    )}
+      {CusInfo?.active !== "0" != 0 && (
+        <Box style={{ position: "fixed", bottom: 0, left: 0, width: "96%", zIndex: 1000, background: "transparent" }} display="flex" justifyContent="center" alignItems="center" p={2}>
+          <button
+            onClick={() => {
+              GodonhangKM()
+            }}
+            style={{
+              background: Color.textAPPGreen2,
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "12px 32px",
+              fontSize: 14,
+              fontWeight: 600,
+              boxShadow: "0 2px 8px #0001",
+              cursor: "pointer"
+            }}
+          >
+            Lên đơn hàng gợi ý theo khuyến mãi này
+          </button>
+        </Box>
+      )}
     </>
   )
 }

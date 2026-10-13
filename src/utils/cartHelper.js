@@ -92,7 +92,7 @@ export const prepareOrderPayload = (Giohangx, datakm, number, CusInfo, SanPhamSu
         if (tkm.LOAI + '' == "1" || tkm.LOAI + '' == "2") {//tien
           chuoikm += pro.scheme + "#" + tkm.pk_seq + "#" + 1 + "#" + (tkm.LOAI + '' == "1" ? tkm.tongTien : tkm.chietKhau * pro.tonggiatriCK / 100.0) + "#-1#-1;"
         } if (tkm.LOAI + '' == "3") {//san pham
-          chuoikm += pro.scheme + "#" + tkm.pk_seq + "#" + 1 + "#" + 0 + "#" + sp.spId + "#" + sp.tongLuong + ";"
+          chuoikm += pro.scheme + "#" + tkm.pk_seq + "#" + 1 + "#" + 0 + "#" + tkm.spId + "#" + tkm.tongLuong + ";"
         }
 
 

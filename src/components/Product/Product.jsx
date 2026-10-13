@@ -48,18 +48,18 @@ const Product = (item) => {
   const Giohangx = store.getters.getGioHang.value || []
   useEffect(() => {
     console.log("Giohang in Product: ", Giohangx)
-    if (Giohangx&& Giohangx.length > 0  ) {
+    if (Giohangx && Giohangx.length > 0) {
       const foundItem = Giohangx.find((it) => it.id === id)
       if (foundItem) {
         setSoluong(foundItem.soluong)
       }
-    }else {
+    } else {
       setSoluong(0)
     }
     console.log("Giohang changed: ", Giohangx)
     // Reload the page when Giohang changes
     //window.location.reload();
-  },  [ JSON.stringify(Giohangx)])
+  }, [JSON.stringify(Giohangx)])
 
 
 
@@ -253,40 +253,50 @@ const Product = (item) => {
                 +
               </span>
             </div> :
-              <Box className=" m-0  p-0  flex justify-end p-2 pt-0 ">
-                <div className="flex items-center  border border-[#E0E0E0] p-0 rounded-md">
-                  <button
-                    className=" flex items-center justify-center p-2 w-8 h-8 "
-                    onClick={() => {
-                      let a = soluong - 1
-                      onClickAddGH(a < 0 ? 0 : a)
-                    }}
-                  >
-                    <FaMinus
-                      size={12}
-                      color={ConvertOpacity(Color.textAPPDefault, 0.4)}
-                    />
-                  </button>
-                  <div className="w-12 h-8 m-0 px-1 text-center  border-[#E0E0E0] border border-y-0 flex items-center justify-center">
-                    <Text size="xlarge" className=" text-center ">
-                      {" "}
-                      {soluong}{" "}
-                    </Text>
-                  </div>
-                  <button
-                    className=" flex items-center justify-center  p-2 w-8 h-8 "
-                    onClick={() => {
-                      let a = soluong + 1
-                      onClickAddGH(a)
-                    }}
-                  >
-                    <FaPlus
-                      size={12}
-                      color={ConvertOpacity(Color.textAPPDefault, 0.4)}
-                    />
-                  </button>
+              // <Box className=" m-0 p-0  flex justify-end p-2 pt-0 ">
+              <div
+                className="
+                      ml-auto
+                      flex-shrink-0
+                      flex items-center
+                      border border-[#E0E0E0]
+                      rounded-md
+                      bg-white
+                    "
+              >
+                <button
+                  className=" flex items-center justify-center p-2 w-8 h-8 "
+                  onClick={() => {
+                    let a = soluong - 1
+                    onClickAddGH(a < 0 ? 0 : a)
+                  }}
+                >
+                  <FaMinus
+                    size={12}
+                    color={ConvertOpacity(Color.textAPPDefault, 0.4)}
+                  />
+                </button>
+                <div className="w-12 h-8 m-0 px-1 text-center  border-[#E0E0E0] border border-y-0 flex items-center justify-center">
+                  <Text size="xlarge" className=" text-center ">
+                    {" "}
+                    {soluong}{" "}
+                  </Text>
                 </div>
-              </Box>}
+                <button
+                  className=" flex items-center justify-center  p-2 w-8 h-8 "
+                  onClick={() => {
+                    let a = soluong + 1
+                    onClickAddGH(a)
+                  }}
+                >
+                  <FaPlus
+                    size={12}
+                    color={ConvertOpacity(Color.textAPPDefault, 0.4)}
+                  />
+                </button>
+              </div>
+              // </Box>
+            }
           </div>
         </Link>
       </Card>

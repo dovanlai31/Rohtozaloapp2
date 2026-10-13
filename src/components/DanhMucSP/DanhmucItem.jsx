@@ -84,6 +84,7 @@ const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
             backgroundColor: item?.COLORS ? item.colors : (index % 2 == 0 ? '#005DAA' : '#00A3D5'),
             borderColor: "#F2F2F2",
             borderRadius: 20,
+            height: 65,
           }}
         >
           <div className="flex flex-col">

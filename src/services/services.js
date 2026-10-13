@@ -32,7 +32,7 @@ export const getBanner = async (sdt) => {
       )
     ).json()
     if (response) {
-      //console.log("khachhang/getBanner: ", response)
+      console.log("khachhang/getBanner: ", response)
       return JSON.parse(response.message)
     } else {
       return [

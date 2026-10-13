@@ -75,12 +75,29 @@ const Banner = (props) => {
                   let p = data[0]
                   console.log("spmua", p)
                   p.soluong = Math.ceil((dieukien[0].TONGTIEN || 0) / p.dongia);
+                  p.title = data[0].ten || data[0].TEN_SP
+                  p.thumbnail = data[0].HinhAnh || data[0].HINHANH
+                  p.ma = data[0].ma || data[0].MA_SP
+                  console.log("spmua", p)
+                  store.dispatch("SetAddGioHang", p)
+                  showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
                   // alert(p.soluong)
                   console.log("spmua", p)
                   store.dispatch("SetAddGioHang", p)
                   // showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
 
-                }
+                }else if (dieukien[0].TONGLUONG > 0) {// số lượng
+
+                let p = data[0]
+                console.log("spmua", p)
+                p.soluong = dieukien[0].TONGLUONG;
+
+                store.dispatch("SetAddGioHang", p)
+                //showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
+
+
+
+              }
 
 
               } else if (dieukien[0].TONGLUONG > 0) {// số lượng

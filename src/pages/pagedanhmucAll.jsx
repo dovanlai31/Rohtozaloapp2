@@ -81,7 +81,7 @@ const AllDanhmuc = ({ zmproute }) => {
       }}
       className=""
     >
-      <HeaderBack slot="fixed" title={"Danh mục"} />
+      <HeaderBack slot="fixed" title={"Danh mục" } />
 
       <Box
         className="wrapCatalogs   

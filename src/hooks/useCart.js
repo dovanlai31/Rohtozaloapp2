@@ -54,7 +54,21 @@ export const useCart = (CusInfo) => {
     updateViewMore(false)
     let listsp = Giohangx.filter((item) => item.Scheme == "" || !item.Scheme)
     updateGiohang(listsp)
+
+    //alert("useCart useEffect")
+
   }, [Giohangx, refres, datakm?.length])
+
+  
+  useEffect(() => {
+
+    updateAppKm(true)
+    updateDatakm([])
+    
+    //alert("useCart useEffect")
+
+  }, [Giohangx.length])
+
 
   useEffect(() => {
     dialog.current = zmp.dialog.create({
@@ -200,7 +214,6 @@ export const useCart = (CusInfo) => {
 
           const rawPromos = JSON.parse(data.data)
           console.log("applyPromotion response22 ", rawPromos)
-
           const { promotions, SanPhamSuDung: newSPSD, chuoiSort, prizes } = formatPromotionData(rawPromos, currentDieuChinh, Giohangx, store, [])
 
           console.log("Formatted promotions", promotions, newSPSD, chuoiSort, prizes)
@@ -277,6 +290,7 @@ export const useCart = (CusInfo) => {
         showDialog(p[0]?.MSG)
         if (p[0]?.RESULT == 1) {
           updateGiohang([])
+          updateAppKm(true)
           store.dispatch("remoteAllGioHang")
           updateDatakm([])
           backHome()
@@ -326,12 +340,17 @@ export const useCart = (CusInfo) => {
       let prizesForTkm = []
       tkm.spTra_vongquay.map((sp, j) => {
         prizesForTkm.push({ ...sp, name: sp.traDIENGIAI, value: sp.chietKhau, weight: sp.TYLETRUNGTHUONG })
-        //return sp
       })
-      tkm.prizes = prizesForTkm
-      prizes = prizesForTkm
+      // Loại bỏ phần tử trùng nhau theo id
+      const uniquePrizes = prizesForTkm.filter((item, index, self) =>
+        index === self.findIndex((t) => t.pk_seq === item.pk_seq)
+      )
+      tkm.prizes = uniquePrizes
+      prizes = uniquePrizes
     }
     console.log("🚀 ~ file: useCart.js:288 ~ handleShowvongQuay ~ prizes:", prizes)
+
+
     if (prizes.length > 0) {
       setMaxSpins(prizes[0]?.SOLUOTQUAY || 0) // Ví dụ: giới hạn quay 2 lần
       if (prizes && prizes.length > 0) {
