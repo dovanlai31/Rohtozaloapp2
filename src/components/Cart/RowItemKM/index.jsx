@@ -1,148 +1,53 @@
-import store from "../../../store"
-
-import React, { useState, useEffect, forwardRef, useRef } from "react"
-import {
-  Page,
-  Card,
-  Box,
-  Text,
-  Button,
-  zmp,
-  Icon,
-  Title,
-  List,
-  ListItem,
-  Link,
-} from "zmp-framework/react"
+import { forwardRef } from "react"
 import "./../../../styles/giohang.scss"
-import icongiohang from "@static/images/shoppingbag.png"
 import { formatCurrency } from "@utils/networking"
-import icongif2 from "@static/images/gift.png"
-import Color from "@components/common/Color"
+import { MdCardGiftcard, MdRedeem } from "react-icons/md"
 
+const parseSp = (s) => {
+  try {
+    const v = JSON.parse(s || "[]")
+    return Array.isArray(v) ? v : []
+  } catch (e) {
+    return []
+  }
+}
+
+// Một chương trình khuyến mãi được áp trong đơn hàng (chỉ xem)
 const RowItemKM = forwardRef((data, ref) => {
-  const elRef = useRef(null)
-  const { item, index, updateGiohang, tinhtien, length } = data
-  const Giohang = store.getters.getGioHang.value || []
-  const [soluong, updateItem] = useState(data.item.soluong)
-
-  useEffect(() => {
-    console.log("xxxx", item + " - ")
-    updateItem(data.item.soluong)
-  }, [item.soluong])
-
-  const setSoluongsp = (sl, id) => {
-    // let arrr =[].findIndex
-    let a = item
-    a.soluong = sl
-    updateItem(sl)
-    store.dispatch("updateGiohang", a)
-    tinhtien()
-  }
-
-  const deleteP = (id) => {
-    let arr = Giohang.filter((w) => w.id != id)
-    updateGiohang(arr)
-    store.dispatch("remoteItemGioHang", id)
-  }
+  const { item, index } = data
+  const spList = parseSp(item?.spTen)
+  const bySoLuong = Number(item?.soluong) > 0
 
   return (
-    <Box
-      p="0"
-      m="0"
-      key={index}
-      style={{
-        borderRadius: 16,
-        boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
-        background: "linear-gradient(90deg,#f8fafc 60%,#e0e7ff 100%)",
-        border: "1px solid #e0e7ff",
-        marginBottom: 16,
-        transition: "box-shadow 0.2s",
-        borderBottomColor: index == length - 1 ? "white" : "#eeee",
-        //width: "100%",
-      }}
-      className="km-item-hover"
-    >
-      <Box p="0" m="0" flex alignItems="center" style={{ width: "100%", gap: 16 }}>
-        <Box p="0" m="2" style={{ width: "100%" }}>
-          <Box p="0" m="0" mb="4" flex alignItems="center" style={{ gap: 8 }}>
-            <img src={icongif2} alt="gift" style={{ width: 32, height: 32, marginRight: 8 }} />
-            <Text
-              size="normal"
-              className="font-extrabold"
-              style={{
-                fontSize: "14px",
-                color: Color.textAPPGreen2,
-                letterSpacing: 0.5,
-                flex: 1,
-              }}
-            >
-              {item?.ten}
-            </Text>
-          </Box>
-          <Text
-            key={item?.Scheme}
-            size="small"
-            style={{ color: Color.textAPPGray, fontSize: "13px", marginBottom: 6 }}
-            className="desc text-blue-dark overflow-ellipsis text-wrap "
-          >
-            🎁 <span style={{ color: Color.textAPPBlueHeavy }}>{item?.Scheme}</span>
-          </Text>
-          {item.spTen &&
-            JSON.parse(item.spTen).length > 0 &&
-            JSON.parse(item.spTen).map((spkm) => (
-              <Box key={spkm.TEN} flex style={{ gap: 8, marginBottom: 4, background: '#f1f5f9', borderRadius: 8, padding: '4px 8px' }} alignItems="center" m="0" p="0">
-                <Icon zmp="zi-gift" size="18px" style={{ color: Color.textAPPBlueHeavy }} />
-                <Text
-                  size="small"
-                  style={{ color: Color.textAPPBlack, fontSize: "13px", fontWeight: 500 }}
-                  className="desc text-blue-dark overflow-ellipsis text-wrap "
-                >
-                  {spkm.TEN}
-                </Text>
-              </Box>
-            ))}
-          <Box
-            className="w-full m-0 mt-1 p-2 "
-            style={{ backgroundColor: "#e0e7ff", borderRadius: 8, marginTop: 8 }}
-            flex
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <Text
-              size="small"
-              style={{ color: Color.textAPPGray, fontSize: "12px", fontWeight: 600 }}
-            >
-             {item?.soluong>0 ? "Số lượng" : "Tổng tiền"}
-            </Text>
-            <Text
-              size="small"
-              style={{ color: Color.textAPPGreen2, fontSize: "15px", fontWeight: 700 }}
-            >
-              {item?.soluong>0 ? formatCurrency(item?.soluong || 0, true) : formatCurrency(item?.TongTien || 0, true)}
-            </Text>
-          </Box>
-        </Box>
-      </Box>
-      {/* <Box
-        m={0}
-        p={0}
-        style={{
-          width: "100%",
-          height: "5px",
-          paddingBottom: "10px",
-          WebkitBoxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-          boxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-        }}
-        className="BoxLine"
-      ></Box> */}
-      {/* <style>{`
-        .km-item-hover:hover {
-          box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-          border: 1.5px solid #38bdf8;
-        }
-      `}</style> */}
-    </Box>
+    <div key={index} className="rounded-xl border border-[#fde2c8] bg-[#fff8f0] p-3">
+      <div className="flex items-start gap-2">
+        <MdCardGiftcard size={18} className="mt-0.5 shrink-0 text-[#c26a00]" />
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-semibold leading-snug text-slate-700" style={{ overflowWrap: "anywhere" }}>
+            {item?.ten}
+          </div>
+          {item?.Scheme && <div className="mt-0.5 text-[11px] text-slate-500">{item.Scheme}</div>}
+        </div>
+      </div>
+
+      {spList.length > 0 && (
+        <div className="mt-2 flex flex-col gap-1">
+          {spList.map((spkm, i) => (
+            <div key={spkm.TEN || i} className="flex items-center gap-1.5 rounded-lg bg-white px-2 py-1.5 text-[12px] text-slate-600">
+              <MdRedeem size={14} className="shrink-0 text-[#c26a00]" />
+              <span className="min-w-0 flex-1">{spkm.TEN}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-2 flex items-center justify-between border-t border-dashed border-[#f3d5b5] pt-2 text-[12px]">
+        <span className="text-slate-500">{bySoLuong ? "Số lượng tặng" : "Giá trị khuyến mãi"}</span>
+        <span className="text-[14px] font-bold tabular-nums text-[#e5232a]">
+          {bySoLuong ? formatCurrency(item?.soluong || 0, true) : `${formatCurrency(item?.TongTien || 0, true)}đ`}
+        </span>
+      </div>
+    </div>
   )
 })
 export default RowItemKM

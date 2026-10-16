@@ -1,20 +1,15 @@
-import { ConvertOpacity } from "@utils/ConvertOpacity"
 import store from "../../store"
 import { formatCurrency } from "@utils/networking"
 import { FaMinus } from "react-icons/fa"
 import {
   Box,
-  Card,
-  Link,
   SkeletonBlock,
   SkeletonText,
-  Text,
   Title,
   useStore,
   zmp,
   zmpready,
 } from "zmp-framework/react"
-import Color from "@components/common/Color"
 import { FaPlus } from "react-icons/fa"
 import { useEffect, useState } from "react"
 
@@ -41,7 +36,9 @@ const Product = (item) => {
     mucduyet,
     CusInfo,
     showToast,
+    variant, // "grid": thẻ dọc dùng cho lưới 2 cột; mặc định: thẻ ngang
   } = item
+  const isGrid = variant === "grid"
   const [soluong, setSoluong] = useState(0)
 
 
@@ -123,183 +120,162 @@ const Product = (item) => {
     }
   }
 
+  if (loading && isGrid) {
+    return (
+      <div style={style} className="flex flex-col gap-2 rounded-xl border border-[#E3EBF6] bg-white p-2.5">
+        <SkeletonBlock height="110px" effect="fade" className="w-full rounded-lg" />
+        <SkeletonText effect="fade"></SkeletonText>
+        <SkeletonText effect="fade"></SkeletonText>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
-      <Box style={style} mx="0" my="2" className="post">
-        <Card inset className="!p-0 overflow-hidden rounded-2xl">
-          <div className="flex flex-row items-center gap-3 p-3">
-            <SkeletonBlock
-              width={88}
-              height={88}
-              effect="fade"
-              className="rounded-xl flex-shrink-0"
-            />
-            <div className="flex flex-col gap-2 flex-1">
-              <SkeletonText effect="fade"></SkeletonText>
-              <SkeletonText effect="fade"></SkeletonText>
-              <SkeletonText effect="fade"></SkeletonText>
-            </div>
+      <Box style={style} mx="0" my="1" className="post w-full">
+        <div className="mx-3 flex items-center gap-3 rounded-xl border border-[#E3EBF6] bg-white px-3 py-2.5">
+          <SkeletonBlock width={64} height={64} effect="fade" className="flex-shrink-0 rounded-lg" />
+          <div className="flex flex-1 flex-col gap-2">
+            <SkeletonText effect="fade"></SkeletonText>
+            <SkeletonText effect="fade"></SkeletonText>
+            <SkeletonText effect="fade"></SkeletonText>
           </div>
-        </Card>
+        </div>
       </Box>
     )
   }
 
-  console.log("loading san pham", item)
-  return (
-    <Box style={style} mx="0" my="2" className="post w-full">
-      <Card
-        inset
-        className="!p-0 overflow-hidden rounded-2lg w-full border border-[#e8edf2]"
-        style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.10)" }}
+  const openDetail = () => {
+    zmpready(() => {
+      store.dispatch("SetCurentProduct", {
+        id,
+        title: ten,
+        thumbnail: HinhAnh,
+        dongia,
+        HinhAnh,
+        HinhAnh1,
+        HinhAnh2,
+        ten,
+        donvi,
+        ma,
+        qcThung,
+        mota,
+        chidinh,
+        huongdan,
+        thanhphan,
+      })
+    })
+    zmp.views.main.router.navigate("/detail/?id=" + id)
+  }
+
+  const priceText = CusInfo?.active !== "0" ? formatCurrency(dongia, true) + "đ" : "Liên hệ"
+
+  const addButton = (
+    <button
+      type="button"
+      aria-label="Thêm vào giỏ hàng"
+      onClick={() => onClickAddGH(soluong + 1)}
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-0 bg-[#e5232a] text-white active:opacity-80"
+    >
+      <FaPlus size={12} />
+    </button>
+  )
+
+  const stepper = (
+    <div className={`flex shrink-0 items-center rounded-full border border-[#d5e2f2] bg-white ${isGrid ? "w-full justify-between" : ""}`}>
+      <button
+        type="button"
+        aria-label="Giảm số lượng"
+        className="flex h-8 w-8 items-center justify-center border-0 bg-transparent text-primary"
+        onClick={() => {
+          let a = soluong - 1
+          onClickAddGH(a < 0 ? 0 : a)
+        }}
       >
-        <Link
-          // onClick={() => {
-          //   zmpready(() => {
-          //     store.dispatch("SetCurentProduct", {
-          //       id,
-          //       title: ten,
-          //       thumbnail: HinhAnh,
-          //       dongia,
-          //       HinhAnh,
-          //       HinhAnh1,
-          //       HinhAnh2,
-          //       ten,
-          //       donvi,
-          //       ma,
-          //       qcThung,
-          //       mota,
-          //       chidinh,
-          //       huongdan,
-          //       thanhphan,
-          //     })
-          //   })
-          //   zmp.views.main.router.navigate("/detail/?id=" + id)
-          // }}
-          noLinkClass
+        <FaMinus size={10} />
+      </button>
+      <span className="min-w-[24px] text-center text-sm font-semibold tabular-nums text-slate-700">{soluong}</span>
+      <button
+        type="button"
+        aria-label="Tăng số lượng"
+        className="flex h-8 w-8 items-center justify-center border-0 bg-transparent text-primary"
+        onClick={() => onClickAddGH(soluong + 1)}
+      >
+        <FaPlus size={10} />
+      </button>
+    </div>
+  )
+
+  // Thẻ dọc cho lưới 2 cột: ảnh trên, tên, giá + nút thêm giỏ
+  if (isGrid) {
+    return (
+      <div style={style} className="flex min-w-0 flex-col rounded-xl border border-[#E3EBF6] bg-white p-2.5">
+        <button
+          type="button"
+          onClick={openDetail}
+          className="flex h-[110px] w-full items-center justify-center overflow-hidden rounded-lg !border-0 !bg-transparent !p-0 !shadow-none outline-none"
         >
-          <div className="flex flex-row items-center gap-3 p-3 relative">
-            {/* Hình ảnh bên trái */}
-            <Link
-              onClick={() => {
-                zmpready(() => {
-                  store.dispatch("SetCurentProduct", {
-                    id,
-                    title: ten,
-                    thumbnail: HinhAnh,
-                    dongia,
-                    HinhAnh,
-                    HinhAnh1,
-                    HinhAnh2,
-                    ten,
-                    donvi,
-                    ma,
-                    qcThung,
-                    mota,
-                    chidinh,
-                    huongdan,
-                    thanhphan,
-                  })
-                })
-                zmp.views.main.router.navigate("/detail/?id=" + id)
-              }}>
-              <div
-                className="w-[90px] h-[90px] flex-shrink-0 bg-[#f0f4f8] 
-            rounded-2xl flex items-center justify-center p-[10px] overflow-hidden"
-              >
-                <img
-                  src={HinhAnh}
-                  alt={ten}
-                  className="w-full h-full object-contain "
-                />
-              </div>
-            </Link>
+          <img src={HinhAnh} alt={ten} loading="lazy" className="h-full w-full object-contain" />
+        </button>
 
-            {/* Nội dung bên phải */}
-            <div className="flex flex-col flex-1 gap-1 pr-10">
-              <span className="font-bold text-sm leading-snug text-gray-800 line-clamp-2">
-                {ten}
-              </span>
+        <button
+          type="button"
+          onClick={openDetail}
+          className="mt-2 line-clamp-2 min-h-[36px] border-0 bg-transparent p-0 text-left text-[13px] font-medium leading-snug text-slate-700"
+        >
+          {ten}
+        </button>
+        <div className="mt-0.5 truncate text-[11px] text-slate-500">{[ma, donvi].filter(Boolean).join(" · ")}</div>
 
-              {/* Badge đơn vị */}
-              {donvi && (
-                <span
-                  className="inline-block self-start text-[11px] font-extrabold
-                text-primary bg-[#D5E6F5] rounded-full px-[10px] py-[2px]"
-                >
-                  {donvi}
-                </span>
-              )}
-
-              {/* Giá */}
-              {CusInfo?.active !== "0" ? (
-                <span className="text-[15px] font-bold text-[#e5232a] mt-[2px]">
-                  {formatCurrency(dongia, true) + "đ"}
-                </span>
-              ) : (
-                <span className="text-[15px] font-bold text-[#e5232a] mt-[2px]">
-                  Liên hệ
-                </span>
-              )}
+        <div className="mt-auto pt-2">
+          {soluong == 0 ? (
+            <div className="flex items-center justify-between gap-1">
+              <span className="min-w-0 truncate text-[14px] font-bold tabular-nums text-primary">{priceText}</span>
+              {addButton}
             </div>
+          ) : (
+            <>
+              <div className="mb-1.5 truncate text-[14px] font-bold tabular-nums text-primary">{priceText}</div>
+              {stepper}
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
 
-            {/* Nút + tròn đỏ góc phải dưới */}
-            {soluong == 0 ? <div
-              className="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-[#e5232a] flex items-center justify-center flex-shrink-0"
-              style={{ boxShadow: "0 3px 8px rgba(229,35,42,0.4)" }}
-              onClick={() => onClickAddGH(soluong + 1)}
-            >
-              <span className="text-white text-[22px] leading-none select-none ">
-                +
-              </span>
-            </div> :
-              // <Box className=" m-0 p-0  flex justify-end p-2 pt-0 ">
-              <div
-                className="
-                      ml-auto
-                      flex-shrink-0
-                      flex items-center
-                      border border-[#E0E0E0]
-                      rounded-md
-                      bg-white
-                    "
-              >
-                <button
-                  className=" flex items-center justify-center p-2 w-8 h-8 "
-                  onClick={() => {
-                    let a = soluong - 1
-                    onClickAddGH(a < 0 ? 0 : a)
-                  }}
-                >
-                  <FaMinus
-                    size={12}
-                    color={ConvertOpacity(Color.textAPPDefault, 0.4)}
-                  />
-                </button>
-                <div className="w-12 h-8 m-0 px-1 text-center  border-[#E0E0E0] border border-y-0 flex items-center justify-center">
-                  <Text size="xlarge" className=" text-center ">
-                    {" "}
-                    {soluong}{" "}
-                  </Text>
-                </div>
-                <button
-                  className=" flex items-center justify-center  p-2 w-8 h-8 "
-                  onClick={() => {
-                    let a = soluong + 1
-                    onClickAddGH(a)
-                  }}
-                >
-                  <FaPlus
-                    size={12}
-                    color={ConvertOpacity(Color.textAPPDefault, 0.4)}
-                  />
-                </button>
-              </div>
-              // </Box>
-            }
+  return (
+    <Box style={style} mx="0" my="1" className="post w-full">
+      <div className="mx-3 flex items-center gap-3 rounded-xl border border-[#E3EBF6] bg-white px-3 py-2.5">
+        {/* Hình ảnh */}
+        <button
+          type="button"
+          onClick={openDetail}
+          className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg !border-0 !bg-transparent !p-0 !shadow-none outline-none"
+        >
+          <img src={HinhAnh} alt={ten} loading="lazy" className="h-full w-full object-contain" />
+        </button>
+
+        {/* Nội dung */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <button
+            type="button"
+            onClick={openDetail}
+            className="line-clamp-2 border-0 bg-transparent p-0 text-left text-[14px] font-medium leading-snug text-slate-700"
+          >
+            {ten}
+          </button>
+          <div className="mt-0.5 truncate text-xs text-slate-500">
+            {[ma, donvi].filter(Boolean).join(" · ")}
           </div>
-        </Link>
-      </Card>
+
+          <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
+            <span className="text-[15px] font-bold tabular-nums text-primary">{priceText}</span>
+
+            {soluong == 0 ? addButton : stepper}
+          </div>
+        </div>
+      </div>
     </Box>
   )
 }

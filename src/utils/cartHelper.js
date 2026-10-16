@@ -1,3 +1,5 @@
+import { chiaSoLuong, chooserInfo, quotaOf, traBangSanPham } from "./kmRules"
+
 export const calculateTotals = (Giohangx, datakm) => {
   let tt = 0
   Giohangx.forEach((item) => {
@@ -19,7 +21,7 @@ export const calculateTotals = (Giohangx, datakm) => {
   let ttkm = 0
   datakm.forEach((item) => {
     ttkm += item.trakhuyenmai.reduce((total, tkm) => {
-      if (tkm.loai + '' == "1" || tkm.loai + '' == "2") {
+      if ((tkm.loai + '' == "1" || tkm.loai + '' == "2") && tkm.chontkm !== false && !traBangSanPham(tkm, item)) {
         if (!tkm.spTra_vongquay || tkm.spTra_vongquay.length == 0) {
           return total + parseFloat(tkm.tongtien || 0)
         }
@@ -98,32 +100,30 @@ export const prepareOrderPayload = (Giohangx, datakm, number, CusInfo, SanPhamSu
 
       }))
     } else {
+      // định dạng: scheme#trakmId#sosuat#tongtien|0#spId|-1#soluong|-1 (giống saveEditKhuyenMai app sale)
       pro.trakhuyenmai.forEach(tkm => {
-        if (tkm.chontkm) {
-          if (tkm.loai + '' == '3') {
-            if (tkm.IS_TRASP_HanMucTien == '1') {
-              tkm.spTra_xuly?.forEach(sp => {
-                let tt = sp.soluong * sp.gia
-                if (parseInt(sp.soluong) > 0)
-                  chuoikm += pro.scheme + "#" + tkm.id + "#" + pro.sosuat + "#" + tt + "#" + sp.spId + "#" + sp.soluong + ";"
-              })
-            } else {
-              if (tkm.hinhthuc == 2) {
-                tkm.spTra?.forEach((sp, i) => {
-                  if (i == 0) {
-                    chuoikm += pro.scheme + "#" + tkm.id + "#" + pro.sosuat + "#0#" + sp.spId + "#" + (tkm.tongluong * pro.sosuat) + ";"
-                  }
-                })
-              } else {
-                tkm.spTra?.forEach(sp => {
-                  if (parseInt(sp.soluong) > 0)
-                    chuoikm += pro.scheme + "#" + tkm.id + "#" + pro.sosuat + "#0#" + sp.spId + "#" + sp.soluong + ";"
-                })
-              }
-            }
+        if (!tkm.chontkm) return
+        const chooser = chooserInfo(tkm, pro)
+        if (chooser) {
+          // sản phẩm người dùng đã chọn trong bảng chọn quà; trả tiền bằng SP thì số suất = 1
+          const sosuat = chooser.kind === "tien" ? 1 : pro.sosuat
+          tkm.spTra_xuly?.forEach(sp => {
+            if (parseFloat(sp.soluong) > 0)
+              chuoikm += pro.scheme + "#" + tkm.id + "#" + sosuat + "#0#" + sp.spId + "#" + sp.soluong + ";"
+          })
+        } else if (tkm.loai + '' == '3' || tkm.loai + '' == '5') {
+          if (tkm.hinhthuc == 2 && !chiaSoLuong(tkm, pro)) {
+            // bất kỳ trong, không cho chọn: dồn hết vào sản phẩm đầu
+            const sp = tkm.spTra?.[0]
+            if (sp) chuoikm += pro.scheme + "#" + tkm.id + "#" + pro.sosuat + "#0#" + sp.spId + "#" + quotaOf(tkm, pro) + ";"
           } else {
-            chuoikm += pro.scheme + "#" + tkm.id + "#" + (pro.soXuat ?? pro.sosuat) + "#" + tkm.tongtien + "#-1#-1;"
+            tkm.spTra?.forEach(sp => {
+              if (parseFloat(sp.soluong) > 0)
+                chuoikm += pro.scheme + "#" + tkm.id + "#" + pro.sosuat + "#0#" + sp.spId + "#" + sp.soluong + ";"
+            })
           }
+        } else {
+          chuoikm += pro.scheme + "#" + tkm.id + "#" + (pro.soXuat ?? pro.sosuat) + "#" + tkm.tongtien + "#-1#-1;"
         }
       })
     }
@@ -205,7 +205,11 @@ export const checkMissingPromoProducts = (datakm) => {
   let checkChonSpTraKm = ""
   datakm.forEach(pro => {
     pro.trakhuyenmai.forEach(tkm => {
-      if (tkm.loai == 3 && tkm.IS_TRASP_HanMucTien == 1) {
+      if (tkm.chontkm && chiaSoLuong(tkm, pro)) {
+        const tong = (tkm.spTra || []).reduce((t, sp) => t + (parseFloat(sp.soluong) || 0), 0)
+        if (tong !== quotaOf(tkm, pro)) checkChonSpTraKm += ' ' + tkm.diengiai
+      }
+      if (chooserInfo(tkm, pro)) {
         if (tkm.chontkm) {
           let spTra_Choix = tkm.spTra_xuly ? tkm.spTra_xuly.filter(sp => sp.soluong > 0) : []
           if (spTra_Choix.length == 0) {
@@ -230,14 +234,17 @@ export const formatPromotionData = (dataArray, dieuchinh, listsp_original, store
   let prizes = []
 
   let promotions = dataArray.map(pro => {
-    SanPhamSuDung += SanPhamSuDung.length <= 0 ? pro.SanPhamSuDung : (';' + pro.SanPhamSuDung)
+    if (pro.SanPhamSuDung) // API web không trả SanPhamSuDung, chỉ lấy từ điều kiện bên dưới
+      SanPhamSuDung += SanPhamSuDung.length <= 0 ? pro.SanPhamSuDung : (';' + pro.SanPhamSuDung)
     pro.dieukienkhuyenmai = typeof pro.dieukienkhuyenmai === 'string' ? JSON.parse(pro.dieukienkhuyenmai) : pro.dieukienkhuyenmai
     pro.trakhuyenmai = typeof pro.trakhuyenmai === 'string' ? JSON.parse(pro.trakhuyenmai) : pro.trakhuyenmai
 
     pro.trakhuyenmai.map((tkm, i) => {
-      if (tkm.loai + '' == "3") {
-        tkm.spTra = typeof tkm.spTra === 'string' ? JSON.parse(tkm.spTra) : tkm.spTra
+      if (tkm.loai + '' == "3" || tkm.loai + '' == "5") {
+        tkm.spTra = typeof tkm.spTra === 'string' ? JSON.parse(tkm.spTra) : (tkm.spTra || [])
         tkm.spTra.map((sp, j) => {
+          if (sp.gia === undefined) sp.gia = sp.dongia ?? sp.Dongia ?? 0
+          if (sp.tonkho === undefined && sp.Tonkho !== undefined) sp.tonkho = sp.Tonkho
           if (dieuchinh === 1) {
             if (tkm.hinhthuc == '2' && tkm.IS_TRASP_HanMucTien != '1') {
               if (j == 0) {
@@ -258,7 +265,7 @@ export const formatPromotionData = (dataArray, dieuchinh, listsp_original, store
           return sp
         })
       }
-      if (tkm.spTra_vongquay.length > 0) {
+      if ((tkm.spTra_vongquay || []).length > 0) {
         tkm.spTra_vongquay = typeof tkm.spTra_vongquay === 'string' ? JSON.parse(tkm.spTra_vongquay) : tkm.spTra_vongquay
         let prizesForTkm = []
         tkm.spTra_vongquay.map((sp, j) => {

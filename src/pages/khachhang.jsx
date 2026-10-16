@@ -231,7 +231,7 @@ const Khachhang = () => {
                 style={{ background: 'white' }}
               />
             </span>
-            {/* <div className="text-[17px] font-bold text-[#222]">{item.title}</div> */}
+            {/* <div className="text-[17px] font-bold text-slate-800">{item.title}</div> */}
           </button>
         ))}
       </div>

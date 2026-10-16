@@ -62,7 +62,7 @@ const ReportXuDiem = ({ zmproute }) => {
                   </span>
                   {title} Khách Hàng
                 </Box>
-                <Box className="text-xl font-medium text-blue-imex">0</Box>
+                <Box className="text-xl font-medium text-primary">0</Box>
               </Box>
               <Box
                 m="0"
@@ -86,7 +86,7 @@ const ReportXuDiem = ({ zmproute }) => {
                   </span>
                   {title} Đơn Hàng
                 </Box>
-                <Box className="text-xl font-medium text-blue-imex">0</Box>
+                <Box className="text-xl font-medium text-primary">0</Box>
               </Box>
               <Box
                 m="0"
@@ -110,7 +110,7 @@ const ReportXuDiem = ({ zmproute }) => {
                   </span>
                   {title} Còn Lại
                 </Box>
-                <Box className="text-xl font-medium text-blue-imex">0</Box>
+                <Box className="text-xl font-medium text-primary">0</Box>
               </Box>
             </div>
           </Box>

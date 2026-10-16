@@ -1,664 +1,451 @@
-import React, { useEffect, useState } from "react"
-import {
-  Tabs,
-  Tab,
-  Tabbar,
-  Box,
-  Link,
-  Card,
-  Text,
-  zmp,
-  zmpready,
-  useStore,
-} from "zmp-framework/react"
+import { useMemo, useState } from "react"
+import { Link, zmp, useStore } from "zmp-framework/react"
 import "../../styles/notifypage.scss"
-import { request } from "@utils/networking"
-import { Voucher } from "@components/Icons"
-import Color from "@components/common/Color"
-import { BiSolidDiscount } from "react-icons/bi"
-import { FaInbox, FaStar } from "react-icons/fa6"
-import { BsCartFill } from "react-icons/bs"
-import { BsReceipt } from "react-icons/bs"
-import { formatDateToDDMMYYYY } from "@utils/util"
+import { FaMinus, FaPlus } from "react-icons/fa"
+import {
+  MdArrowForward,
+  MdCardGiftcard,
+  MdCheckCircle,
+  MdExpandLess,
+  MdExpandMore,
+  MdEvent,
+  MdImage,
+  MdLocalOffer,
+  MdShoppingCart,
+} from "react-icons/md"
+import { formatCurrency } from "@utils/networking"
+import { LEVEL, daysLeftText, fmtDate, timeInfo } from "@utils/promoTime"
 import store from "../../store"
-import { Icon } from "zmp-ui"
-import { showToast } from "zmp-sdk"
 
+const money = (n) => `${formatCurrency(Math.round(Number(n) || 0), true)}đ`
+const num = (n) => Number(n) || 0
 
-//import { C } from "../../../www/assets/index.a2bfea25.module"
-const CTKhuyenMai = ({ data, CTKM, listSP }) => {
+const toast = (text) => zmp.toast.create({ text, position: "center", closeTimeout: 1800 }).open()
+
+// Mô tả điều kiện "MUA" (dieukien: DIEUKIENKHUYENMAI, LOAI 1 = bắt buộc từng SP, 2 = bất kỳ trong)
+const describeCondition = (dk, spList) => {
+  if (!dk) return { title: "Theo điều kiện chương trình", sub: "" }
+  if (num(dk.TONGTIEN_DKKM) > 0) {
+    return { title: `Đơn từ ${money(dk.TONGTIEN_DKKM)}`, sub: "Tính trên các sản phẩm áp dụng" }
+  }
+  if (num(dk.LOAI) === 1) {
+    const req = spList.filter((s) => num(s.SOLUONG) > 0)
+    if (req.length === 1) return { title: `Mua ${req[0].SOLUONG} ${req[0].DVDL || ""}`.trim(), sub: req[0].TEN_SP }
+    return { title: "Mua đủ số lượng từng sản phẩm", sub: `${req.length || spList.length} sản phẩm bắt buộc` }
+  }
+  const sl = num(dk.TONGLUONG_DKKM)
+  return {
+    title: `Mua ${sl} sản phẩm`,
+    sub: spList.length > 1 ? `Bất kỳ trong ${spList.length} sản phẩm áp dụng` : spList[0]?.TEN_SP || "",
+  }
+}
+
+// Mô tả phần thưởng "NHẬN" (tra: TRAKHUYENMAI, LOAI 1 = tiền, 2 = chiết khấu, 3 = sản phẩm)
+const describeReward = (tra, spTra) => {
+  if (!tra) return { title: "Ưu đãi theo chương trình", sub: "" }
+  const val = String(tra.TONGTIEN || "").replace(" VND", "đ").replace(/,/g, ".")
+  if (num(tra.LOAI) === 1) return { title: `Tặng ${val}`, sub: tra.DIENGIAI }
+  if (num(tra.LOAI) === 2) return { title: `Chiết khấu ${val.replace(" %", "%")}`, sub: tra.DIENGIAI }
+  if (spTra.length === 1) return { title: `Tặng ${val} ${spTra[0].DVDL || ""}`.trim(), sub: spTra[0].TEN_SP }
+  return { title: `Tặng ${val} sản phẩm`, sub: spTra.length ? `Chọn trong ${spTra.length} sản phẩm` : tra.DIENGIAI }
+}
+
+// Tiến độ đạt điều kiện theo giỏ hàng hiện tại + số lượng còn thiếu từng sản phẩm
+const calcProgress = (dk, spList, cartQty) => {
+  if (!dk || !spList.length) return null
+  const qty = (sp) => cartQty[String(sp.SANPHAM_FK)] || 0
+
+  if (num(dk.TONGTIEN_DKKM) > 0) {
+    const target = num(dk.TONGTIEN_DKKM)
+    const current = spList.reduce((s, sp) => s + qty(sp) * num(sp.dongia), 0)
+    const missingMoney = Math.max(0, target - current)
+    // Bù phần thiếu bằng sản phẩm đã có trong giỏ (hoặc sản phẩm đầu tiên có giá)
+    const base = spList.find((sp) => qty(sp) > 0 && num(sp.dongia) > 0) || spList.find((sp) => num(sp.dongia) > 0)
+    const add = base && missingMoney > 0 ? [{ sp: base, n: Math.ceil(missingMoney / num(base.dongia)) }] : []
+    return { current, target, isMoney: true, done: missingMoney <= 0, add }
+  }
+
+  if (num(dk.LOAI) === 1) {
+    const req = spList.filter((sp) => num(sp.SOLUONG) > 0)
+    const target = req.reduce((s, sp) => s + num(sp.SOLUONG), 0)
+    const current = req.reduce((s, sp) => s + Math.min(qty(sp), num(sp.SOLUONG)), 0)
+    const add = req.filter((sp) => qty(sp) < num(sp.SOLUONG)).map((sp) => ({ sp, n: num(sp.SOLUONG) - qty(sp) }))
+    return { current, target, isMoney: false, done: target > 0 && add.length === 0, add }
+  }
+
+  const target = num(dk.TONGLUONG_DKKM)
+  const current = spList.reduce((s, sp) => s + qty(sp), 0)
+  const missing = Math.max(0, target - current)
+  const base = spList.find((sp) => qty(sp) > 0) || spList[0]
+  return { current, target, isMoney: false, done: target > 0 && missing === 0, add: missing > 0 ? [{ sp: base, n: missing }] : [] }
+}
+
+const toCartItem = (sp, soluong) => ({
+  ...sp,
+  id: sp.SANPHAM_FK,
+  ten: sp.TEN_SP,
+  title: sp.TEN_SP,
+  ma: sp.MA_SP,
+  donvi: sp.DVDL,
+  HinhAnh: sp.HINHANH,
+  thumbnail: sp.HINHANH,
+  dongia: sp.dongia,
+  soluong,
+})
+
+const SectionTitle = ({ icon, children, right }) => (
+  <div className="mb-2 flex items-center justify-between px-1">
+    <span className="flex items-center gap-1.5 text-[14px] font-semibold text-slate-700">
+      {icon}
+      {children}
+    </span>
+    {right}
+  </div>
+)
+
+const ProductThumb = ({ src, name }) => (
+  <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+    {src ? (
+      <img src={src} alt={name || ""} loading="lazy" className="h-full w-full object-contain" />
+    ) : (
+      <MdImage size={22} className="text-slate-300" />
+    )}
+  </span>
+)
+
+const SP_HIEN_THI = 10 // số sản phẩm áp dụng hiện sẵn, còn lại bấm "Xem thêm"
+
+const CTKhuyenMai = ({ data, CTKM }) => {
+  const [showAllSp, setShowAllSp] = useState(false)
   const CusInfo = useStore("getCusInfo")
-  console.log("CusInfo ", CusInfo)
-  let dieukien = []
-  let tra = []
-  let sanphamdk = []
-  let sanphamtra = []
+  const ListGiohang = useStore("getGioHang")
+  const canBuy = CusInfo?.active !== "0"
 
-  if (data.length > 0) {
-    console.log(data)
-
-    if (data[0].hasOwnProperty("dieukien")) {
-      dieukien = JSON.parse(data[0].dieukien)
-    }
-
-    if (data[0].hasOwnProperty("tra")) {
-      tra = JSON.parse(data[0].tra)
-    }
-
-    if (data[1].hasOwnProperty("dieukien")) {
-      sanphamdk = JSON.parse(data[1].dieukien)
-    }
-
-    if (data[1].hasOwnProperty("tra")) {
-      sanphamtra = JSON.parse(data[1].tra)
+  const parse = (s) => {
+    try {
+      return JSON.parse(s || "[]")
+    } catch (e) {
+      return []
     }
   }
-  const GodonhangKM = () => {
-    console.log("data...  ", data)
-    if (dieukien.length > 0) {
-      console.log("dieukien", dieukien)
-      let loaikm = dieukien[0].LOAI
-      if (loaikm == "1" || loaikm == "2") {//
-        if (dieukien[0].TONGTIEN_DKKM > 1) {
-          if (sanphamdk.length > 0) {
+  const dieukien = data.length > 0 ? parse(data[0]?.dieukien) : []
+  const tra = data.length > 0 ? parse(data[0]?.tra) : []
+  const sanphamdk = data.length > 1 ? parse(data[1]?.dieukien).filter((x) => x?.SANPHAM_FK) : []
+  const sanphamtra = data.length > 1 ? parse(data[1]?.tra).filter((x) => x?.SANPHAM_FK) : []
 
-            console.log("sanphamdk", sanphamdk)
-            let Product = sanphamdk[0]
-            console.log("spmua", Product)
+  const cartQty = useMemo(() => {
+    const m = {}
+    ;(ListGiohang || []).forEach((it) => (m[String(it.id)] = num(it.soluong)))
+    return m
+  }, [ListGiohang])
 
-            let p = Product
-            console.log("sanphamdk", dieukien[0].TONGTIEN_DKKM, p.dongia, Math.ceil((dieukien[0].TONGTIEN_DKKM || 0) / p.dongia))
-            p.soluong = Math.ceil((dieukien[0].TONGTIEN_DKKM || 0) / p.dongia)
-            p.title = Product.ten || Product.TEN_SP
-            p.thumbnail = Product.HinhAnh || Product.HINHANH
-            p.ma = Product.ma || Product.MA_SP
-            p.dongia = Product.dongia,
-              p.id = Product.id || Product.SANPHAM_FK
-              
-            console.log("spmua", p)
-            store.dispatch("SetAddGioHang", p)
-            showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
+  const dk = dieukien[0]
+  const cond = describeCondition(dk, sanphamdk)
+  const reward = describeReward(tra[0], sanphamtra)
+  const progress = calcProgress(dk, sanphamdk, cartQty)
+  const t = timeInfo(CTKM?.TUNGAY, CTKM?.DENNGAY)
+  const lv = LEVEL[t.level]
 
-          }
-        } else {
-
-          if (dieukien[0].TONGLUONG_DKKM > 0) {// số lượng
-            if (sanphamdk.length > 0) {
-              //console.log("sanphamdk", sanphamdk)
-              let Product = sanphamdk[0]
-              console.log("spmua sp", Product)
-
-              let p = Product
-              p.soluong = dieukien[0].TONGLUONG_DKKM;
-              p.title = Product.ten || Product.TEN_SP
-              p.thumbnail = Product.HinhAnh || Product.HINHANH
-              p.ma = Product.MA_SP,
-                p.dongia = Product.dongia,
-                p.id = Product.id || Product.SANPHAM_FK
-
-
-              // spId: s.id,
-              //       soluong: s.soluong,
-              //       dongia: s.dongia * (1 - ((s.chietkhauKM ? s.chietkhauKM / 100 : 0) + (s.nhomCkGam ? s.nhomCkGam / 100 : 0))),
-              //       vat: s.vat,
-              //       thung: 0,
-              //       nhomCkGam: s.nhomCkGam ? s.nhomCkGam : 0,
-              //       chietkhauKM: s.chietkhauKM ? s.chietkhauKM : 0,
-              //       spMa: s.ma,
-              //       dvdl_fk: s.dvdl_fk
-
-              store.dispatch("SetAddGioHang", p)
-              showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
-
-            }
-
-          }
-        }
-
-
-      } else if (dieukien[0].TONGLUONG > 0) {// số lượng
-        if (sanphamdk.length > 0) {
-          //console.log("sanphamdk", sanphamdk)
-          let Product = sanphamdk[0]
-          console.log("spmua", Product)
-
-          let p = Product
-          p.soluong = dieukien[0].TONGLUONG_DKKM;
-          p.title = Product.ten
-          p.thumbnail = Product.HinhAnh
-          store.dispatch("SetAddGioHang", p)
-          showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
-
-        }
-
-      }
-
-
-    }
-    backHome();
-
+  const setQty = (sp, n) => {
+    if (n <= 0) store.dispatch("remoteItemGioHang", sp.SANPHAM_FK)
+    else store.dispatch("SetAddGioHang", toCartItem(sp, n))
   }
+
+  // Thêm đúng phần còn thiếu để đủ điều kiện (giữ nguyên số lượng đang có trong giỏ)
+  const addMissing = () => {
+    if (!progress?.add.length) return
+    progress.add.forEach(({ sp, n }) => setQty(sp, (cartQty[String(sp.SANPHAM_FK)] || 0) + n))
+    toast("Đã thêm vào giỏ hàng, đơn đã đủ điều kiện")
+  }
+
   const backHome = () => {
     zmp.views.current.router.back()
     zmp.views.main?.router?.clearPreviousHistory()
     if (zmp.views.main?.router?.currentRoute?.path !== "/") {
-      zmp.views.main.router.navigate("/", {
-        reloadCurrent: true,
-      })
+      zmp.views.main.router.navigate("/", { reloadCurrent: true })
     }
-    setTimeout(() => {
-      zmp.tab.show("#view-giohang")
-    }, 250)
-
+    setTimeout(() => zmp.tab.show("#view-giohang"), 250)
   }
+
+  const one = progress?.add.length === 1 ? progress.add[0] : null
+  const ctaText = !progress
+    ? "Xem giỏ hàng"
+    : progress.done
+    ? "Xem giỏ hàng"
+    : one
+    ? `Thêm ${one.n} ${one.sp.DVDL || ""} ${one.sp.TEN_SP} để đủ điều kiện`.replace(/\s+/g, " ")
+    : "Thêm sản phẩm còn thiếu để đủ điều kiện"
+  const onCta = !progress || progress.done ? backHome : addMissing
+  const pct = progress && progress.target > 0 ? Math.min(100, (progress.current / progress.target) * 100) : 0
+
   return (
     <>
-      <Box m={0} p={0}>
-        <div className="flex justify-around items-center w-auto primary-background p-1 m-2 rounded shadow-lg">
-
-          <Box className="m-0">
-            <Text className="text-sm font-medium m-0" style={{ color: "#f8f8f8" }}>
-              {CTKM?.diengiai}
-            </Text>
-            <Text className="text-sm font-normal m-0" style={{ color: "#f8f8f8" }}>
-              {CTKM?.loaict}
-            </Text>
-            <Text className="text-sm font-normal m-0" style={{ color: "#f8f8f8" }}>
-              {formatDateToDDMMYYYY(CTKM?.TUNGAY || "", "/")} -{" "}
-              {formatDateToDDMMYYYY(CTKM?.DENNGAY || "", "/")}
-            </Text>
-
-
-          </Box>
-          <Box className="RoundIcon">
-            <BiSolidDiscount fill="#ff6a5b" size={32} />
-          </Box>
-
+      <div className="flex flex-col gap-3 px-4 pb-32 pt-3">
+        {/* Thông tin chương trình + thời gian */}
+        <div className="rounded-xl border border-[#E3EBF6] bg-white p-3.5">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="flex min-w-0 items-center gap-1 text-[11px] font-medium text-slate-500">
+              <MdLocalOffer size={13} className="shrink-0 text-[#e5232a]" />
+              <span className="truncate">{CTKM?.scheme || "Chương trình khuyến mãi"}</span>
+            </span>
+            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${lv.badge}`}>{lv.label}</span>
+          </div>
+          <div className="text-[15px] font-semibold leading-snug text-slate-700" style={{ overflowWrap: "anywhere" }}>
+            {CTKM?.diengiai || CTKM?.scheme}
+          </div>
+          {t.end && (
+            <>
+              <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+                <span className="flex items-center gap-1">
+                  <MdEvent size={12} />
+                  {fmtDate(t.start)} - {fmtDate(t.end)}
+                </span>
+                <span className={t.level === "soon" ? "font-semibold text-[#c26a00]" : ""}>{daysLeftText(t.daysLeft)}</span>
+              </div>
+              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-[#edf0f5]">
+                <div className={`h-full rounded-full ${lv.bar}`} style={{ width: `${t.progress}%` }} />
+              </div>
+            </>
+          )}
         </div>
 
-        <Box className="bg-white">
-          <Tabbar
-            inner={false}
-            m={0}
-            p={0}
-            className="CustomTabbar"
-            style={{ backgroundColor: "transparent", height: 70 }}
+        {/* Mua → Nhận */}
+        <div className="flex items-stretch gap-2">
+          <div className="min-w-0 flex-1 rounded-xl border border-[#E3EBF6] bg-white p-3">
+            <div className="mb-1 text-[10px] font-bold tracking-wide text-primary">MUA</div>
+            <div className="text-[14px] font-bold leading-snug text-primary">{cond.title}</div>
+            {cond.sub && <div className="mt-0.5 line-clamp-2 text-[11px] text-slate-500">{cond.sub}</div>}
+          </div>
+          <span className="flex shrink-0 items-center text-slate-300">
+            <MdArrowForward size={18} />
+          </span>
+          <div className="min-w-0 flex-1 rounded-xl border border-[#fde2c8] bg-[#fff8f0] p-3">
+            <div className="mb-1 text-[10px] font-bold tracking-wide text-[#c26a00]">NHẬN</div>
+            <div className="text-[14px] font-bold leading-snug text-[#e5232a]">{reward.title}</div>
+            {reward.sub && <div className="mt-0.5 line-clamp-2 text-[11px] text-slate-500">{reward.sub}</div>}
+          </div>
+        </div>
+        {(dieukien.length > 1 || tra.length > 1) && (
+          <div className="-mt-1 px-1 text-[11px] text-slate-400">
+            Chương trình có {dieukien.length} điều kiện và {tra.length} mức thưởng, xem chi tiết bên dưới.
+          </div>
+        )}
+
+        {/* Tiến độ theo giỏ hàng */}
+        {canBuy && progress && progress.target > 0 && (
+          <div
+            className={`rounded-xl border p-3 ${
+              progress.done ? "border-[#BFE6CB] bg-[#EEF9F1]" : "border-[#E3EBF6] bg-white"
+            }`}
           >
-            <Link
-              style={{
-                fontSize: "13px",
-                textWrap: "wrap",
-                whiteSpace: "break-spaces",
-                textAlign: "center",
-                width: 300,
-              }}
-              text="Điều kiện"
-              tabLink="#dieukien"
-              tabLinkActive
-            ></Link>
-            <Link
-              style={{
-                fontSize: "13px",
-                textWrap: "wrap",
-                whiteSpace: "break-spaces",
-                textAlign: "center",
-                width: 300,
-              }}
-              text="Sản phẩm điều kiện"
-              tabLink="#sanphamdk"
-            ></Link>
-            <Link
-              style={{
-                fontSize: "13px",
-                textWrap: "wrap",
-                whiteSpace: "break-spaces",
-                textAlign: "center",
-                width: 300,
-              }}
-              text="Trả"
-              tabLink="#tra"
-            ></Link>
-            <Link
-              style={{
-                fontSize: "13px",
-                textWrap: "wrap",
-                whiteSpace: "break-spaces",
-                textAlign: "center",
-                width: 300,
-              }}
-              text="Sản phẩm trả"
-              tabLink="#sanphamtra"
-            ></Link>
-          </Tabbar>
-        </Box>
-
-
-      </Box>
-
-      <Box
-        className="latest"
-        mt="5"
-        flex
-        flexDirection="column"
-        justifyContent="space-between"
-      >
-        <Tabs m={5} animated swipeable>
-          <Tab id={"dieukien"} tabActive>
-            <Box className="view-center-gh">
-              {dieukien.length == 0 && (
-                <div className="flex flex-col justify-center items-center">
-                  <FaInbox size={25} color="#ccc" />
-                  <Text style={{ fontSize: 13, marginTop: 8, color: "#ccc" }}>
-                    Không có điều kiện khuyến mãi
-                  </Text>
-                </div>
+            <div className="flex items-center gap-1.5 text-[13px]">
+              {progress.done ? (
+                <>
+                  <MdCheckCircle size={18} className="shrink-0 text-[#1f8a4c]" />
+                  <span className="font-semibold text-[#1f7a45]">Giỏ hàng của bạn đã đủ điều kiện nhận ưu đãi</span>
+                </>
+              ) : (
+                <>
+                  <MdShoppingCart size={16} className="shrink-0 text-primary" />
+                  <span className="text-slate-600">
+                    Giỏ hàng đang có{" "}
+                    <b className="text-primary">
+                      {progress.isMoney ? money(progress.current) : progress.current}/
+                      {progress.isMoney ? money(progress.target) : progress.target}
+                    </b>
+                    {progress.isMoney ? "" : " sản phẩm"}
+                  </span>
+                </>
               )}
-              {dieukien.length > 0 &&
-                dieukien.map((item) => (
-                  <Box
-                    key={item.PK_SEQ}
-                    className="list-item-km2 shadown-app-2"
-                    style={{ padding: 0, borderRadius: 10, background: "white" }}
-                  >
-                    <Box flex alignItems="center">
-                      <Box className="list-icon2" style={{ width: "20%" }}>
-                        <span className="RoundIcon4">
-                          <FaStar fill={Color.textAPPGold} size={25} />
-                        </span>
-                      </Box>
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#edf0f5]">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${progress.done ? "bg-[#1f8a4c]" : "bg-primary"}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            {!progress.done && progress.add.length > 0 && (
+              <div className="mt-1.5 text-[12px] text-slate-500">
+                Mua thêm{" "}
+                {progress.add.map((a, i) => (
+                  <span key={i}>
+                    {i > 0 && ", "}
+                    <b className="font-semibold text-slate-600">
+                      {a.n} {a.sp.DVDL || ""} {a.sp.TEN_SP}
+                    </b>
+                  </span>
+                ))}{" "}
+                để nhận ưu đãi
+              </div>
+            )}
+          </div>
+        )}
 
-                      <Box
-                        className="customText"
-                        style={{ width: "100%" }}
-                        flex
-                        flexDirection="column"
-                        justifyContent="flex-start"
-                        flexWrap
-                      >
-                        <Box>
-                          <Text
-                            size="small"
-                            style={{ color: Color.textAPPBlue }}
-                            className="font-extrabold bg-text-second"
+        {/* Sản phẩm áp dụng */}
+        {sanphamdk.length > 0 && (
+          <div>
+            <SectionTitle icon={<MdShoppingCart size={16} className="text-primary" />}>
+              Sản phẩm áp dụng ({sanphamdk.length})
+            </SectionTitle>
+            <div className="flex flex-col gap-2">
+              {(showAllSp ? sanphamdk : sanphamdk.slice(0, SP_HIEN_THI)).map((sp) => {
+                const q = cartQty[String(sp.SANPHAM_FK)] || 0
+                return (
+                  <div key={sp.SANPHAM_FK} className="flex items-center gap-3 rounded-xl border border-[#E3EBF6] bg-white p-2.5">
+                    <Link
+                      href={"/detail/?id=" + sp.SANPHAM_FK}
+                      animate
+                      transition="zmp-cover-v"
+                      noLinkClass
+                      className="!flex min-w-0 flex-1 items-center gap-3"
+                    >
+                      <ProductThumb src={sp.HINHANH} name={sp.TEN_SP} />
+                      <div className="min-w-0 flex-1">
+                        <div className="line-clamp-2 text-[13px] font-medium leading-snug text-slate-700">{sp.TEN_SP}</div>
+                        <div className="mt-0.5 text-[11px] text-slate-500">
+                          {[sp.MA_SP, sp.DVDL].filter(Boolean).join(" · ")}
+                          {num(sp.SOLUONG) > 0 && <span className="ml-1 font-semibold text-primary">· cần {sp.SOLUONG}</span>}
+                        </div>
+                        {canBuy && num(sp.dongia) > 0 && (
+                          <div className="mt-0.5 text-[13px] font-bold tabular-nums text-primary">{money(sp.dongia)}</div>
+                        )}
+                      </div>
+                    </Link>
+                    {canBuy &&
+                      (q === 0 ? (
+                        <button
+                          type="button"
+                          aria-label="Thêm vào giỏ hàng"
+                          onClick={() => setQty(sp, 1)}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-0 bg-[#e5232a] text-white active:opacity-80"
+                        >
+                          <FaPlus size={12} />
+                        </button>
+                      ) : (
+                        <div className="flex shrink-0 flex-col items-center rounded-full border border-[#d5e2f2] bg-white">
+                          <button
+                            type="button"
+                            aria-label="Tăng số lượng"
+                            onClick={() => setQty(sp, q + 1)}
+                            className="flex h-7 w-8 items-center justify-center border-0 bg-transparent text-primary"
                           >
-                            {item?.DIENGIAI}
-                          </Text>
-                        </Box>
+                            <FaPlus size={10} />
+                          </button>
+                          <span className="text-[13px] font-semibold tabular-nums text-slate-700">{q}</span>
+                          <button
+                            type="button"
+                            aria-label="Giảm số lượng"
+                            onClick={() => setQty(sp, q - 1)}
+                            className="flex h-7 w-8 items-center justify-center border-0 bg-transparent text-primary"
+                          >
+                            <FaMinus size={10} />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                )
+              })}
+            </div>
+            {sanphamdk.length > SP_HIEN_THI && (
+              <button
+                type="button"
+                onClick={() => setShowAllSp((v) => !v)}
+                className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl border border-[#E3EBF6] bg-white py-2.5 text-[13px] font-semibold text-primary active:bg-[#f7faff]"
+              >
+                {showAllSp ? (
+                  <>
+                    Thu gọn <MdExpandLess size={18} />
+                  </>
+                ) : (
+                  <>
+                    Xem thêm {sanphamdk.length - SP_HIEN_THI} sản phẩm <MdExpandMore size={18} />
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
 
-                        <Box alignItems="center">
-                          <Text
-                            style={{ color: Color.textAPPGray, width: 203 }}
-                            mx="0"
-                            size="small"
-                            className="flex"
-                          >
-                            <span>Loại</span>
-                            <span
-                              style={{
-                                flexGrow: 1,
-                                textAlign: "right",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {item?.LOAI_DIENGIAI}
-                            </span>
-                          </Text>
-                          <Text
-                            style={{ color: Color.textAPPGray, width: 203 }}
-                            mx="0"
-                            size="small"
-                            className="flex"
-                          >
-                            <span>{item?.HINHTHUC_DIENGIAI || "Giá trị"}</span>
-                            <span
-                              style={{
-                                flexGrow: 1,
-                                textAlign: "right",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {item?.TONGTIEN}
-                            </span>
-                          </Text>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Box>
-                ))}
-            </Box>
-          </Tab>
-          <Tab id={"sanphamdk"}>
-            <Box className="view-center-gh">
-              {sanphamdk.length == 0 && (
-                <div className="flex flex-col justify-center items-center">
-                  <FaInbox size={25} color="#ccc" />
-                  <Text style={{ fontSize: 13, marginTop: 8, color: "#ccc" }}>
-                    Không có sản phẩm
-                  </Text>
+        {/* Quà / thưởng nhận được */}
+        {(tra.length > 0 || sanphamtra.length > 0) && (
+          <div>
+            <SectionTitle icon={<MdCardGiftcard size={16} className="text-[#c26a00]" />}>Quà / thưởng nhận được</SectionTitle>
+            <div className="flex flex-col gap-2">
+              {tra.map((r, i) => {
+                const d = describeReward(r, sanphamtra)
+                return (
+                  <div key={r.PK_SEQ || i} className="rounded-xl border border-[#fde2c8] bg-[#fff8f0] px-3 py-2.5">
+                    <div className="text-[13px] font-bold text-[#e5232a]">{d.title}</div>
+                    {r.DIENGIAI && <div className="mt-0.5 text-[12px] text-slate-500">{r.DIENGIAI}</div>}
+                    {r.HINHTHUC_DIENGIAI && r.HINHTHUC_DIENGIAI !== "Không xác định" && (
+                      <div className="mt-0.5 text-[11px] text-slate-400">{r.HINHTHUC_DIENGIAI}</div>
+                    )}
+                  </div>
+                )
+              })}
+              {sanphamtra.map((sp) => (
+                <Link
+                  key={sp.SANPHAM_FK}
+                  href={"/detail/?id=" + sp.SANPHAM_FK}
+                  animate
+                  transition="zmp-cover-v"
+                  noLinkClass
+                  className="!flex items-center gap-3 rounded-xl border border-[#E3EBF6] bg-white p-2.5"
+                >
+                  <ProductThumb src={sp.HINHANH} name={sp.TEN_SP} />
+                  <div className="min-w-0 flex-1">
+                    <div className="line-clamp-2 text-[13px] font-medium leading-snug text-slate-700">{sp.TEN_SP}</div>
+                    <div className="mt-0.5 text-[11px] text-slate-500">{[sp.MA_SP, sp.DVDL].filter(Boolean).join(" · ")}</div>
+                  </div>
+                  {num(sp.SOLUONG) > 0 && (
+                    <span className="shrink-0 rounded-full bg-[#fdf1dc] px-2 py-0.5 text-[11px] font-semibold text-[#9a5a00]">
+                      x{sp.SOLUONG}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Các điều kiện khác (khi chương trình có nhiều điều kiện) */}
+        {dieukien.length > 1 && (
+          <div>
+            <SectionTitle icon={<MdLocalOffer size={16} className="text-primary" />}>Tất cả điều kiện</SectionTitle>
+            <div className="flex flex-col gap-2">
+              {dieukien.map((d, i) => (
+                <div key={d.PK_SEQ || i} className="rounded-xl border border-[#E3EBF6] bg-white px-3 py-2.5">
+                  <div className="text-[13px] font-semibold text-slate-700">{describeCondition(d, sanphamdk).title}</div>
+                  {d.DIENGIAI && <div className="mt-0.5 text-[12px] text-slate-500">{d.DIENGIAI}</div>}
+                  <div className="mt-0.5 text-[11px] text-slate-400">{d.LOAI_DIENGIAI}</div>
                 </div>
-              )}
-              {sanphamdk.length > 0 &&
-                sanphamdk.map((item, index) => (
-                  <Box
-                    //  className=" shadown-app-1"
-                    key={index}
-                    style={{ borderRadius: 10, background: "white" }}
-                  >
-                    <Box flex alignItems="center">
-                      <Box
-                        style={{
-                          backgroundColor: "#ffffff",
-                          borderRadius: "8px",
-                          width: "80px",
-                          height: "80px",
-                          objectFit: "cover",
-                          boxShadow: "0 0 0 1px #99a3ad2a",
-                        }}
-                      >
-                        <Box
-                          className="bg-cover"
-                          style={{
-                            backgroundImage: `url(${encodeURI(item?.HINHANH)})`,
-                            width: "60px",
-                            height: "60px",
-                            objectFit: "cover",
-                            backgroundSize: "cover",
-                          }}
-                        />
-                      </Box>
+              ))}
+            </div>
+          </div>
+        )}
 
-                      <Link
-                        style={{ width: "80%" }}
-                        href={"/detail/?id=" + item?.SANPHAM_FK}
-                        animate
-                        transition="zmp-cover-v"
-                        noLinkClass
-                      >
-                        <Box style={{ width: "95%", margin: 0 }}>
-                          <Box alignItems="center">
-                            <Text
-                              size="normal"
-                              className="font-extrabold text-blue-imex "
-                              style={{
-                                width: "100%",
-                                fontSize: "13px",
-                                marginBottom: 8,
-                              }}
-                            >
-                              {item?.TEN_SP}
-                            </Text>
+        {data.length > 0 && !dieukien.length && !tra.length && !sanphamdk.length && (
+          <div className="py-10 text-center text-[13px] text-slate-400">Chương trình chưa có thông tin chi tiết</div>
+        )}
+      </div>
 
-                            <Box m="0">
-                              <Text
-                                className="desc text-blue-dark overflow-ellipsis "
-                                style={{
-                                  width: "100%",
-                                  fontSize: "13px",
-                                  color: Color.textAPPGray,
-                                }}
-                              >
-                                Mã: {item?.MA_SP}
-                              </Text>
-                              <Text
-                                className="desc text-blue-dark overflow-ellipsis "
-                                style={{
-                                  width: "100%",
-                                  fontSize: "13px",
-                                  color: Color.textAPPGray,
-                                }}
-                              >
-                                Đơn vị: {item?.DVDL}
-                              </Text>
-                              {item?.SOLUONG != "-1" && (
-                                <Text
-                                  className="desc text-blue-dark overflow-ellipsis "
-                                  style={{
-                                    width: "100%",
-                                    fontSize: "13px",
-                                    color: Color.textAPPGray,
-                                  }}
-                                >
-                                  Số lượng: {item?.SOLUONG}
-                                </Text>
-                              )}
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Link>
-                    </Box>
-                  </Box>
-                ))}
-            </Box>
-          </Tab>
-          <Tab id={"tra"}>
-            <Box className="view-center-gh">
-              {tra.length == 0 && (
-                <div className="flex flex-col justify-center items-center">
-                  <FaInbox size={25} color="#ccc" />
-                  <Text style={{ fontSize: 13, marginTop: 8, color: "#ccc" }}>
-                    Không có trả khuyến mãi
-                  </Text>
-                </div>
-              )}
-              {tra.length > 0 &&
-                tra.map((item) => (
-                  <Box
-                    key={item.PK_SEQ}
-                    className="list-item-km2 shadown-app-2"
-                    style={{ padding: 0, borderRadius: 10, background: "white" }}
-                  >
-                    <Box flex alignItems="center">
-                      <Box className="list-icon2" style={{ width: "20%" }}>
-                        <span className="RoundIcon4">
-                          <BsReceipt fill={Color.BackgrondLightAPP4} size={25} />
-                        </span>
-                      </Box>
-
-                      <Box
-                        className="customText"
-                        style={{ width: "100%" }}
-                        flex
-                        flexDirection="column"
-                        justifyContent="flex-start"
-                        flexWrap
-                      >
-                        <Box>
-                          <Text
-                            size="small"
-                            style={{ color: Color.textAPPBlue }}
-                            className="font-extrabold bg-text-second"
-                          >
-                            {item?.DIENGIAI}
-                          </Text>
-                        </Box>
-
-                        <Box alignItems="center">
-                          <Text
-                            style={{ color: Color.textAPPGray, width: 203 }}
-                            mx="0"
-                            size="small"
-                            className="flex"
-                          >
-                            <span>Loại</span>
-                            <span
-                              style={{
-                                flexGrow: 1,
-                                textAlign: "right",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {item?.LOAI_DIENGIAI}
-                            </span>
-                          </Text>
-                          <Text
-                            style={{ color: Color.textAPPGray, width: 203 }}
-                            mx="0"
-                            size="small"
-                            className="flex"
-                          >
-                            <span>Hình thức</span>
-                            <span
-                              style={{
-                                flexGrow: 1,
-                                textAlign: "right",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {item?.HINHTHUC_DIENGIAI}
-                            </span>
-                          </Text>
-                          <Text
-                            style={{ color: Color.textAPPGray, width: 203 }}
-                            mx="0"
-                            size="small"
-                            className="flex"
-                          >
-                            <span>{item?.LOAI_TEXT || "Giá trị"}</span>
-                            <span
-                              style={{
-                                flexGrow: 1,
-                                textAlign: "right",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {item?.TONGTIEN}
-                            </span>
-                          </Text>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Box>
-                ))}
-            </Box>
-          </Tab>
-          <Tab id={"sanphamtra"}>
-            <Box className="view-center-gh">
-              {sanphamtra.length == 0 && (
-                <div className="flex flex-col justify-center items-center">
-                  <FaInbox size={25} color="#ccc" />
-                  <Text style={{ fontSize: 13, marginTop: 8, color: "#ccc" }}>
-                    Không có sản phẩm
-                  </Text>
-                </div>
-              )}
-              {sanphamtra.length > 0 &&
-                sanphamtra.map((item, index) => (
-                  <Box
-                    //  className=" shadown-app-1"
-                    key={index}
-                    style={{ borderRadius: 10, background: "white" }}
-                  >
-                    <Box flex alignItems="center">
-                      <Box
-                        style={{
-                          backgroundColor: "#ffffff",
-                          borderRadius: "8px",
-                          width: "80px",
-                          height: "80px",
-                          objectFit: "cover",
-                          boxShadow: "0 0 0 1px #99a3ad2a",
-                        }}
-                      >
-                        <Box
-                          className="bg-cover"
-                          style={{
-                            backgroundImage: `url(${encodeURI(item?.HINHANH)})`,
-                            width: "60px",
-                            height: "60px",
-                            objectFit: "cover",
-                            backgroundSize: "cover",
-                          }}
-                        />
-                      </Box>
-
-                      <Link
-                        style={{ width: "80%" }}
-                        href={"/detail/?id=" + item?.SANPHAM_FK}
-                        animate
-                        transition="zmp-cover-v"
-                        noLinkClass
-                      >
-                        <Box style={{ width: "95%", margin: 0 }}>
-                          <Box alignItems="center">
-                            <Text
-                              size="normal"
-                              className="font-extrabold text-blue-imex "
-                              style={{
-                                width: "100%",
-                                fontSize: "13px",
-                                marginBottom: 8,
-                              }}
-                            >
-                              {item?.TEN_SP}
-                            </Text>
-
-                            <Box m="0">
-                              <Text
-                                className="desc text-blue-dark overflow-ellipsis "
-                                style={{
-                                  width: "100%",
-                                  fontSize: "13px",
-                                  color: Color.textAPPGray,
-                                }}
-                              >
-                                Mã: {item?.MA_SP}
-                              </Text>
-                              <Text
-                                className="desc text-blue-dark overflow-ellipsis "
-                                style={{
-                                  width: "100%",
-                                  fontSize: "13px",
-                                  color: Color.textAPPGray,
-                                }}
-                              >
-                                Đơn vị: {item?.DVDL}
-                              </Text>
-                              {item?.SOLUONG != "-1" && (
-                                <Text
-                                  className="desc text-blue-dark overflow-ellipsis "
-                                  style={{
-                                    width: "100%",
-                                    fontSize: "13px",
-                                    color: Color.textAPPGray,
-                                  }}
-                                >
-                                  Số lượng: {item?.SOLUONG}
-                                </Text>
-                              )}
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Link>
-                    </Box>
-                  </Box>
-                ))}
-            </Box>
-          </Tab>
-        </Tabs>
-      </Box>
-
-      {/* Flag Button dưới cùng */}
-      {CusInfo?.active !== "0" != 0 && (
-        <Box style={{ position: "fixed", bottom: 0, left: 0, width: "96%", zIndex: 1000, background: "transparent" }} display="flex" justifyContent="center" alignItems="center" p={2}>
+      {/* Nút hành động cuối trang */}
+      {canBuy && data.length > 0 && (
+        <div
+          className="fixed bottom-0 left-0 z-[1000] w-full border-t border-[#e6ebf2] bg-white px-4 pt-2.5"
+          style={{ paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))" }}
+        >
           <button
-            onClick={() => {
-              GodonhangKM()
-            }}
-            style={{
-              background: Color.textAPPGreen2,
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "12px 32px",
-              fontSize: 14,
-              fontWeight: 600,
-              boxShadow: "0 2px 8px #0001",
-              cursor: "pointer"
-            }}
+            type="button"
+            onClick={onCta}
+            className={`flex w-full items-center justify-center gap-2 rounded-xl border-0 px-3 py-3 text-[14px] font-semibold text-white active:opacity-80 ${
+              progress && !progress.done ? "bg-[#e5232a]" : "bg-primary"
+            }`}
           >
-            Lên đơn hàng gợi ý theo khuyến mãi này
+            <MdShoppingCart size={18} className="shrink-0" />
+            <span className="truncate">{ctaText}</span>
           </button>
-        </Box>
+        </div>
       )}
     </>
   )

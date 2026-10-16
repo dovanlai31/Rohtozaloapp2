@@ -13,7 +13,7 @@ export default function KhachhangSupportHero({ onCallClick, onChatClick }) {
                 <p className="mb-2 text-center text-block-acc-name font-bold text-primary">
                   Gắn kết khách hàng
                 </p>
-                <p className="text-center leading-relaxed text-[#1f2937]">
+                <p className="text-center leading-relaxed text-slate-800">
                   Bạn cần hỗ trợ nhanh, tư vấn hỗ trợ
                   <br />
                   <b className="text-primary">

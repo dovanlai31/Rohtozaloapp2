@@ -1,562 +1,345 @@
-import store from "../../../store"
-
-import React, { useState, useEffect, forwardRef, useRef } from "react"
-import {
-  Page,
-  Card,
-  Box,
-  Text,
-  Button,
-  zmp,
-  Icon,
-  Title,
-  List,
-  ListItem,
-  Link,
-
-} from "zmp-framework/react"
-import "./../../../styles/giohang.scss"
-import icongiohang from "@static/images/shoppingbag.png"
+import { forwardRef, useRef, useState } from "react"
+import { zmp } from "zmp-framework/react"
+import { Sheet } from "zmp-ui"
+import { MdCardGiftcard, MdCasino, MdChevronRight, MdLocalOffer, MdSearch, MdWarningAmber } from "react-icons/md"
 import { formatCurrency } from "@utils/networking"
-import icongif2 from "@static/images/gift.png"
-import Color from "@components/common/Color"
-import { ConvertOpacity } from "@utils/ConvertOpacity"
+import { Button, QtyStepper } from "@components/ui"
+import { useHideMainNav } from "../../../hooks/useHideMainNav"
+import { chiaSoLuong, chooserInfo, conTon, quotaOf } from "@utils/kmRules"
 
+const money = (n) => `${formatCurrency(Number(n) || 0, true)} ₫`
+
+// Một dòng trả thưởng: icon + nội dung + giá trị bên phải
+const RewardLine = ({ icon, children, right }) => (
+  <div className="flex items-start gap-2 py-1">
+    <span className="mt-[1px] flex shrink-0">{icon}</span>
+    <div className="min-w-0 flex-1 text-[13px] leading-snug text-slate-600">{children}</div>
+    {right}
+  </div>
+)
+
+const giftIcon = <MdCardGiftcard size={16} className="text-[#c26a00]" />
+const discountIcon = <MdLocalOffer size={15} className="text-[#e5232a]" />
+
+// Một chương trình khuyến mãi được áp cho đơn (trong giỏ hàng)
 const RowItemKMBanhang = forwardRef((data, ref) => {
-  const elRef = useRef(null)
-  const { item, index, updateGiohang, tinhtien, length, updateItemKM, setIsShowModalKm, handleShowvongQuay } = data
-  const Giohang = store.getters.getGioHang.value || []
-  const [soluong, updateItem] = useState(data.item.soluong)
+  const { item, index, updateItemKM, setIsShowModalKm, handleShowvongQuay } = data
   const [MaxTT, setMaxTT] = useState(0)
   const [showProductModal, setShowProductModal] = useState(false)
   const [selectedProductRow, setSelectedProductRow] = useState(null)
   const [tempSpTra, setTempSpTra] = useState([])
   const [searchText, setSearchText] = useState("")
-
-
+  const [chooser, setChooser] = useState(null) // { kind, max, price, unit } của dòng đang chọn quà
   const dialog = useRef(null)
-  useEffect(() => {
-    console.log("xxxx", item + " - ")
-    updateItem(data.item.soluong)
-  }, [item.soluong])
+  useHideMainNav(showProductModal)
 
-  const setSoluongsp = (sl, id) => {
-    // let arrr =[].findIndex
-    let a = item
-    a.soluong = sl
-    updateItem(sl)
-    store.dispatch("updateGiohang", a)
-    tinhtien()
-  }
-
-  const deleteP = (id) => {
-    let arr = Giohang.filter((w) => w.id != id)
-    updateGiohang(arr)
-    store.dispatch("remoteItemGioHang", id)
-  }
-  const handleShowSpKm = (value, item, index, i, MaxTT) => {
+  const handleShowSpKm = (value, item, index, i) => {
+    const info = chooserInfo(value, item)
+    if (!info) return
     setIsShowModalKm(true)
-    setMaxTT(MaxTT)
+    setChooser(info)
+    setMaxTT(info.max)
+    setSearchText("")
     setShowProductModal(true)
-
     setSelectedProductRow({ value, item, index, i })
-    //xếp value.spTra có giá từ thápn đến cao
-    value.spTra.sort((a, b) => a.gia - b.gia)
-    //gán lại số lượng trong sptra = với spTra_xuly nếu có
-    if (value.spTra_xuly && value.spTra_xuly.length > 0) {
-      let newArr = value.spTra.map(sp => {
-        let spXuly = value.spTra_xuly.find(x => x.MA === sp.MA);
-        return spXuly ? { ...sp, soluong: spXuly.soluong } : { ...sp, soluong: 0 };
-      });
-      //xếp value.spTra có nhâp số lương từ thấp đến cao
-      newArr.sort((a, b) => b.soluong - a.soluong)
-      setTempSpTra(newArr);
-    } else {
-      setTempSpTra(value.spTra.map(sp => ({ ...sp, soluong: 0 })))
-    }
+
+    // chỉ hiện sản phẩm còn tồn, giá từ thấp đến cao; giữ lại số lượng đã chọn trước đó
+    const daChon = value.spTra_xuly || []
+    const list = (value.spTra || [])
+      .filter(conTon)
+      .map((sp) => {
+        const MA = sp.MA ?? sp.ma
+        const old = daChon.find((x) => x.MA === MA)
+        return { ...sp, MA, TEN: sp.TEN ?? sp.ten, gia: info.price(sp), soluong: old ? Number(old.soluong) || 0 : 0 }
+      })
+      .sort((a, b) => a.gia - b.gia)
+      .sort((a, b) => b.soluong - a.soluong)
+    setTempSpTra(list)
   }
 
-  // Xử lý nhập số lượng cho từng sản phẩm trả
-  const handleChangeSoluong = (sp, val) => {
-    let newArr = [...tempSpTra]
-    val = Math.max(0, Number(val) || 0)
-    const idx = newArr.findIndex(item => item.MA === sp.MA);
-    if (idx !== -1) {
-      newArr[idx].soluong = val
-    }
-    // Tổng số lượng không vượt quá MaxTT
-    const total = newArr.reduce((sum, sp) => sum + (Number(sp.soluong * sp.gia) || 0), 0)
-    if (total > MaxTT) {
-      showDialog(`Tổng giá trị sản phẩm trả không được vượt quá ${formatCurrency(MaxTT, true)} đ`)
-      newArr[idx].soluong = Math.floor((MaxTT - (total - (Number(newArr[idx].soluong * newArr[idx].gia) || 0))) / newArr[idx].gia);
-      //  return // Không cho nhập vượt
-    }
-    setTempSpTra(newArr)
-  }
-  const showDialog = (msg) => {
-    dialog.current = zmp.dialog.create({
-      title: "Thông báo",
-      content: '<div className="dialog-text">' + msg + "</div>",
-      buttons: [
-        {
-          text: "Đóng",
-        },
-      ],
-    })
-    if (dialog.current) {
-      dialog.current.open()
-    }
-  }
-  // Xác nhận chọn sản phẩm trả
-  const handleConfirmSpTra = () => {
-    // TODO: xử lý lưu lại lựa chọn vào store hoặc callback
+  const fmtMax = (n) => (chooser?.unit === "điểm" ? `${formatCurrency(Number(n) || 0, true)} điểm` : money(n))
 
-    if (selectedProductRow) {
-      const { value, item, index, i } = selectedProductRow
-      let datax = tempSpTra.filter(sp => Number(sp.soluong) > 0).map(sp => ({
-        ...sp,
-      }))
-      item.trakhuyenmai[i].spTra_xuly = datax
-      item.trakhuyenmai[i].chontkm = true
-      // Cập nhật lại sp trả vào item khuyến mãi
-      console.log("Selected products for return:", item)
+  // Chia số lượng "bất kỳ trong": tổng không vượt số lượng được hưởng, không vượt tồn kho
+  const setSoLuongChia = (value, k, v) => {
+    const quota = quotaOf(value, item)
+    const sp = value.spTra[k]
+    let val = Math.max(0, Number(v) || 0)
+    const others = value.spTra.reduce((t, x, j) => (j === k ? t : t + (Number(x.soluong) || 0)), 0)
+    if (others + val > quota) {
+      showDialog(`Tổng số lượng quà không được vượt quá ${quota}`)
+      val = Math.max(0, quota - others)
     }
-
+    if (sp.tonkho !== undefined && sp.tonkho !== null && val > Number(sp.tonkho)) {
+      showDialog(`Sản phẩm ${sp.TEN ?? sp.ten} chỉ còn ${sp.tonkho}`)
+      val = Math.max(0, Number(sp.tonkho))
+    }
+    sp.soluong = val
     updateItemKM(item)
-    setSelectedProductRow(null)
+  }
+
+  const closeModal = () => {
     setShowProductModal(false)
     setIsShowModalKm(false)
   }
 
+  const showDialog = (msg) => {
+    dialog.current = zmp.dialog.create({
+      title: "Thông báo",
+      content: '<div class="dialog-text">' + msg + "</div>",
+      buttons: [{ text: "Đóng" }],
+    })
+    dialog.current?.open()
+  }
+
+  const tongChon = tempSpTra.reduce((sum, sp) => sum + (Number(sp.soluong * sp.gia) || 0), 0)
+
+  // Nhập số lượng cho từng sản phẩm trả, tổng giá trị không vượt quá hạn mức
+  const handleChangeSoluong = (sp, val) => {
+    let newArr = [...tempSpTra]
+    val = Math.max(0, Number(val) || 0)
+    const idx = newArr.findIndex((x) => x.MA === sp.MA)
+    if (idx === -1) return
+    newArr[idx] = { ...newArr[idx], soluong: val }
+    const total = newArr.reduce((sum, x) => sum + (Number(x.soluong * x.gia) || 0), 0)
+    const ton = newArr[idx].tonkho
+    if (ton !== undefined && ton !== null && val > Number(ton)) {
+      showDialog(`Sản phẩm ${newArr[idx].TEN} chỉ còn ${ton}`)
+      newArr[idx] = { ...newArr[idx], soluong: Math.max(0, Number(ton)) }
+      setTempSpTra(newArr)
+      return
+    }
+    if (total > MaxTT) {
+      showDialog(`Tổng giá trị quà không được vượt quá ${fmtMax(MaxTT)}`)
+      const others = total - (Number(newArr[idx].soluong * newArr[idx].gia) || 0)
+      newArr[idx] = { ...newArr[idx], soluong: Math.max(0, Math.floor((MaxTT - others) / newArr[idx].gia)) }
+    }
+    setTempSpTra(newArr)
+  }
+
+  // Xác nhận chọn quà
+  const handleConfirmSpTra = () => {
+    if (!tempSpTra.some((sp) => Number(sp.soluong) > 0)) {
+      showDialog("Vui lòng chọn ít nhất 1 quà")
+      return
+    }
+    if (selectedProductRow) {
+      const { item, i } = selectedProductRow
+      item.trakhuyenmai[i].spTra_xuly = tempSpTra.filter((sp) => Number(sp.soluong) > 0).map((sp) => ({ ...sp }))
+      item.trakhuyenmai[i].chontkm = true
+      updateItemKM(item)
+    }
+    setSelectedProductRow(null)
+    closeModal()
+  }
+
+  const q = searchText.trim().toLowerCase()
+  const filteredSp = tempSpTra.filter(
+    (sp) => !q || sp.TEN?.toLowerCase().includes(q) || sp.MA?.toLowerCase().includes(q)
+  )
+
+  const renderValue = (value, i) => {
+    const hasWheel = (value.spTra_vongquay || []).length > 0
+
+    // Vòng quay may mắn
+    if (hasWheel) {
+      return (
+        <div key={i} className="py-1">
+          {!item.ketqua_vongquay ? (
+            <div className="flex items-center justify-between gap-2 rounded-lg bg-[#fff8f0] px-3 py-2">
+              <span className="flex min-w-0 items-center gap-1.5 text-[13px] text-slate-600">
+                <MdCasino size={16} className="shrink-0 text-[#c26a00]" />
+                Bạn có lượt quay thưởng
+              </span>
+              <Button
+                size="sm"
+                className="shrink-0 !bg-[#f59e0b]"
+                onClick={() => handleShowvongQuay(value, item)}
+              >
+                Quay ngay
+              </Button>
+            </div>
+          ) : (
+            item.ketqua_vongquay.map((sp, k) => (
+              <RewardLine key={k} icon={<MdCasino size={16} className="text-[#c26a00]" />}>
+                <span className="text-slate-500">Vòng quay {k + 1}: </span>
+                {sp.LOAI === 1 && <b className="font-semibold text-slate-700">{money(sp.tongTien)}</b>}
+                {sp.LOAI === 2 && <b className="font-semibold text-slate-700">Chiết khấu {sp.chietKhau}</b>}
+                {sp.LOAI === 3 && <b className="font-semibold text-slate-700">{sp.traDIENGIAI}</b>}
+              </RewardLine>
+            ))
+          )}
+        </div>
+      )
+    }
+
+    const info = chooserInfo(value, item)
+    const chonQua = !!info
+    const isDiscount = (value.loai == 1 || value.loai == 2) && !chonQua
+    const traSp = (value.loai == 3 || value.loai == 5) && !chonQua
+    const chia = traSp && chiaSoLuong(value, item)
+    const daChon = value.spTra_xuly || []
+    const quota = quotaOf(value, item)
+    // bất kỳ trong (không cho chọn): dồn hết vào sản phẩm đầu; còn lại: các sản phẩm có số lượng
+    const spTang = !traSp || chia
+      ? []
+      : value.hinhthuc == 2
+      ? (value.spTra || []).slice(0, 1).map((sp) => ({ ...sp, soluong: quota }))
+      : (value.spTra || []).filter((sp) => Number(sp.soluong) > 0)
+    const tongChia = chia ? (value.spTra || []).reduce((t, sp) => t + (Number(sp.soluong) || 0), 0) : 0
+
+    return (
+      <div key={i}>
+        <RewardLine
+          icon={isDiscount ? discountIcon : giftIcon}
+          right={
+            isDiscount ? (
+              <span className="shrink-0 text-[13px] font-bold tabular-nums text-[#1f8a4c]">-{money(value.tongtien)}</span>
+            ) : null
+          }
+        >
+          {value.diengiai}
+          {value.isvuotmuc == 1 && (
+            <span className="ml-1.5 rounded bg-[#e3f4ea] px-1.5 py-[1px] align-middle text-[10px] font-semibold text-[#1f7a45]">
+              Thưởng vượt
+            </span>
+          )}
+        </RewardLine>
+
+        {chia && (
+          <div className="ml-6 mt-0.5">
+            <div className={`mb-1 text-[12px] ${tongChia === quota ? "text-slate-500" : "text-[#9a5a00]"}`}>
+              Chọn quà: <b className="tabular-nums">{tongChia}</b>/{quota}
+            </div>
+            {(value.spTra || []).map((sp, k) =>
+              conTon(sp) ? (
+                <div key={sp.MA || sp.ma || k} className="flex items-center justify-between gap-2 py-1">
+                  <div className="min-w-0">
+                    <div className="text-[12px] leading-snug text-slate-600">{sp.TEN ?? sp.ten}</div>
+                    {sp.tonkho !== undefined && sp.tonkho !== null && (
+                      <div className="text-[11px] text-slate-400">Tồn {formatCurrency(sp.tonkho, true)}</div>
+                    )}
+                  </div>
+                  <QtyStepper value={Number(sp.soluong) || 0} min={0} onChange={(v) => setSoLuongChia(value, k, v)} />
+                </div>
+              ) : null
+            )}
+          </div>
+        )}
+
+        {spTang.map((sp, k) => (
+          <div key={sp.MA || k} className="ml-6 flex items-start justify-between gap-2 py-0.5 text-[12px] text-slate-500">
+            <span className="min-w-0">{sp.TEN}</span>
+            <span className="shrink-0 font-semibold tabular-nums text-slate-700">× {sp.soluong}</span>
+          </div>
+        ))}
+
+        {chonQua && (
+          <div className="ml-6 mt-1">
+            {daChon.length > 0 ? (
+              <div className="mb-1.5 flex flex-col gap-0.5">
+                {daChon.map((sp, k) => (
+                  <div key={sp.MA || k} className="flex items-start justify-between gap-2 text-[12px] text-slate-500">
+                    <span className="min-w-0">{sp.TEN}</span>
+                    <span className="shrink-0 font-semibold tabular-nums text-slate-700">× {sp.soluong}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mb-1.5 flex items-center gap-1 text-[12px] text-[#9a5a00]">
+                <MdWarningAmber size={14} className="shrink-0" />
+                Chưa chọn quà
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => handleShowSpKm(value, item, index, i)}
+              className="flex w-full items-center justify-between gap-2 rounded-lg border border-[#d5e2f2] bg-[#f7faff] px-3 py-2 text-left"
+            >
+              <span className="text-[12px] text-slate-600">
+                {daChon.length > 0 ? "Đổi quà" : "Chọn quà"} · tối đa{" "}
+                <b className="font-semibold text-slate-700">
+                  {info?.unit === "điểm" ? `${formatCurrency(info.max, true)} điểm` : money(info?.max)}
+                </b>
+              </span>
+              <MdChevronRight size={18} className="shrink-0 text-primary" />
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <>
-      <Box
-        p="0"
-        m="0"
-        key={index}
-        style={{ borderBottomColor: index == length - 1 ? "white" : "#eeee" }}
-      >
-        <Box p="0" m="0" flex alignItems="center" style={{ width: "100%", gap: 12 }}>
-          <Box p="0" m="2" style={{ width: "100%" }}>
-            <Box p="0" m="0">
-              <Text
-                size="xsmall"
-                style={{ color: Color.textAPPBlueHeavy, }}
-              >
-                {index + 1}. {item.diengiai}
-              </Text>
-              <Text
-                size="xxxsmall"
-                style={{ color: Color.textAPPGray, marginTop: 4 }}
-              >
-                Mã: {item.scheme}
-              </Text>
-            </Box>
+      <div className={`px-3.5 py-3 ${index > 0 ? "border-t border-[#edf0f5]" : ""}`}>
+        <div className="text-[13px] font-semibold leading-snug text-slate-700" style={{ overflowWrap: "anywhere" }}>
+          {item.diengiai}
+        </div>
+        <div className="mb-1 mt-0.5 text-[11px] text-slate-400">Mã: {item.scheme}</div>
+        {(item.trakhuyenmai || []).map((value, i) => (value.chontkm === false ? null : renderValue(value, i)))}
+      </div>
 
-            {item.trakhuyenmai.map((value, i) => {
-              if (value.loai != 5)
-                return (
-                  <Box key={i} flex style={{ gap: 8 }} alignItems="center" m="0" p="0">
-                    <Icon
-                      style={{ color: Color.textAPPGreen2 }}
-                      zmp={value.loai == 1 || value.loai == 2 ? "zi-star-solid" : "zi-send-solid"}
-                      size="14px"
-                    />
-                    {/* <Box
-                      style={{
-                        width: 10,
-                      }}
-                    /> */}
+      {/* Bảng chọn quà theo hạn mức */}
+      <Sheet visible={showProductModal && !!selectedProductRow} onClose={closeModal} mask handler swipeToClose title="Chọn quà tặng">
+        <div className="flex flex-col px-4" style={{ maxHeight: "72vh" }}>
+          <div className="mb-2 flex items-center justify-between text-[12px]">
+            <span className="text-slate-500">
+              Tối đa <b className="tabular-nums text-slate-700">{fmtMax(MaxTT)}</b>
+            </span>
+            <span className="text-slate-500">
+              Còn lại <b className="tabular-nums text-primary">{fmtMax(MaxTT - tongChon)}</b>
+            </span>
+          </div>
+          <div className="mb-1 h-1.5 overflow-hidden rounded-full bg-[#edf1f7]">
+            <div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${MaxTT > 0 ? Math.min(100, (tongChon * 100) / MaxTT) : 0}%`, transition: "width 200ms" }}
+            />
+          </div>
 
-                    <Link
-                    //onClick={() => handleShowSpKm(value, item, index, i, (value.HanMucTien || 0))}
-                    >
-                      <Box m="0" p="0">
-                        <Text
-                          size="small"
-                          style={{ color: Color.textAPPGray, fontSize: "13px", padding: '10px 0px' }}
-                          className="desc text-blue-dark overflow-ellipsis text-wrap "
-                        >
-                          {value.spTra_vongquay.length < 1 && `Trả: ${value.diengiai}`}
-                          {value.spTra_vongquay.length < 1 && (value.loai == 2 || value.loai == 1)
-                            ? <Text
-                              style={{ color: Color.textAPPRed, fontSize: "10px", }}
-                              className="desc text-blue-dark overflow-ellipsis text-wrap "
-                            >
-                              -{formatCurrency(value.tongtien || 0, true)} đ
-                            </Text>
-                            : null}
-                        </Text>
-                        {/* "Chiết khấu từng dòng quy đổi sản phẩm" */}
-                        {value.loai == 3 && value.IS_TRASP_HanMucTien == 1 && value.spTra_vongquay.length < 1 ? (
-                          //thêm btn chọn sp trả
-                          <Link onClick={() => handleShowSpKm(value, item, index, i, (value.HanMucTien || 0))}>
-                            <Box m="0" p="0">
+          <div className="my-2 flex items-center gap-2 rounded-xl border border-[#E3EBF6] bg-[#f5f7fb] px-3 py-2">
+            <MdSearch size={18} className="shrink-0 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm quà theo tên hoặc mã"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full text-[14px] text-slate-700"
+              style={{ border: "none", boxShadow: "none", padding: 0, background: "transparent", outline: "none" }}
+            />
+          </div>
 
-                              <Text
-                                style={{ color: Color.textAPPBlueHeavy, fontSize: "10px", cursor: "pointer" }}
-                                className="desc text-blue-dark overflow-ellipsis text-wrap "
-                              >
-                                Có nhiều lựa chọn
-                                với tổng trị: {formatCurrency(value.HanMucTien, true)} đ {" "}
-                                <Icon
-                                  zmp="zi-chevron-down"
-                                  size="22px"
-                                />
+          <div className="-mx-4 flex-1 overflow-y-auto px-4">
+            {filteredSp.length === 0 ? (
+              <div className="py-8 text-center text-[13px] text-slate-400">Không tìm thấy quà phù hợp</div>
+            ) : (
+              filteredSp.map((sp, idx) => (
+                <div key={sp.MA || idx} className="flex items-center justify-between gap-3 border-b border-[#edf0f5] py-2.5">
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-medium leading-snug text-slate-700">{sp.TEN}</div>
+                    <div className="mt-0.5 text-[11px] text-slate-400">
+                      {sp.MA} · {fmtMax(sp.gia)}
+                      {sp.tonkho !== undefined && sp.tonkho !== null ? ` · Tồn ${formatCurrency(sp.tonkho, true)}` : ""}
+                    </div>
+                  </div>
+                  <QtyStepper value={Number(sp.soluong) || 0} min={0} onChange={(v) => handleChangeSoluong(sp, v)} />
+                </div>
+              ))
+            )}
+          </div>
 
-                              </Text>
-                              {value.spTra_xuly && value.spTra_xuly.length > 0 ? (
-                                value.spTra_xuly.map((sp, idx) =>
-                                  <Text
-                                    key={i}
-                                    style={{ color: Color.textAPPBlueHeavy, fontSize: "10px", }}
-                                    className="desc text-blue-dark overflow-ellipsis text-wrap "
-                                  >
-                                    - Đã chọn: {sp.TEN}, số lượng: {sp.soluong}
-                                  </Text>
-                                )
-                              ) : null}
-                            </Box>
-                          </Link>
-                        ) : value.loai == 3 && value.IS_TRASP_HanMucTien == 0 && value.pheptoan == 1 && value.spTra_vongquay.length < 1 ? (
-                          //hiện sp trả theo số lượng  phép toán 1 là trả and(trả tất cả)
-                          value.spTra.map((sp, i) => {
-                            if (value.hinhthuc == 2)// bất kỳ trong là hienj 1 dòng thôi khỏi chọn cho nhanh
-                            {
-                              if (i == 0) {
-                                return (
-                                  <Text
-                                    key={i}
-                                    style={{ color: Color.textAPPBlueHeavy, fontSize: "10px", }}
-                                    className="desc text-blue-dark overflow-ellipsis text-wrap "
-                                  >
-                                    - Trả SP: {sp.TEN}, số lượng: {value.tongluong * item.sosuat}
-                                  </Text>
-                                )
-                              }
-
-                            } else {
-
-                              return (
-                                <Text
-                                  key={i}
-                                  style={{ color: Color.textAPPBlueHeavy, fontSize: "10px", }}
-                                  className="desc text-blue-dark overflow-ellipsis text-wrap "
-                                >
-                                  - Trả SP: {sp.TEN}, số lượng: {value.tongluong * item.sosuat}
-                                </Text>
-                              )
-                            }
-                          }
-
-                          )
-                        ) : value.spTra_vongquay.length > 0 && !item.ketqua_vongquay ? (
-
-                          <Link
-
-                            onClick={() => handleShowvongQuay(value, item)} style={{ textDecoration: 'none', width: '100%' }}>
-                            <Box
-                              m="0"
-                              p="0"
-                              display="flex"
-                              alignItems="center"
-                              justifyContent="flex-end"
-                              style={{
-                                background: 'linear-gradient(90deg, #FFD700 0%, #FFB300 100%)',
-                                borderRadius: '18px',
-                                padding: '6px 16px',
-                                boxShadow: '0 2px 8px rgba(255, 193, 7, 0.15)',
-                                border: '1.5px solid #FFB300',
-                                cursor: 'pointer',
-                                transition: 'box-shadow 0.2s',
-                                minWidth: '110px',
-                                margin: '4px 0',
-                              }}
-                              className="quay-thuong-btn"
-                              onMouseOver={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(255, 193, 7, 0.25)'}
-                              onMouseOut={e => e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.15)'}
-                            >
-                              {/* <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px' }}>
-                                <circle cx="12" cy="12" r="10" fill="#FFF8E1" stroke="#FFB300" strokeWidth="2" />
-                                <path d="M12 6v6l4 2" stroke="#FFB300" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg> */}
-                              <Text
-                                key={i}
-                                style={{
-                                  color: '#B26A00',
-                                  fontWeight: 700,
-                                  fontSize: '13px',
-                                  letterSpacing: '0.5px',
-                                  textShadow: '0 1px 0 #FFFDE7',
-                                }}
-                                className="desc text-blue-dark overflow-ellipsis text-wrap"
-                              >
-                                Quay thưởng
-                              </Text>
-                            </Box>
-                          </Link>
-
-                        ) : null}
-                        {item.ketqua_vongquay && item.ketqua_vongquay?.map((sp, i) => (
-                          <Box key={i} m="0" p="0" style={{ marginBottom: 4 }}>
-                            <Text
-                              style={{ color: Color.textAPPBlueHeavy, fontSize: "12px", fontWeight: 600 }}
-                              className="desc text-blue-dark text-wrap"
-                            >
-                              Vòng quay {i + 1}:
-                            </Text>
-                            {sp.LOAI === 1 && (
-                              <Text style={{ color: Color.textAPPGreen2, fontSize: "12px", marginLeft: 8 }}>
-                                Tổng tiền: {formatCurrency(sp.tongTien, true)}
-                              </Text>
-                            )}
-                            {sp.LOAI === 2 && (
-                              <Text style={{ color: Color.textAPPRed, fontSize: "12px", marginLeft: 8 }}>
-                                Chiết khấu: {sp.chietKhau}
-                              </Text>
-                            )}
-                            {sp.LOAI === 3 && (
-                              <Text style={{ color: Color.textAPPCopper3, fontSize: "12px", marginLeft: 8 }}>
-                                Phần thưởng: {sp.traDIENGIAI}
-                              </Text>
-                            )}
-                          </Box>
-                        ))}
-                      </Box>
-                    </Link>
-                  </Box>
-                )
-              return null
-            })}
-          </Box>
-        </Box>
-        <Box
-          m={0}
-          p={0}
-          style={{
-            width: "100%",
-            height: "5px",
-            paddingBottom: "10px",
-            WebkitBoxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-            boxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-          }}
-          className="BoxLine"
-        ></Box>
-      </Box>
-      {/* Modal chọn sản phẩm trả */}
-      {showProductModal && selectedProductRow && (
-        <>
-          {/* Overlay nhẹ, không che toàn bộ */}
-          <Box
-            m='0'
-            p='0'
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              background: "rgba(0,0,0,0.08)",
-              zIndex: 999,
-            }}
-            onClick={() => {
-              setShowProductModal(false);
-              setIsShowModalKm(false);
-            }}
-          />
-          {/* Popup modal nhỏ */}
-          <Box
-            m='0'
-            p='0'
-
-            style={{
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "90vw",
-              maxWidth: "90vw",
-              minWidth: 280,
-              maxHeight: "67vh",
-              overflowY: "auto",
-              background: "#fff",
-              borderRadius: 16,
-              boxShadow: "0 2px 16px rgba(0,0,0,0.18)",
-              // padding: 18,
-              zIndex: 1000,
-              animation: "fadeInModal 0.25s",
-              marginTop: "-5vh",
-            }}
-          >
-            <Box
-              flex
-              justifyContent="space-between"
-              alignItems="center"
-              m='0'
-              p='0'
-              style={{
-                padding: "12px 18px",
-                marginBottom: 8,
-                position: "sticky",
-                top: 0,
-                background: "#fff",
-                zIndex: 2,
-                paddingBottom: 4,
-                boxShadow: "0 1px 0 rgba(0,0,0,0.04)",
-              }}
-            >
-              <Title size="small">Danh sách quà tặng</Title>
-              <Button
-                iconZMP="zi-close"
-                style={{ borderRadius: 12, padding: "10px", color: "#333", fontWeight: 600, fontSize: 13 }}
-                onClick={() => {
-                  setShowProductModal(false);
-                  setIsShowModalKm(false);
-                }}
-              >
-
-              </Button>
-            </Box>
-            <Text style={{
-              fontSize: 12,
-              color: Color.textAPPCopper3,
-              marginBottom: 8,
-              position: "sticky",
-              top: 38,
-              background: "#fff",
-              zIndex: 2,
-              paddingBottom: 4,
-              padding: "0 18px",
-              width: "77%",
-            }}>Tối đa: {formatCurrency(MaxTT, true)}
-            </Text>
-            {/* //thêm ô  tìm kiếm */}
-            <Box p="0" m="0" style={{ padding: "0 18px", marginBottom: 8 }}>
-
-              <input
-                type="text"
-                placeholder="Tìm kiếm sản phẩm..."
-                style={{
-                  width: "100%",
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #eee",
-                  fontSize: 13,
-                  marginBottom: 4,
-                }}
-
-                value={searchText || ""}
-                onChange={e => {
-                  const searchText = e.target.value;
-                  // Lọc sản phẩm theo tên hoặc mã
-                  if (typeof setSearchText === "function") setSearchText(searchText);
-                }}
-              />
-            </Box>
-
-            <List>
-              {tempSpTra.filter(sp =>
-                sp.TEN.toLowerCase().includes(searchText.toLowerCase()) ||
-                sp.MA?.toLowerCase().includes(searchText.toLowerCase())
-              ).map((sp, idx) => (
-                <ListItem key={sp.MASP || idx}>
-
-                  <Box p="0" m="0" flex alignItems="center" justifyContent="space-between"
-                    style={{ width: '100%' }}>
-                    <Box style={{ width: '80%' }} >
-                      <Text style={{ fontSize: 12, fontWeight: 500 }}>{sp.TEN}</Text>
-                      <Text style={{ fontSize: 11, color: '#888' }}>
-                        Mã: {sp.MA}
-                      </Text>
-                      <Text style={{ fontSize: 11, color: '#888' }}>
-                        Giá: {formatCurrency(sp.gia, true)} đ
-                      </Text>
-                    </Box>
-
-                    <input
-                      type="number"
-                      min={0}
-                      max={MaxTT}
-                      value={sp.soluong == '0' ? '' : sp.soluong}
-                      style={{ width: 48, padding: "2px 4px", borderRadius: 8, border: "1px solid #eee", fontSize: 12 }}
-                      onChange={e => handleChangeSoluong(sp, e.target.value)}
-                    />
-                  </Box>
-                </ListItem>
-              ))}
-            </List>
-
-            <Box
-              style={{
-                position: "sticky",
-                bottom: 0,
-                background: "#fff",
-                zIndex: 2,
-                boxShadow: "0 -1px 0 rgba(0,0,0,0.04)",
-                padding: "8px",
-                width: "100%",
-
-
-              }}
-            >
-
-              <Link onClick={handleConfirmSpTra} style={{ width: '96%' }}>
-                <Box
-                  m="0"
-                  p="0"
-                  flex
-                  alignItems="center"
-
-                  style={{
-                    backgroundColor: ConvertOpacity(Color.textAPPGreen, 0.1),
-                    borderRadius: 5,
-                    padding: "8px 12px",
-                    justifyContent: 'space-between',
-                    gap: 18,
-                    width: '100%',
-
-                  }}
-                >
-
-                  <Text style={{ fontSize: 11, color: '#888', marginTop: 0, flex: 1, textAlign: 'left' }}>
-                    Tổng: {formatCurrency(tempSpTra.reduce((sum, sp) => sum + (Number(sp.soluong * sp.gia) || 0), 0), true)}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: '#888', marginTop: 0, flex: 1, textAlign: 'center' }}>
-                    Còn lại: {formatCurrency(MaxTT - tempSpTra.reduce((sum, sp) => sum + (Number(sp.soluong * sp.gia) || 0), 0), true)}
-                  </Text>
-                  <Text
-                    noSpace
-                    style={{
-                      color: Color.textAPPGreen2,
-                      fontSize: 13,
-                      flex: 1,
-                      textAlign: 'right',
-                    }}
-                  >
-                    Xác nhận
-                  </Text>
-                </Box>
-              </Link>
-              {/* <Button
-                style={{ borderRadius: 12, background: Color.textAPPGreen, color: "#fff", fontWeight: 600, fontSize: 13, }}
-                onClick={handleConfirmSpTra}
-              >Xác nhận</Button> */}
-
-            </Box>
-          </Box>
-          {/* CSS animation cho modal */}
-          <style>{`
-            @keyframes fadeInModal {
-              from { opacity: 0; transform: translate(-50%, -60%) scale(0.95); }
-              to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            }
-          `}</style>
-        </>
-      )}
+          <div className="flex items-center gap-3 py-3" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] text-slate-500">Đã chọn</div>
+              <div className="text-[15px] font-bold tabular-nums text-slate-800">{fmtMax(tongChon)}</div>
+            </div>
+            <Button className="flex-1" onClick={handleConfirmSpTra}>
+              Xác nhận
+            </Button>
+          </div>
+        </div>
+      </Sheet>
     </>
-
-
-
   )
 })
 export default RowItemKMBanhang

@@ -79,26 +79,22 @@ const AllDanhmuc = ({ zmproute }) => {
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
-      className=""
+      className="bg-slate-50"
     >
-      <HeaderBack slot="fixed" title={"Danh mục" } />
+      <HeaderBack slot="fixed" title={"Danh mục"} />
 
-      <Box
-        className="wrapCatalogs   
-          justify-center 
-          flex-wrap flex
-   
-          "
-      >
-        {vlData.items.map((item, index) => (
-          <DanhmucItemAll
-            key={index + ""}
-            seen={item.seen}
-            item={item}
-            index={index}
-          />
-        ))}
-      </Box>
+      <div className="mx-4 my-3 rounded-2xl border border-[#E3EBF6] bg-white px-1.5 py-4">
+        <div className="flex flex-wrap gap-y-4">
+          {vlData.items.map((item, index) => (
+            <DanhmucItemAll
+              key={index + ""}
+              seen={item.seen}
+              item={item}
+              index={index}
+            />
+          ))}
+        </div>
+      </div>
       <Box
         className=""
         noSpace={true}

@@ -128,8 +128,7 @@ const TichLuyDetail = ({ zmproute }) => {
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
-      className="detail-page"
-      style={{ background: "#f8f8f8" }}
+      className="detail-page bg-slate-50"
     >
       <HeaderBack slot="fixed" title={`Chi tiết ${loai != 2 ? "tích luỹ" : "khuyến mãi"}`}></HeaderBack>
 

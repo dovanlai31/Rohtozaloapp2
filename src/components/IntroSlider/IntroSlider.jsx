@@ -35,7 +35,7 @@ const IntroSlider = ({ data = [] }) => {
           {data.map((item, index) => (
             <div key={item.key} ref={refs[index]} className="w-full flex-shrink-0">
               <Box m={0}></Box>
-              <Title size="large" className="font-extrabold text-blue-dark">
+              <Title size="large" className="font-bold text-blue-dark">
                 {item.title}
               </Title>
               <Box m={0} mt={4}>

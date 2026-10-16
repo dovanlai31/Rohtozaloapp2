@@ -24,7 +24,9 @@ export const cartService = {
 
   createOrder: async (params) => {
     try {
-      const response = await request("POST", "khachhang/TaoMoiDonHangNew2", params)
+      // có dhId: cập nhật đơn đang sửa (chỉ đơn trạng thái 0), không thì tạo đơn mới
+      const method = params?.dhId ? "khachhang/CapNhatDonHangNew2" : "khachhang/TaoMoiDonHangNew2"
+      const response = await request("POST", method, params)
       const json = await response.json()
       return json
     } catch (error) {

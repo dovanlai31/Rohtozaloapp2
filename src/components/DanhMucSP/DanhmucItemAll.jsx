@@ -12,6 +12,7 @@ import {
 import classNames from "classnames"
 import colors from "tailwindcss/colors"
 import { colorsArr } from "@static/values"
+import CategoryThumb from "./CategoryThumb"
 
 const DanhmucItemAll = ({ item, seen, loading, index, col }) => {
   if (loading) {
@@ -33,64 +34,26 @@ const DanhmucItemAll = ({ item, seen, loading, index, col }) => {
   console.log("xxxxxxxxxxxtiem dm x ", item)
 
   return (
-    <Box
-      m="0"
-      className={col ? "story3" : "story2"}
-      flex
-      flexDirection="column"
-      alignItems="center"
-      style={{ width: "25%" }}
+    <Link
+      href={`/pagedanhmuc?index=${index}`}
+      noLinkClass
+      className="!flex min-w-0 flex-col items-center overflow-hidden px-1.5"
+      style={{ width: "33.333%" }}
     >
-      <Box
-        pt="0"
-        mt="0"
-        flex
-        justifyContent="center"
-        alignItems='flex-center'
-        style={{ width: "100%", }}
+      <CategoryThumb
+        src={item?.HINHANH}
+        name={item?.TEN}
+        index={index}
+        className="aspect-square w-full max-w-[84px] p-3"
+        textClassName="text-xl"
+      />
+      <span
+        className="mt-1.5 line-clamp-2 w-full text-center text-[12px] leading-tight text-slate-700"
+        style={{ overflowWrap: "anywhere" }}
       >
-        <Link
-          // href="/pagedanhmuc?id="+index
-          href={`/pagedanhmuc?index=${index}`}
-          onClick={() => {
-            // zmp.views.main.router.navigate("/search/?id=" + user.pk_seq+'&clten='+user.ten)
-          }}
-          //  animate
-          //  transition='zmp-cover-v'
-          noLinkClass
-          className="avatar-wrapper rounded-2xl"
-        >
-          <Box
-            m="0"
-            p="1"
-            my="2"
-            className="rounded-2xl avatar-wrapperAll"
-            style={{
-              backgroundColor:  (index % 2 == 0 ? '#005DAA' : '#00A3D5'),
-              borderColor: "#F2F2F2",
-            }}
-          >
-            <img loading="lazy" className="p-[20px]" src={item?.HINHANH}></img>
-            <Box py={1}>
-              <Text
-                className="textline2   text-white "
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  lineHeight: "16px",
-                  textAlign: "center",
-                  padding: 0,
-                  margin: 0,
-                }}
-              >
-                {item?.TEN || ""}
-              </Text>
-            </Box>
-            {/* <div className={classes}></div> */}
-          </Box>
-        </Link>
-      </Box>
-    </Box>
+        {item?.TEN || ""}
+      </span>
+    </Link>
   )
 }
 

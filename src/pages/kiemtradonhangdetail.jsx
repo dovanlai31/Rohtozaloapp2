@@ -444,7 +444,7 @@ const KiemTraDonDatHangDetail = ({ zmproute, showToast }) => {
               <Box m="0">
                 <Text
                   size="normal"
-                  className="font-extrabold text-blue-imex "
+                  className="font-bold text-primary "
                   style={{
                     width: "100%",
                     fontSize: "14px",
@@ -588,7 +588,7 @@ const KiemTraDonDatHangDetail = ({ zmproute, showToast }) => {
               <Card style={{ marginTop: "10px" }} inset>
                 <Box flex justifyContent="center" style={{ width: "100%" }}>
                   <Text
-                    className="font-extrabold "
+                    className="font-bold "
                     style={{ color: Color.textAPPBlue, fontSize: "16px" }}
                   >
                     Chương trình

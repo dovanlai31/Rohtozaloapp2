@@ -140,7 +140,7 @@ const home_ListDH = ({ zmproute }) => {
         >
           <HeaderBox
             slot="fixed"
-            icon={<FaBasketShopping size={25} className="text-blue-imex" />}
+            icon={<FaBasketShopping size={25} className="text-primary" />}
             HeaderBoxName={"Lịch sử mua hàng"}
           />
           {/* <Box m={0} slot="fixed" p={0}>

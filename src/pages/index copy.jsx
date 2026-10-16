@@ -42,7 +42,7 @@ const HomePage = () => {
                 Hi, {user.firstName}!
               </Text>
             )}
-            <Title size="large" className="font-extrabold text-blue-dark">
+            <Title size="large" className="font-bold text-blue-dark">
               Explore today’s
             </Title>
           </Box>

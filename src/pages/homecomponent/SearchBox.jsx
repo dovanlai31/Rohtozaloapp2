@@ -1,23 +1,17 @@
-import { Box, Icon, Link, Text } from "zmp-framework/react"
+import { Link } from "zmp-framework/react"
+import { MdSearch } from "react-icons/md"
 
+// Ô tìm kiếm ở trang chủ: chỉ là lối vào, bấm để mở trang Tìm kiếm (cùng kiểu với <TextInput>)
 const SearchBox = () => {
   return (
-    <Box className="box-shadow-5 m-0 flex w-full justify-center p-0">
-      <Link
-        href="/search?all=1"
-        className="box-border block w-[95%] max-w-full rounded-2xl border-2 border-[#D6E3D9] bg-white no-underline"
-      >
-        <div className="flex  w-full items-center justify-between gap-2 p-[13px]">
-          <Box className="m-0 flex min-w-0 flex-1 items-center gap-1 p-0">
-            <Icon zmp="zi-search" className="shrink-0 text-[#ffffff]" />
-            <Text className="min-w-0 ml-2 text-[#98A1B3]">Tìm kiếm sản phẩm...</Text>
-          </Box>
-          <div className="iconsearchWrap shrink-0">
-            <Icon className="iconsearch text-[#98A1B3]" zmp="zi-tune" />
-          </div>
-        </div>
-      </Link>
-    </Box>
+    <Link
+      href="/search?all=1"
+      noLinkClass
+      className="!flex h-11 w-full items-center gap-2 rounded-full border border-[#E3EBF6] bg-white px-4 active:bg-[#f7faff]"
+    >
+      <MdSearch size={20} className="shrink-0 text-slate-400" />
+      <span className="min-w-0 flex-1 truncate text-[14px] text-slate-400">Tìm tên hoặc mã sản phẩm</span>
+    </Link>
   )
 }
 

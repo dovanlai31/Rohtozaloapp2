@@ -1,38 +1,52 @@
 import { formatCurrency } from "@utils/networking"
+import { FaMinus, FaPlus } from "react-icons/fa"
+import { MdAddShoppingCart } from "react-icons/md"
 import { RiMessage2Fill } from "react-icons/ri"
+
+const footerClass = "fixed bottom-0 left-0 z-[999] w-full border-t border-[#e6ebf2] bg-white px-4 pt-2.5"
+const footerStyle = { paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))" }
 
 const DetailFooter = ({ Product, CusInfo, loading, soluong, onChangeSL, onAddToCart, onChat }) => {
   if (loading || !CusInfo) return null
 
   if (CusInfo.active !== "0") {
     return (
-      <div
-        slot="fixed"
-        className="fixed bottom-0 left-0 w-full z-[999] bg-white border-t border-[#e0e0e0] px-4 pt-2.5 pb-6 shadow-[0_-2px_10px_rgba(0,0,0,0.04)]"
-      >
-        {/* Đơn giá + bộ đếm */}
-        <div className="flex justify-between items-center mb-2.5">
+      <div slot="fixed" className={footerClass} style={footerStyle}>
+        <div className="mb-2.5 flex items-center justify-between">
           <div>
-            <p className="m-0 mb-0.5 text-[13px] text-[#2d5bb9]">Đơn giá {formatCurrency(Product?.dongia || 0, true)} VNĐ</p>
-            <p className="m-0 text-[14px] font-bold text-[#2d5bb9]">{formatCurrency((Product?.dongia || 0) * soluong, true)} VNĐ</p>
+            <div className="text-xs text-slate-500">Tạm tính</div>
+            <div className="text-[17px] font-bold tabular-nums text-[#e5232a]">
+              {formatCurrency((Product?.dongia || 0) * soluong, true)}đ
+            </div>
           </div>
-          <div className="flex items-center border border-[#d0d0d0] rounded-md overflow-hidden h-9">
+          <div className="flex items-center rounded-full border border-[#d5e2f2] bg-white">
             <button
+              type="button"
+              aria-label="Giảm số lượng"
               onClick={() => onChangeSL((prev) => (prev > 1 ? prev - 1 : 1))}
-              className="w-9 h-full bg-white border-none text-[18px] text-[#333] cursor-pointer flex items-center justify-center"
-            >−</button>
-            <span className="min-w-[36px] text-center text-[16px] font-bold text-[#1a1a1a] border-l border-r border-[#e0e0e0] h-full flex items-center justify-center">{soluong}</span>
+              className="flex h-9 w-9 items-center justify-center border-0 bg-transparent text-primary"
+            >
+              <FaMinus size={11} />
+            </button>
+            <span className="min-w-[32px] text-center text-[15px] font-semibold tabular-nums text-slate-800">
+              {soluong}
+            </span>
             <button
+              type="button"
+              aria-label="Tăng số lượng"
               onClick={() => onChangeSL((prev) => prev + 1)}
-              className="w-9 h-full bg-white border-none text-[18px] text-[#333] cursor-pointer flex items-center justify-center"
-            >+</button>
+              className="flex h-9 w-9 items-center justify-center border-0 bg-transparent text-primary"
+            >
+              <FaPlus size={11} />
+            </button>
           </div>
         </div>
-        {/* Nút thêm vào giỏ */}
         <button
+          type="button"
           onClick={onAddToCart}
-          className="w-full py-[13px] bg-[#2d5bb9] text-white border-none rounded-lg text-[15px] font-bold cursor-pointer tracking-wide"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-0 bg-[#e5232a] py-3 text-[15px] font-semibold text-white active:opacity-80"
         >
+          <MdAddShoppingCart size={18} />
           Thêm vào giỏ hàng
         </button>
       </div>
@@ -40,13 +54,11 @@ const DetailFooter = ({ Product, CusInfo, loading, soluong, onChangeSL, onAddToC
   }
 
   return (
-    <div
-      slot="fixed"
-      className="fixed bottom-0 left-0 w-full z-[999] bg-white border-t border-[#e0e0e0] px-4 pt-2.5 pb-6"
-    >
+    <div slot="fixed" className={footerClass} style={footerStyle}>
       <button
+        type="button"
         onClick={onChat}
-        className="w-full py-[13px] bg-[#2d5bb9] text-white border-none rounded-lg text-[15px] font-bold cursor-pointer flex items-center justify-center gap-2"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border-0 bg-primary py-3 text-[15px] font-semibold text-white active:opacity-80"
       >
         <RiMessage2Fill size={18} />
         Liên hệ qua Zalo

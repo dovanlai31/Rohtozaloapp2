@@ -13,37 +13,47 @@ const MyApp = () => {
   const dialog = useRef(null)
 
   useEffect(() => {
-
+    // Đăng ký xác nhận thoát TRƯỚC mọi việc khác: nếu bước sau lỗi thì nút tắt vẫn hỏi lại
+    try {
+      onConfirmToExit(() => openDialog())
+    } catch (e) {
+      console.log("onConfirmToExit fail", e)
+    }
 
     handleLogin()
 
-    dialog.current = zmp.dialog.create({
-      title: "Đóng ứng dụng",
-      content: "Bạn thật sự muốn đóng ứng dụng ?",
-      buttons: [
-        {
-          text: "Không",
-          cssClass: "dialog-negative-action",
-          //close: true,
-        },
-        {
-          text: "Đúng",
-          close: false,
-          onClick() {
-            closeApp()
-          },
-        },
-      ],
-    })
-
-    onConfirmToExit(() => openDialog())
     return () => offConfirmToExit()
   }, [])
 
   useEffect(() => {}, [Giohang])
+
+  // Tạo hộp thoại khi cần (lúc mount zmp.dialog có thể chưa sẵn sàng)
   const openDialog = () => {
-    if (dialog.current) {
+    try {
+      if (!dialog.current) {
+        dialog.current = zmp.dialog.create({
+          title: "Đóng ứng dụng",
+          content: "Bạn thật sự muốn đóng ứng dụng?",
+          buttons: [
+            {
+              text: "Không",
+              cssClass: "dialog-negative-action",
+            },
+            {
+              text: "Đóng",
+              close: false,
+              onClick() {
+                closeApp()
+              },
+            },
+          ],
+        })
+      }
       dialog.current.open()
+    } catch (e) {
+      // dự phòng khi không tạo được hộp thoại của zmp
+      console.log("open exit dialog fail", e)
+      if (window.confirm("Bạn thật sự muốn đóng ứng dụng?")) closeApp()
     }
   }
 

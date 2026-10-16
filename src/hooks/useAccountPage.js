@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { authorize, getPhoneNumber, getSetting, getUserInfo } from "zmp-sdk/apis"
 import { useStore, zmp } from "zmp-framework/react"
 import store from "../store"
+import { getPosmSummary } from "../services/posmService"
 
 export function useAccountPage() {
   const dialog = useRef(null)
@@ -18,6 +19,7 @@ export function useAccountPage() {
 
   const [dataDoanhSo, setdataDoanhSo] = useState([])
   const [SoLuongDonHang, setSoLuongDonHang] = useState("0-0")
+  const [posmSummary, setPosmSummary] = useState({ tongPosm: 0, chuaKiemTra: 0, phieuChuaTra: 0 })
 
   const showDialog = (msg) => {
     dialog.current = zmp.dialog.create({
@@ -140,9 +142,19 @@ export function useAccountPage() {
     }
   }
 
+  const loadPosmSummary = async () => {
+    if (!CusInfo?.KHACHHANG_fk) return
+    try {
+      setPosmSummary(await getPosmSummary(validateString(CusInfo?.KHACHHANG_fk + "", true)))
+    } catch (error) {
+      console.log("Error getPosmSummary ", error)
+    }
+  }
+
   useEffect(() => {
     getDoanhSo()
     getSoLuongDonHang()
+    loadPosmSummary()
   }, [Giohangx, refres])
 
   useEffect(() => {
@@ -157,6 +169,7 @@ export function useAccountPage() {
     CusInfo,
     dataDoanhSo,
     SoLuongDonHang,
+    posmSummary,
     checkPhonePermissionAndContinue,
   }
 }

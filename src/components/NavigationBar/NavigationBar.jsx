@@ -43,7 +43,7 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
         <HomeIcon active={activeTab === "main"} />
         <Text
           size="xxxsmall"
-          className="navbar-item-label navbar-item-label text-gray-dark font-extrabold"
+          className="navbar-item-label navbar-item-label text-gray-dark font-bold"
         >
           Trang chủ
         </Text>
@@ -60,7 +60,7 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
         <Bookmark active={activeTab === "khuyenMaiList"} />
         <Text
           size="xxxsmall"
-          className="navbar-item-label text-gray-dark font-extrabold"
+          className="navbar-item-label text-gray-dark font-bold"
         >
           Khuyến mãi
         </Text>
@@ -76,7 +76,7 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
 
         <Text
           size="xxxsmall"
-          className="navbar-item-label text-gray-dark font-extrabold"
+          className="navbar-item-label text-gray-dark font-bold"
         >
           Đơn hàng
         </Text>
@@ -97,7 +97,7 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
           </span>
           <Text
             size="xxxsmall"
-            className="navbar-item-label text-gray-dark font-extrabold"
+            className="navbar-item-label text-gray-dark font-bold"
           >
             Giỏ hàng
           </Text>
@@ -108,7 +108,7 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
         <ChatIcon active={activeTab === "khachhang"} />
         <Text
           size="xxxsmall"
-          className="navbar-item-label text-gray-dark font-extrabold"
+          className="navbar-item-label text-gray-dark font-bold"
         >
           Khách hàng
         </Text>
@@ -121,7 +121,7 @@ const NavigationBar = ({ activeTab, NotifyGH }) => {
         <MenuIcon active={activeTab === "taikhoan"} />
         <Text
           size="xxxsmall"
-          className="navbar-item-label text-gray-dark font-extrabold"
+          className="navbar-item-label text-gray-dark font-bold"
         >
           Tài khoản
         </Text>

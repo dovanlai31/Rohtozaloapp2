@@ -1,26 +1,32 @@
-import { Swiper, SwiperSlide } from "zmp-framework/react"
+import { formatCurrency } from "@utils/networking"
 
 const RelatedProducts = ({ list_sp_tt, onProductClick }) => {
   return (
-    <div className="bg-white mt-[8px] p-4">
-      <p className="m-0 mb-3 font-bold text-[15px] text-[#1a1a1a]">Sản phẩm liên quan</p>
+    <div className="p-4">
+      <div className="mb-3 text-[15px] font-bold text-slate-800">Sản phẩm liên quan</div>
       {list_sp_tt && list_sp_tt.length > 0 ? (
-        <Swiper slidesPerView={3} spaceBetween={12} loop={list_sp_tt.length > 3}>
+        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
           {list_sp_tt.map((sp, index) => (
-            <SwiperSlide key={index + ""} style={{ width: "100px" }}>
-              <div onClick={() => onProductClick(sp)}>
-                <div style={{ backgroundImage: `url(${sp.HinhAnh})` }} className="w-full h-[80px] bg-contain bg-no-repeat bg-center" />
-                <p className="m-[6px_0_0] text-[11px] leading-[1.3em] text-[#333] line-clamp-2 overflow-hidden break-words" style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                  {sp.ten}
-                </p>
-              </div>
-            </SwiperSlide>
+            <button
+              key={index + ""}
+              type="button"
+              onClick={() => onProductClick(sp)}
+              className="w-[104px] shrink-0 border-0 bg-transparent p-0 text-left"
+            >
+              <span className="flex h-[96px] w-full items-center justify-center overflow-hidden rounded-xl border border-[#E3EBF6] bg-white p-2">
+                <img src={sp.HinhAnh} alt={sp.ten} loading="lazy" className="h-full w-full object-contain" />
+              </span>
+              <span className="mt-1.5 line-clamp-2 text-[12px] leading-tight text-slate-700">{sp.ten}</span>
+              {Number(sp.dongia) > 0 && (
+                <span className="mt-0.5 block text-[12px] font-semibold tabular-nums text-[#e5232a]">
+                  {formatCurrency(sp.dongia, true)}đ
+                </span>
+              )}
+            </button>
           ))}
-        </Swiper>
-      ) : (
-        <div className="py-2">
-          <p className="m-0 text-[14px] text-[#999] text-center">Không có sản phẩm liên quan để hiển thị</p>
         </div>
+      ) : (
+        <div className="py-2 text-center text-[13px] text-slate-400">Không có sản phẩm liên quan</div>
       )}
     </div>
   )

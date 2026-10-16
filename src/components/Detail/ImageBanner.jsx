@@ -1,75 +1,46 @@
-import {
-  Box,
-  Icon,
-  Link,
-  SkeletonBlock,
-  Swiper,
-  SwiperSlide,
-} from "zmp-framework/react"
+import { Icon, Link, SkeletonBlock, Swiper, SwiperSlide } from "zmp-framework/react"
 import Image from "@components/Image"
 
 const ImageBanner = ({ Product, loading, onBack }) => {
+  const images = [Product?.HinhAnh, Product?.HinhAnh1, Product?.HinhAnh2].filter(
+    // HinhAnh1/2 ngắn hơn 60 ký tự là link ảnh mặc định "chụp ảnh" của hệ thống
+    (src, i) => src && (i === 0 || src.length > 59)
+  )
+
   return (
-    <Box m="0" p="0" mb={5} id="topSection" className="banner_page_detai2">
+    <div id="topSection" className="relative bg-white">
       {!loading && (
-        <Swiper>
-          <SwiperSlide>
-            <Box m="0" p="0" className="banner_page_detai">
-              <Image
-                className="image-card2"
-                src={Product?.HinhAnh}
-                style={{ height: 280, backgroundColor: "#fff", objectFit: "contain" }}
-                alt="Hình ảnh sản phẩm"
-              />
-            </Box>
-          </SwiperSlide>
-          {Product?.HinhAnh1 && Product?.HinhAnh1.length > 59 && (
-            <SwiperSlide>
-              <Box m="0" p="0" className="banner_page_detai">
+        <Swiper pagination={images.length > 1}>
+          {images.map((src, i) => (
+            <SwiperSlide key={i}>
+              <div className="flex h-[300px] items-center justify-center px-6 pb-6 pt-[calc(var(--safe-top)+36px)]">
                 <Image
-                  className="image-card2"
-                  src={Product?.HinhAnh1}
-                  style={{ height: 280, backgroundColor: "#fff", objectFit: "contain" }}
+                  src={src}
+                  alt="Hình ảnh sản phẩm"
+                  style={{ width: "100%", height: "100%", objectFit: "contain", backgroundColor: "#fff" }}
                 />
-              </Box>
+              </div>
             </SwiperSlide>
-          )}
-          {Product?.HinhAnh2 && Product?.HinhAnh2.length > 59 && (
-            <SwiperSlide>
-              <Box m="0" p="0" className="banner_page_detai">
-                <Image
-                  className="image-card2"
-                  src={Product?.HinhAnh2}
-                  style={{ height: 280, backgroundColor: "#fff", objectFit: "contain" }}
-                />
-              </Box>
-            </SwiperSlide>
-          )}
+          ))}
         </Swiper>
       )}
       {loading && (
-        <SkeletonBlock
-          height="310px"
-          width="247px"
-          effect="wave"
-          className="banner_page_detai"
-        />
+        <div className="flex h-[300px] items-center justify-center pt-[calc(var(--safe-top)+36px)]">
+          <SkeletonBlock height="220px" width="220px" borderRadius="16px" effect="wave" />
+        </div>
       )}
-      {/* Nút back */}
-      <div style={{ position: "absolute", top: 40, left: 16, zIndex: 10 }}>
+
+      {/* Nút quay lại */}
+      <div className="absolute left-3 z-10" style={{ top: "calc(var(--safe-top) + 8px)" }}>
         <Link
           back
           onClick={onBack}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: 36, height: 36, borderRadius: "50%",
-            backgroundColor: "rgba(0,0,0,0.2)"
-          }}
+          className="!flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-[0_1px_6px_rgba(0,0,0,0.15)]"
         >
-          <Icon style={{ color: "white" }} size={24} zmp="zi-chevron-left-header"></Icon>
+          <Icon color="#334155" size={20} zmp="zi-chevron-left-header"></Icon>
         </Link>
       </div>
-    </Box>
+    </div>
   )
 }
 

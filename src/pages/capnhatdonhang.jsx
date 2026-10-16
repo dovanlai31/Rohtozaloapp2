@@ -7,7 +7,9 @@ import { formatCurrency, getAPI, request } from "@utils/networking"
 import { validateString } from "@utils/util"
 import { useEffect, useRef, useState } from "react"
 import { TbPackageImport } from "react-icons/tb"
-import { Box, Button, Card, Link, Page, Text, useStore, zmp } from "zmp-framework/react"
+import { Page, useStore, zmp } from "zmp-framework/react"
+import { Button as UiButton, SectionTitle } from "@components/ui"
+import { MdEdit, MdLocalOffer, MdShoppingBag } from "react-icons/md"
 import Logo from "../static/images/logoMain.webp"
 import store from "../store"
 import "../styles/app.scss"
@@ -397,396 +399,213 @@ const Capnhatdonhang = ({ zmproute }) => {
       .open()
   }
 
-  const onClickChotDonHang = async (status = "1") => {
+  // Sửa đơn (trạng thái 0): đưa sản phẩm của đơn vào giỏ hàng (giá hiện hành), tính lại khuyến mãi rồi cập nhật đơn
+  const onClickSuaDon = () => {
     if (isGiaoHang != 0) {
-      //alert trạng thái không hợp lệ
-      zmp.dialog.alert("Trạng thái đơn hàng không hợp lệ để chốt đơn", "Thông báo");
+      zmp.dialog.alert("Đơn hàng đã được xử lý, không thể chỉnh sửa", "Thông báo")
       return
-
     }
+    const gioHienTai = store.getters.getGioHang.value || []
+    const dangSua = store.getters.dhDangSua.value || ""
+    if (gioHienTai.length > 0 && dangSua != id) {
+      zmp.dialog.confirm(
+        "Giỏ hàng đang có sản phẩm. Thay bằng sản phẩm của đơn #" + id + " để chỉnh sửa?",
+        "Thông báo",
+        napDonVaoGio
+      )
+    } else napDonVaoGio()
+  }
+
+  const napDonVaoGio = async () => {
     updateLoading(true)
-    let queryString = {
-      dhId: id,
-    }
+    const userId = validateString(CusInfo?.KHACHHANG_fk + "", true)
+    const thieu = []
     try {
-      const response = await (
-        await request(
-          "POST",
-          "khachhang/ChotDonhang",
-          {
-            userId: validateString(CusInfo?.KHACHHANG_fk + "", true),
-            trangthai: status
-          },
-          queryString
+      const list = (
+        await Promise.all(
+          listSp.map(async (item) => {
+            try {
+              const { data, error } = await getAPI("khachhang/getSpDetail", "POST", {}, {
+                userId,
+                spId: validateString(item.id + "", true),
+                idchungloai: "",
+                loai: "2",
+              })
+              const sp = !error && data?.result ? JSON.parse(data.content)?.[0] : null
+              if (!sp) throw new Error()
+              return { ...sp, soluong: Number(item.soluong ?? item.SOLUONG) || 1 }
+            } catch (e) {
+              thieu.push(item.ten || item.TEN || item.ma)
+              return null
+            }
+          })
         )
-      ).json()
-      if (response) {
+      ).filter(Boolean)
 
-        //{
-        //   "result": true,
-        //   "message": "Donhang.SysOTC.NotFound",
-        //   "content": 0
-        // }
-
-        updateLoading(false)
-        console.log("ChotDonhang response ", response)
-        if (response.result) {
-          zmp.dialog.alert(response.message, "Thông báo");
-        }
-        if (!response.result) {
-           zmp.dialog.alert(response.title, "Thông báo");
-        }
-      
-      } else {
-        updateLoading(false)
+      if (!list.length) {
+        zmp.dialog.alert("Không lấy được thông tin sản phẩm của đơn hàng, vui lòng thử lại", "Thông báo")
+        return
       }
-    } catch (error) {
+      await store.dispatch("AddAllGioHang", list)
+      store.dispatch("setDhDangSua", id)
+      const goToCart = () => {
+        zmp.views.current.router.back()
+        setTimeout(() => zmp.tab.show("#view-giohang"), 300)
+      }
+      if (thieu.length) {
+        zmp.dialog.alert("Một số sản phẩm không còn bán nên không đưa vào giỏ: " + thieu.join(", "), "Thông báo", goToCart)
+      } else {
+        zmp.toast.create({ text: "Đã đưa đơn #" + id + " vào giỏ hàng để chỉnh sửa", position: "center", closeTimeout: 1800 }).open()
+        goToCart()
+      }
+    } finally {
       updateLoading(false)
     }
   }
 
+  // Huỷ đơn (chỉ đơn trạng thái 0): dùng API huỷ đơn của Rohto, hoàn lại tồn kho và phân bổ khuyến mãi
+  const onClickXoaDonHang = async () => {
+    if (isGiaoHang != 0) {
+      zmp.dialog.alert("Đơn hàng đã được xử lý, không thể xoá", "Thông báo")
+      return
+    }
+    updateLoading(true)
+    try {
+      const response = await (
+        await request(
+          "POST",
+          "khachhang/xoadonhang",
+          { userId: validateString(CusInfo?.KHACHHANG_fk + "", true) },
+          { dhId: id }
+        )
+      ).json()
+      if (response?.result) {
+        store.dispatch("setRefres", Date.now()) // làm mới danh sách đơn / số đơn chờ xác nhận
+        zmp.dialog.alert(response.message || "Đã xoá đơn hàng", "Thông báo", () => zmp.views.current.router.back())
+      } else {
+        zmp.dialog.alert(response?.message || "Không xoá được đơn hàng, vui lòng thử lại", "Thông báo")
+      }
+    } catch (error) {
+      zmp.dialog.alert("Không xoá được đơn hàng, vui lòng thử lại", "Thông báo")
+    } finally {
+      updateLoading(false)
+    }
+  }
 
-
+  const HIEN_SAN = 3 // số sản phẩm hiện sẵn, còn lại bấm "Xem thêm"
+  const listSp = Array.isArray(Giohang) ? Giohang : []
+  const canChot = isGiaoHang == 0
+  const tienHang = Number(TongTien) || 0
+  const tienKm = Number(TongtieKm) || 0
 
   return (
     <Page
-      className="detail-page relative"
+      className="detail-page bg-slate-50"
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
     >
-      <HeaderBack slot="fixed" force={true} title={"Đơn hàng"} />
-      {/* {loading && <LoadingSpinner />} */}
+      <HeaderBack slot="fixed" force={true} title={id ? `Đơn hàng #${id}` : "Đơn hàng"} />
 
-      {Giohang.length > 0 && (
-        <>
-          <Box mx={2} className={`box ${isOpenOTP ? "open" : ""}`}>
-            <Card inset className="">
-              <Box flex justifyContent="center" style={{ width: "100%" }}>
-                <Box m="0" p="0" className="logo-imex "></Box>
-              </Box>
-              <Box
-                m={0}
-                p={0}
-                style={{
-                  width: "100%",
-                  height: "5px",
-                  // backgroundColor: 'red',
-
-                  paddingBottom: "10px",
-                  WebkitBoxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-                  boxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-                }}
-                className="BoxLine"
-              ></Box>
-
-              {Giohang.map((item, index) => {
-                if (index < 3) {
-                  return (
-                    <RowItemGH
-                      key={index}
-                      item={item}
-                      index={index}
-                      ViewMore={ViewMore}
-                      updateGiohang={(a) => updateGiohang(a)}
-                      tinhtien={() => tinhtien()}
-                      length={Giohang.length}
-                    ></RowItemGH>
-                  )
-                } else {
-                  if (index == 3 && !ViewMore)
-                    return (
-                      <div className="mt-4 flex items-center justify-center">
-                        <Button
-                          className="gap-2 px-6 py-4"
-                          onClick={() => updateViewMore(true)}
-                        >
-                          <Text
-                            className="text-brown-dark-text-size8 "
-                            style={{
-                              color: Color.textAPPGray,
-                              fontSize: "13px",
-                              fontWeight: 500,
-                            }}
-                          >
-                            Xem thêm
-                          </Text>
-                          {/* <FaCircleArrowDown size={25} fill="#0091FF" /> */}
-                        </Button>
-                      </div>
-                    )
-                  if (ViewMore)
-                    return (
-                      <RowItemGH
-                        key={index}
-                        item={item}
-                        index={index}
-                        ViewMore={ViewMore}
-                        updateGiohang={(a) => updateGiohang(a)}
-                        tinhtien={() => tinhtien()}
-                        length={Giohang.length}
-                      ></RowItemGH>
-                    )
-                }
-              })}
-            </Card>
-
-            {datakm.length > 0 ? (
-              <Card style={{ marginTop: "10px" }} inset>
-                <Box flex justifyContent="center" style={{ width: "100%" }}>
-                  <Text
-                    className="font-extrabold "
-                    style={{ color: Color.textAPPBlue, fontSize: "16px" }}
-                  >
-                    Chương trình
-                  </Text>
-                </Box>
-
-                <Box className="">
-                  {datakm.map((item, index) => {
-                    return (
-                      <RowItemKM
-                        key={index}
-                        item={item}
-                        index={index}
-                        length={datakm.length}
-                        updateGiohang={(a) => updateGiohang(a)}
-                        tinhtien={() => tinhtien()}
-                      ></RowItemKM>
-                    )
-                  })}
-                </Box>
-              </Card>
-            ) : (
-              <></>
+      {listSp.length > 0 && (
+        <div className="flex flex-col gap-3 px-4 pt-3" style={{ paddingBottom: canChot ? 260 : 190 }}>
+          {/* Sản phẩm */}
+          <div>
+            <SectionTitle icon={<MdShoppingBag size={16} />}>
+              Sản phẩm ({listSp.length}) · {formatCurrency(tongSoLuong, true)} SL
+            </SectionTitle>
+            <div className="divide-y divide-[#edf0f5] overflow-hidden rounded-xl border border-[#E3EBF6] bg-white">
+              {(ViewMore ? listSp : listSp.slice(0, HIEN_SAN)).map((item, index) => (
+                <RowItemGH
+                  key={item.id || index}
+                  item={item}
+                  index={index}
+                  ViewMore={ViewMore}
+                  updateGiohang={(a) => updateGiohang(a)}
+                  tinhtien={() => tinhtien()}
+                  length={listSp.length}
+                />
+              ))}
+            </div>
+            {!ViewMore && listSp.length > HIEN_SAN && (
+              <UiButton variant="ghost" full className="mt-2 !py-2.5 text-[13px] text-primary" onClick={() => updateViewMore(true)}>
+                Xem thêm {listSp.length - HIEN_SAN} sản phẩm
+              </UiButton>
             )}
-          </Box>
-          <Box style={{ height: isOpenOTP ? 420 : 280 }}></Box>
-        </>
+          </div>
+
+          {/* Chương trình khuyến mãi */}
+          {datakm.length > 0 && (
+            <div>
+              <SectionTitle icon={<MdLocalOffer size={16} className="text-[#e5232a]" />}>Chương trình khuyến mãi</SectionTitle>
+              <div className="flex flex-col gap-2">
+                {datakm.map((item, index) => (
+                  <RowItemKM
+                    key={index}
+                    item={item}
+                    index={index}
+                    length={datakm.length}
+                    updateGiohang={(a) => updateGiohang(a)}
+                    tinhtien={() => tinhtien()}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
-
-      {Giohang.length > 0 ? (
-        <Box
-          m="0"
-          p="0"
-          flex
-          className="mx-0 customBG "
-          alignItems="center"
-          slot="fixed"
-          style={{
-            height: 200,
-            width: "100%",
-            position: "absolute",
-            bottom: 0,
-            zIndex: 9,
-            //  background: "white",
-
-            // boxShadow: " -1px -2px 0px 0px rgba(173,155,155,0.75)",
-            borderTopWidth: 0,
-
-          }}
+      {/* Tổng tiền + thao tác (cố định đáy màn hình) */}
+      {listSp.length > 0 && (
+        <div
+          className="fixed bottom-0 left-0 z-[999] w-full border-t border-[#e6ebf2] bg-white px-4 pt-3"
+          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}
         >
-          {/* <Icon zmp='zi-star'></Icon> */}
-          <Box m="0" p="0" style={{ width: "100%" }}>
-            <Box style={{ width: "100%" }}>
-              {Giohang.length > 0 && (
-                <Box
-                  className="viewtotal-bottom"
-                  flex
-                  alignItems="center"
-                  justifyContent="space-between"
-                >
-                  <Box width={"90%"}>
-                    <div className="flex justify-between mb-1">
-                      <Text
-                        style={{
-                          color: Color.textAPPBlue,
-                          fontWeight: "800",
-                          fontSize: "13px",
-                        }}
-                      >
-                        Tổng tiền
-                      </Text>
-                      <Text
-                        style={{
-                          color: Color.textAPPGreen,
-                          fontWeight: 800,
-                          fontSize: "16px",
-                        }}
-                      >
-                        {formatCurrency(Number(TongTien))}
-                      </Text>
-                    </div>
-                    <div className="flex justify-between mb-1">
-                      <Text
-                        style={{
-                          color: Color.textAPPBlue,
-                          fontWeight: "800",
-                          fontSize: "13px",
-                        }}
-                      >Tiền khuyến mãi</Text>
-                      <Text
-                        style={{
-                          color: Color.BackgrondLightAPP4,
-                          fontWeight: 800,
-                          fontSize: "16px",
-                        }}
-                      >
-                        {formatCurrency(
-                          Number(TongtieKm) > 0 ? Number(TongtieKm) * -1 : -0
-                        )}
-                      </Text>
-                    </div>
-                    <div
-                      className="flex justify-between mb-4 border-b-2"
-                      style={{ borderColor: "#ccc", borderStyle: "dashed" }}
-                    >
-                      <Text
-                        style={{
-                          color: Color.textAPPBlue,
-                          fontWeight: "800",
-                          fontSize: "13px",
-                        }}
-                      >
-                        VAT
-                      </Text>
-                      <Text
-                        style={{
-                          color: Color.textAPPGreen,
-                          fontWeight: 800,
-                          fontSize: "16px",
-                        }}
-                      >
-                        {formatCurrency(Number(TongTienVAT))}
-                      </Text>
-                    </div>
-                    <div className="flex justify-between">
-                      <Text
-                        style={{
-                          color: Color.textAPPBlue,
-                          fontWeight: 800,
-                          fontSize: "13px",
-                        }}
-                      >
-                        Tổng tiền sau VAT
-                      </Text>
-                      <Text
-                        style={{
-                          color: Color.textAPPGreen,
-                          fontWeight: 800,
-                          fontSize: "16px",
-                        }}
-                      >
-                        {formatCurrency(
-                          Number(TongGiatri)
-                        )}{" "}
-                      </Text>
-                    </div>
-                  </Box>
+          <div className="flex flex-col gap-1 text-[13px]">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Tiền hàng</span>
+              <span className="tabular-nums text-slate-600">{formatCurrency(tienHang, true)}đ</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Khuyến mãi</span>
+              <span className="font-semibold tabular-nums text-[#1f8a4c]">
+                {tienKm > 0 ? `-${formatCurrency(tienKm, true)}đ` : "0đ"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">VAT</span>
+              <span className="tabular-nums text-slate-600">{formatCurrency(Number(TongTienVAT) || 0, true)}đ</span>
+            </div>
+          </div>
+          <div className="mt-1.5 flex items-baseline justify-between border-t border-dashed border-[#dfe6f0] pt-1.5">
+            <span className="text-[14px] font-semibold text-slate-700">Tổng thanh toán</span>
+            <span className="text-[19px] font-bold tabular-nums text-[#e5232a]">
+              {formatCurrency(Number(TongGiatri) || 0, true)}đ
+            </span>
+          </div>
 
-                </Box>
-              )}
-            </Box>
-
-            {isGiaoHang == 0 ? (
-              <Box m="0" p="0" className="p-4" flex justifyContent="center">
-
-                {loading ? (
-                  <LoadingSpinner></LoadingSpinner>
-                ) : (
-                  <Box m="0" p="0" className="p-4" flex justifyContent="center" style={{ width: "90%" }}>
-
-                    <Box m="0" p="0" flex style={{ width: "100%", gap: 5 }}>
-                      <Link
-                        onClick={() => {
-
-                          zmp.dialog.confirm(
-                            "Bạn có chắc chắn muốn xóa đơn hàng này?", "Thông báo",
-                            () => {
-                              onClickChotDonHang("2")
-                            }
-                          )
-                        }}
-                      >
-                        <Box
-                          m="0"
-                          p="0"
-                          flex
-                          alignItems="center"
-                          justifyContent="center"
-                          style={{
-                            backgroundColor: ConvertOpacity(Color.textAPPGreen, 0.1),
-                            borderRadius: 5,
-                            width: "50px",
-                            height: "50px",
-                            border: `1px solid ${ConvertOpacity(Color.textAPPGreen, 0.1)}`,
-                          }}
-                        >
-                          <IoTrashBin color={Color.textAPPRed2} style={{}} />
-                        </Box>
-                      </Link>
-                      <Button
-                        className="view-center"
-                        fill
-                        style={{
-                          backgroundColor: ConvertOpacity(Color.textAPPGreen2, 1),
-                          color: "white",
-                          fontSize: 16,
-                          borderRadius: 5,
-                          height: 50,
-                          flexGrow: 1,
-                        }}
-                        onClick={() => {
-
-                          // hiên alert xác nhận
-                          zmp.dialog.confirm(
-                            "Bạn có chắc chắn muốn chốt đơn hàng này?", "Thông báo",
-                            () => {
-                              onClickChotDonHang(0)
-                            }
-                          )
-
-                        }}
-                      >
-                        <Box flex alignItems="center" justifyContent="center">
-                          <FaCheck style={{ marginRight: 8 }} />
-                          <Text style={{ color: "white", fontSize: 13 }}>
-                            Chốt đơn hàng
-                          </Text>
-                        </Box>
-                      </Button>
-                    </Box>
-
-                    {/* <Button
-                      small
-                      className="filter-button-luu view-center"
-                      color="white"
-                      iconZMP="zi-check-circle"
-                      onClick={() => {
-
-                        // hiên alert xác nhận
-                        zmp.dialog.confirm(
-                          "Bạn có chắc chắn muốn chốt đơn hàng này?", "Thông báo",
-                          () => {
-                            onClickChotDonHang()
-                          }
-                        )
-
-                      }}
-                    >
-                      <Text style={{ color: "white", marginTop: 0 }}>
-                        Chốt đơn hàng
-                      </Text>
-                    </Button> */}
-                  </Box>
-                )}
-              </Box>) : null}
-
-          </Box>
-        </Box>
-      ) : (
-        <></>
+          {canChot &&
+            (loading ? (
+              <div className="flex justify-center py-2">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              <div className="mt-2.5 flex gap-2">
+                <UiButton
+                  variant="ghost"
+                  aria-label="Xoá đơn hàng"
+                  className="!px-3.5 text-[#e5232a]"
+                  icon={<IoTrashBin size={18} />}
+                  onClick={() =>
+                    zmp.dialog.confirm("Bạn có chắc chắn muốn xóa đơn hàng này?", "Thông báo", onClickXoaDonHang)
+                  }
+                />
+                <UiButton className="flex-1" icon={<MdEdit size={16} />} onClick={onClickSuaDon}>
+                  Sửa đơn hàng
+                </UiButton>
+              </div>
+            ))}
+        </div>
       )}
     </Page>
   )

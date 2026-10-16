@@ -4,10 +4,11 @@ import Post from "@components/Product"
 import NoDataMessage from "@components/common/NoDataMessage"
 import { request } from "@utils/networking"
 import { useEffect, useRef, useState } from "react"
-import { Box, Icon, Page, Tab, Tabs, Text, useStore, zmp } from "zmp-framework/react"
+import { Box, Icon, Page, Tab, Tabs, useStore, zmp } from "zmp-framework/react"
 import "../styles/app.scss"
 import Color from "@components/common/Color"
 import DanhmucItem from "@components/DanhMucSP/DanhmucItem"
+import CategoryThumb from "@components/DanhMucSP/CategoryThumb"
 
 const ListPost = ({ zmproute }) => {
   const datasp = useStore("latestBlogs")
@@ -113,7 +114,7 @@ const ListPost = ({ zmproute }) => {
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
-      className="detail-page"
+      className="detail-page bg-slate-50"
     >
       <HeaderBack slot="fixed" title={tendanhmuc}></HeaderBack>
 
@@ -128,96 +129,56 @@ const ListPost = ({ zmproute }) => {
               className="page-content-danhmuc"
               tabLinkActive={index == tabLinkActive}
             >
-              {/* Box mô tả danh mục */}
+              {/* Mô tả danh mục */}
               {activeCategory && (
-                <Box
-                  m="4"
-                  mt="0"
-                  style={{
-                    backgroundColor: "#fff",
-                    borderRadius: 14,
-                    padding: "16px",
-                    boxShadow: "0px 2px 10px rgba(0,0,0,0.07)",
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 12,
-                  }}
-                >
-                  {/* Nội dung chữ bên trái */}
-                  <div style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        fontWeight: 800,
-                        fontSize: "16px",
-                        color: "#005DAA",
-                        marginBottom: 8,
-                        display: "block",
-                      }}
-                    >
+                <div className="mx-4 mt-3 flex items-start gap-3 rounded-2xl border border-[#E3EBF6] bg-white p-3">
+                  <CategoryThumb
+                    src={activeCategory?.HINHANH}
+                    name={activeCategory?.TEN}
+                    index={Number(zmproute.query.index) || 0}
+                    className="h-16 w-16 p-2"
+                    textClassName="text-xl"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[15px] font-bold leading-snug text-slate-800">
                       {activeCategory?.DIENGIAI || activeCategory?.TEN}
-                    </Text>
+                    </div>
                     {activeCategory?.MOTA && (
-                      <Text
-                        style={{
-                          fontSize: "13px",
-                          color: "#444",
-                          lineHeight: "1.6",
-                          display: "block",
-                        }}
-                      >
+                      <div className="mt-1 text-[13px] leading-relaxed text-slate-600">
                         {activeCategory.MOTA}
-                      </Text>
+                      </div>
                     )}
                   </div>
-                  {/* Hình ảnh bên phải */}
-                  {activeCategory?.HINHANH && (
-                    <img
-                      src={activeCategory.HINHANH}
-                      alt={activeCategory.TEN}
-                      style={{
-                        width: 72,
-                        height: 72,
-                        objectFit: "contain",
-                        borderRadius: 8,
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
-                </Box>
+                </div>
               )}
 
-              <Box
-                flexWrap
-                m="2"
-                flex
-                flexDirection="row"
-                justifyContent="center"
-                className="gap-3"
-              >
-                {listData.length > 0 && zmproute.query.loai !== 'NHANHANG' ? (
-                  listData.map((item, i) => <DanhmucItem
-                    key={i + ""}
-                    seen={item.seen}
-                    item={item}
-                    index={i}
-                    loai={'NHANHANG'}
-
-                  />
-                    //  <Post {...item} key={i + ""} />
-                  )
-                ) :
-
-                  listData.length > 0 && zmproute.query.loai === 'NHANHANG' ? (
-                    listData.map((item, i) =>
-                      <Post {...item} key={i + ""} />
-                    )
-                  ) : (
-                    <NoDataMessage />
-                  )
-                }
-                {loading && <LoadingSpinner />}
-              </Box>
+              {listData.length > 0 && zmproute.query.loai !== 'NHANHANG' ? (
+                // Lưới nhãn hàng của danh mục
+                <div className="mx-4 my-3 rounded-2xl border border-[#E3EBF6] bg-white px-2 pb-3 pt-3">
+                  <div className="mb-3 px-2 text-[15px] font-bold text-slate-800">Nhãn hàng</div>
+                  <div className="flex flex-wrap gap-y-3">
+                    {listData.map((item, i) => (
+                      <DanhmucItem
+                        key={i + ""}
+                        seen={item.seen}
+                        item={item}
+                        index={i}
+                        loai={'NHANHANG'}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : listData.length > 0 && zmproute.query.loai === 'NHANHANG' ? (
+                // Danh sách sản phẩm của nhãn hàng
+                <div className="py-2">
+                  {listData.map((item, i) => (
+                    <Post {...item} CusInfo={CusInfo} key={i + ""} />
+                  ))}
+                </div>
+              ) : (
+                !loading && <NoDataMessage />
+              )}
+              {loading && <LoadingSpinner />}
             </Tab>
           ))}
         </Tabs>

@@ -7,9 +7,6 @@ import {
   DatePicker,
   Link,
   Page,
-  Tab,
-  Tabbar,
-  Tabs,
   useStore,
   zmp,
 } from "zmp-framework/react"
@@ -17,6 +14,11 @@ import { Input } from "zmp-ui"
 import "../styles/notifypage.scss"
 
 import DonHang from "@components/DonHang/DonHang"
+import { PillTabs } from "@components/ui"
+import DateRangeFilter from "@components/DonHang/DateRangeFilter"
+
+// Ngày trong state có thể là Date (khi mở từ trang Doanh số) hoặc chuỗi yyyy-mm-dd (từ bộ lọc)
+const toYmd = (v) => (!v ? "" : typeof v === "string" ? v : formatDateToYYYYMMDD(v))
 import useDebounce from "@hooks/useDebounce"
 import { requestWithAbortController } from "@utils/networking"
 import {
@@ -32,6 +34,7 @@ const listdonhang = ({ zmproute }) => {
   const abortController = useRef(new AbortController())
   const abortControllerTQ = useRef(new AbortController())
 
+  const [tab, setTab] = useState("dh")
   const [dhId, setDhId] = useState("")
   const [tungay, setTuggay] = useState("")
   const [denngay, setDenngay] = useState("")
@@ -263,31 +266,33 @@ const listdonhang = ({ zmproute }) => {
         onPageBeforeIn={() => {
           zmp.toolbar.hide("#main-nav")
         }}
-        className="detail-page"
+        className="detail-page bg-slate-50"
       >
+        <Header back>Đơn hàng</Header>
+        {/* Tab Đơn hàng / Đơn sampling: cố định dưới header */}
+        <Box m={0} p={0} slot="fixed" className="bg-slate-50 px-4 pb-1 pt-3">
+          <PillTabs
+            tabs={[
+              { key: "dh", label: "Đơn hàng" },
+              { key: "qt", label: "Đơn sampling" },
+            ]}
+            value={tab}
+            onChange={setTab}
+          />
+          <DateRangeFilter
+            className="mt-2"
+            value={{ from: toYmd(tungay), to: toYmd(denngay) }}
+            onChange={({ from, to }) => {
+              setTuggay(from)
+              setDenngay(to)
+            }}
+          />
+        </Box>
         <Box
           m="0"
           p="0"
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
-          <Header back>Đơn hàng</Header>
-          <Box m={0} slot="fixed" p={0}>
-            <Tabbar inner={false} m={0} p={5} className="CustomTabbar">
-              <Link
-                style={{ fontSize: "14px" }}
-                tabLink="#tab-1DHList"
-                tabLinkActive
-              >
-                Đơn hàng
-              </Link>
-              <Link style={{ fontSize: "14px" }} tabLink="#tab-2DHList">
-                Đơn sampling
-              </Link>
-              {/* <Link style={{ fontSize: "14px" }} tabLink="#tab-3CT">
-            CT tích lũy xu
-          </Link> */}
-            </Tabbar>
-          </Box>
           {/* <Box px="5" mb="0" style={{ backgroundColor: "transparent" }}>
             <Card inset className="shadown-app-1 ">
               <Box
@@ -369,24 +374,21 @@ const listdonhang = ({ zmproute }) => {
               </Box>
             </Card>
           </Box> */}
-          <Tabs animated swipeable>
-            <Tab id={"tab-1DHList"} style={{ overflow: "scroll" }} tabActive>
-              <DonHang
-                ListDonHang={ListDonHang}
-                lastPage={lastPage}
-                loading={loading}
-                getListDonHang={getListDonHangAbort}
-              />
-            </Tab>
-            <Tab id={"tab-2DHList"} style={{ overflow: "scroll" }} tabActive>
-              <DonHang
-                ListDonHang={ListDonHangQT}
-                lastPage={lastPageQT}
-                loading={loadingQT}
-                getListDonHang={getListDonHangTangQuaAbort}
-              />
-            </Tab>
-          </Tabs>
+          {tab === "dh" ? (
+            <DonHang
+              ListDonHang={ListDonHang}
+              lastPage={lastPage}
+              loading={loading}
+              getListDonHang={getListDonHangAbort}
+            />
+          ) : (
+            <DonHang
+              ListDonHang={ListDonHangQT}
+              lastPage={lastPageQT}
+              loading={loadingQT}
+              getListDonHang={getListDonHangTangQuaAbort}
+            />
+          )}
         </Box>
       </Page>
     </Router>

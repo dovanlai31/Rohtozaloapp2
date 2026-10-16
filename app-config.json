@@ -52,7 +52,11 @@
     "/login",
     "/voucher",
     "/kiemtradondathang",
-    "/kiemtradonhangdetail"
+    "/kiemtradonhangdetail",
+    "/kiemtraposm",
+    "/kiemtraposmdetail",
+    "/phieutrathuong",
+    "/phieutrathuongdetail"
   ],
   "template": {}
 }

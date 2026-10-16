@@ -12,7 +12,7 @@ import {
 } from "react-icons/md"
 import { FaCoins } from "react-icons/fa"
 
-function StateMessage({ children, className }) {
+function StateMessage({ children, className = "" }) {
   return <div className={className}>{children}</div>
 }
 
@@ -21,9 +21,6 @@ StateMessage.propTypes = {
   className: PropTypes.string,
 }
 
-StateMessage.defaultProps = {
-  className: "",
-}
 
 function InfoTable({ rows }) {
   return (
@@ -34,10 +31,10 @@ function InfoTable({ rows }) {
             <tr key={row.label}>
               <td className="w-1/2 px-1 py-2.5">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[#3b5ea8]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-primary">
                     {row.icon}
                   </span>
-                  <span className="truncate text-[14px]  text-[#878787]">
+                  <span className="truncate text-[14px]  text-slate-500">
                     {row.label}
                   </span>
                 </div>
@@ -66,14 +63,14 @@ InfoTable.propTypes = {
   ).isRequired,
 }
 
-function OutlineActionLink({ href, label, icon, padding, variant }) {
+function OutlineActionLink({ href, label, icon, padding = undefined, variant = "muted" }) {
   return (
     <Link
       href={href}
       className={`w-full rounded-2xl text-center ${
         variant === "primary"
           ? "bg-[#3b5ea8] !text-white"
-          : "bg-[#e9edf5] !text-[#3b5ea8]"
+          : "bg-[#e9edf5] !text-primary"
       }`}
       style={{ padding }}
     >
@@ -93,12 +90,8 @@ OutlineActionLink.propTypes = {
   padding: PropTypes.string,
 }
 
-OutlineActionLink.defaultProps = {
-  variant: "muted",
-  padding: undefined,
-}
 
-export default function KhachhangTichLuyCard({ loading, dataTichLuy, cusInfo }) {
+export default function KhachhangTichLuyCard({ loading, dataTichLuy = null, cusInfo = {} }) {
   const hasData = !!dataTichLuy
   const progress = dataTichLuy?.PhanTram ?? 0
   const infoRows = [
@@ -106,13 +99,13 @@ export default function KhachhangTichLuyCard({ loading, dataTichLuy, cusInfo }) 
       icon: <MdTaskAlt size={18} />,
       label: "Chương trình",
       value: dataTichLuy?.TenChuongTrinh || "---",
-      valueClassName: "text-[#262936]",
+      valueClassName: "text-slate-800",
     },
     {
       icon: <MdShoppingCart size={18} />,
       label: "Doanh thu cam kết",
       value: formatCurrency(dataTichLuy?.DoanhThuCamKet ?? 0, true),
-      valueClassName: "text-[#2f3345]",
+      valueClassName: "text-slate-800",
     },
     {
       icon: <MdStackedLineChart size={18} />,
@@ -126,7 +119,7 @@ export default function KhachhangTichLuyCard({ loading, dataTichLuy, cusInfo }) 
     return (
       <Card className="shadown-app-1 " inset>
         <div className="w-full rounded-[10px] p-4 text-left">
-          <StateMessage className="text-center text-[11px] text-gray-500">
+          <StateMessage className="text-center text-[11px] text-slate-500">
             Đang tải dữ liệu...
           </StateMessage>
         </div>
@@ -144,10 +137,10 @@ export default function KhachhangTichLuyCard({ loading, dataTichLuy, cusInfo }) 
                 <MdApartment />
               </span>
               <div className="min-w-0">
-                <div className="line-clamp-2 text-[17px] font-extrabold leading-6 text-[#242632]">
+                <div className="line-clamp-2 text-[17px] font-bold leading-6 text-slate-800">
                   {cusInfo?.tenkh ?? "Khách hàng"}
                 </div>
-                <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#e8ebf4] px-3 py-1 text-[13px] font-bold text-[#3b5ea8]">
+                <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#e8ebf4] px-3 py-1 text-[13px] font-bold text-primary">
                   <MdCalendarToday size={14} />
                   {dataTichLuy.TuNgay ?? ""} - {dataTichLuy.DenNgay ?? ""}
                 </div>
@@ -160,10 +153,10 @@ export default function KhachhangTichLuyCard({ loading, dataTichLuy, cusInfo }) 
 
             <div className="mt-2 rounded-2xl bg-[#f1f2f89d] p-4">
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-[15px] font-bold text-[#4a4d5f]">
+                <span className="text-[15px] font-bold text-slate-600">
                   Hoàn thành
                 </span>
-                <span className="rounded-full bg-[#F6F2E7] px-3 py-1 text-[14px] font-extrabold text-[#F3A81D]">
+                <span className="rounded-full bg-[#F6F2E7] px-3 py-1 text-[14px] font-bold text-[#F3A81D]">
                   {progress}%
                 </span>
               </div>
@@ -197,7 +190,7 @@ export default function KhachhangTichLuyCard({ loading, dataTichLuy, cusInfo }) 
             </div>
           </>
         ) : (
-          <StateMessage className="py-3 text-center text-xs font-bold text-[#666]">
+          <StateMessage className="py-3 text-center text-xs font-bold text-slate-600">
             Hiện tại bạn chưa tham gia chương trình tích lũy nào
           </StateMessage>
         )}
@@ -220,9 +213,4 @@ KhachhangTichLuyCard.propTypes = {
   cusInfo: PropTypes.shape({
     tenkh: PropTypes.string,
   }),
-}
-
-KhachhangTichLuyCard.defaultProps = {
-  dataTichLuy: null,
-  cusInfo: {},
 }

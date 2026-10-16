@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { zmp } from "zmp-framework/react"
+import { useStore, zmp } from "zmp-framework/react"
 import store from "../store"
 import { cartService } from "../services/cartService"
 import {
@@ -10,11 +10,13 @@ import {
   checkMissingPromoProducts,
   formatPromotionData
 } from "../utils/cartHelper"
+import { useCartRewards } from "./useCartRewards"
 
 export const useCart = (CusInfo) => {
   const Giohangx = store.getters.getGioHang.value || []
 
   const refres = store.getters.refres.value || false
+  const dhDangSua = useStore("dhDangSua") || "" // theo dõi để giỏ hàng cập nhật khi bắt đầu / thôi sửa đơn
 
   const [Giohang, updateGiohang] = useState(Giohangx)
   const [TongTien, updateTongTien] = useState(0)
@@ -32,6 +34,25 @@ export const useCart = (CusInfo) => {
   const [maxSpins, setMaxSpins] = useState(0);
   const [targetPrize, setTargetPrize] = useState([]);
   const [kmDangQuay, setKmDangQuay] = useState(null)
+  // Thưởng tích lũy + phiếu trả thưởng áp trên đơn
+  const rewards = useCartRewards(CusInfo, Giohangx, dhDangSua)
+
+  // Cách tính khuyến mãi: "auto" = tự xếp ưu tiên theo giá trị, "manual" = người dùng tự xếp thứ tự / chọn chương trình
+  const [kmMode, setKmModeState] = useState(() => {
+    try {
+      return localStorage.getItem("cartKmMode") === "manual" ? "manual" : "auto"
+    } catch (e) {
+      return "auto"
+    }
+  })
+  const setKmMode = (mode) => {
+    setKmModeState(mode)
+    try {
+      localStorage.setItem("cartKmMode", mode)
+    } catch (e) {}
+  }
+  const [kmCandidates, setKmCandidates] = useState([]) // chương trình thỏa điều kiện (bước dieuchinh = 0)
+  const [showKmSort, setShowKmSort] = useState(false)
 
   // Danh sách phần thưởng (từ ảnh của bạn)
   // const prizes = [
@@ -127,7 +148,7 @@ export const useCart = (CusInfo) => {
   const handleDeleteAll = () => {
     zmp.dialog.create({
       title: "Xóa sản phẩm",
-      content: "Bạn muốn xóa toàn bộ sản phẩm lên đơn ?",
+      content: "Bạn muốn xoá toàn bộ sản phẩm trong giỏ hàng?",
       buttons: [
         { text: "Hủy", onClick() { } },
         {
@@ -135,6 +156,7 @@ export const useCart = (CusInfo) => {
           onClick() {
             updateGiohang([])
             store.dispatch("remoteAllGioHang")
+            store.dispatch("setDhDangSua", "")
             setTimeout(() => {
               zmp.toolbar.show("#main-nav")
             }, 200)
@@ -188,7 +210,7 @@ export const useCart = (CusInfo) => {
     }
 
     const donhang = {
-      id: "",
+      id: dhDangSua || "",
       nppId: CusInfo?.nppId || "",
       kbhId: "",
       khoId: "100000",
@@ -210,6 +232,7 @@ export const useCart = (CusInfo) => {
       if (data && data.status == "1") {
         if (data.data.length == 0) {
           if (currentDieuChinh === 0) onClickLuu("")
+          else khongConKhuyenMai()
         } else {
 
           const rawPromos = JSON.parse(data.data)
@@ -219,11 +242,21 @@ export const useCart = (CusInfo) => {
           console.log("Formatted promotions", promotions, newSPSD, chuoiSort, prizes)
 
           if (currentDieuChinh == 0) {
-            setdieuchinh(1)
-            applyPromotionsAPI(chuoiSort, 1)
+            if (kmMode === "manual") {
+              // Luồng thủ công: hiện danh sách để người dùng xếp ưu tiên rồi mới tính (bước dieuchinh = 1)
+              setKmCandidates(promotions)
+              setShowKmSort(true)
+              setIsShowModalKm(true)
+              updateLoading(false)
+            } else {
+              setdieuchinh(1)
+              applyPromotionsAPI(chuoiSort, 1)
+            }
           } else {
             setSanPhamSuDung(newSPSD)
-            updateDatakm(promotions)
+            updateDatakm(
+              promotions.filter((p) => p.ngansach === undefined || p.ngansach === null || Number(p.ngansach) > 0)
+            )
             updateAppKm(false)
             updateLoading(false)
             // setMaxSpins(prizes[0]?.SOLUOTQUAY || 0) // Ví dụ: giới hạn quay 2 lần
@@ -241,13 +274,71 @@ export const useCart = (CusInfo) => {
         }
       } else {
         if (currentDieuChinh === 0) onClickLuu("")
+        else khongConKhuyenMai()
       }
     } catch (error) {
+      console.log("applyPromotionsAPI error", error)
       updateLoading(false)
+      showDialog("Không tính được khuyến mãi, vui lòng thử lại.")
     }
   }
 
   const Appkm = () => applyPromotionsAPI([], 0)
+
+  const khongConKhuyenMai = () => {
+    updateDatakm([])
+    updateAppKm(false)
+    updateLoading(false)
+    showDialog("Không có khuyến mãi nào được áp dụng cho đơn hàng.")
+  }
+
+  const closeKmSort = () => {
+    setShowKmSort(false)
+    setIsShowModalKm(false)
+  }
+
+  // Người dùng xác nhận thứ tự ưu tiên: gửi chuỗi sort để API loại các khuyến mãi không thỏa
+  const confirmKmSort = (list) => {
+    const chuoiSort = []
+    let stt = 1
+    list.forEach((pro) => {
+      ;(pro.trakhuyenmai || []).forEach((tkm) => {
+        chuoiSort.push({
+          ctkmId: tkm.ctkmId + "",
+          trakmId: tkm.id + "",
+          scheme: pro.scheme + "",
+          stt: stt + "",
+          chon: !pro.boChon && tkm.chontkm ? "1" : "0",
+        })
+        stt++
+      })
+    })
+
+    if (!chuoiSort.some((x) => x.chon === "1")) {
+      zmp.dialog
+        .create({
+          title: "Thông báo",
+          content: "Bạn chưa chọn khuyến mãi nào. Tiếp tục đặt hàng không áp dụng khuyến mãi?",
+          buttons: [
+            { text: "Chọn lại" },
+            {
+              text: "Tiếp tục",
+              onClick() {
+                closeKmSort()
+                updateDatakm([])
+                updateAppKm(false)
+              },
+            },
+          ],
+        })
+        .open()
+      return
+    }
+
+    closeKmSort()
+    setdieuchinh(1)
+    applyPromotionsAPI(chuoiSort, 1)
+  }
 
   const onClickDangnhap = () => {
     const duplicates = getDuplicatesInCart(Giohangx)
@@ -281,7 +372,11 @@ export const useCart = (CusInfo) => {
     }
 
     updateLoading(true)
-    const payload = prepareOrderPayload(Giohangx, datakm, number, CusInfo, SanPhamSuDung)
+    const payload = {
+      ...prepareOrderPayload(Giohangx, datakm, number, CusInfo, SanPhamSuDung),
+      ...rewards.savePayload(),
+      dhId: dhDangSua || "",
+    }
 
     try {
       const p = await cartService.createOrder(payload)
@@ -293,6 +388,10 @@ export const useCart = (CusInfo) => {
           updateAppKm(true)
           store.dispatch("remoteAllGioHang")
           updateDatakm([])
+          if (dhDangSua) {
+            store.dispatch("setDhDangSua", "")
+            store.dispatch("setRefres", Date.now())
+          }
           backHome()
         }
       }
@@ -397,7 +496,17 @@ export const useCart = (CusInfo) => {
 
     setShowWheel,
     handleSpinEnd,
-    handleShowvongQuay
+    handleShowvongQuay,
+
+    rewards,
+    dhDangSua,
+
+    kmMode,
+    setKmMode,
+    kmCandidates,
+    showKmSort,
+    closeKmSort,
+    confirmKmSort,
 
   }
 }

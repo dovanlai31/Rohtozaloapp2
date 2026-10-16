@@ -46,6 +46,7 @@ const store = createStore({
     ListCTTrungBay: [],
     ListKhaoSat: [],
     refres: "1",
+    dhDangSua: "", // mã đơn hàng đang sửa trong giỏ hàng ("" = tạo đơn mới)
     // dl từ api geso trả về
     CusInfo: {
       zaloID: "",
@@ -127,6 +128,9 @@ const store = createStore({
     ListCTTLDiem({ state }) {
       return state.ListCTTLDiem
     },
+    dhDangSua({ state }) {
+      return state.dhDangSua
+    },
     refres({ state }) {
       return state.refres
     },
@@ -158,6 +162,9 @@ const store = createStore({
     },
     setRefres({ state }, data) {
       state.refres = data
+    },
+    setDhDangSua({ state }, dhId) {
+      state.dhDangSua = dhId ? String(dhId) : ""
     },
     setToken({ state }, Token) {
       state.Token = Token

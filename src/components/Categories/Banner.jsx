@@ -2,14 +2,26 @@ import { Link, SkeletonBlock, useStore, zmp } from "zmp-framework/react"
 
 import { getAPI, request, requestWithAbortController } from "@utils/networking"
 import store from "../../store"
-import Category from "./Category"
+import Category, { BANNER_RATIO } from "./Category"
 import { Swiper } from "zmp-ui"
 import { validateString } from "@utils/util"
-import { showToast } from "zmp-sdk"
+import { useState } from "react"
 
 const Banner = (props) => {
   const Banners = useStore("Banners")
   const { user, cusInfo } = props
+  const [busy, setBusy] = useState(false)
+
+  // Bấm banner: hiện vòng xoay trong lúc gọi API thêm sản phẩm vào giỏ, chặn bấm lặp
+  const onBannerClick = async (bn) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      await handleClickBanner(bn)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const handleClickBanner = async (bn) => {
     try {
@@ -80,7 +92,7 @@ const Banner = (props) => {
                   p.ma = data[0].ma || data[0].MA_SP
                   console.log("spmua", p)
                   store.dispatch("SetAddGioHang", p)
-                  showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
+                  zmp.toast.create({ text: "Thêm vào giỏ hàng thành công", position: "center", closeTimeout: 1500 }).open()
                   // alert(p.soluong)
                   console.log("spmua", p)
                   store.dispatch("SetAddGioHang", p)
@@ -160,15 +172,16 @@ const Banner = (props) => {
 
   if (Banners && Banners.length > 0) {
     return (
+      <div className="relative">
       <Swiper
-        dots={false}
+        dots={Banners.length > 1}
         id="swiper"
         duration={6000}
         loop={true}
         effect={"fade"}
         slidesPerView="auto"
         autoplay={true}
-        className="categories"
+        className="home-banner"
       >
         {Banners.map((bn, index) => (
           <Swiper.Slide key={index + ""}>
@@ -177,25 +190,28 @@ const Banner = (props) => {
                 width: "100%",
                 height: "100%",
               }}
-              onClick={() => handleClickBanner(bn)}
+              onClick={() => onBannerClick(bn)}
             >
-              <Category
-                url={bn.HinhAnh}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
+              <Category url={bn.HinhAnh} />
             </Link>
           </Swiper.Slide>
         ))}
       </Swiper>
+      {busy && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-white/70">
+          <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-primary border-t-transparent" />
+          <span className="text-[12px] font-medium text-slate-600">Đang thêm vào giỏ hàng…</span>
+        </div>
+      )}
+      </div>
     )
   }
 
+  // Khung chờ tải cùng tỉ lệ với ảnh banner
   return (
-    <SkeletonBlock
-      effect="wave"
-      width="100%"
-      style={{ height: "170px", borderRadius: 24 }}
-    />
+    <div className="relative w-full" style={{ paddingTop: BANNER_RATIO }}>
+      <SkeletonBlock effect="wave" width="100%" height="100%" style={{ position: "absolute", inset: 0 }} />
+    </div>
   )
 }
 

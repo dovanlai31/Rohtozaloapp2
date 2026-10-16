@@ -107,7 +107,7 @@ const DonHangKiemTraDDH: React.FC<Props> = (props) => {
                       )}
                       <Text
                         size="normal"
-                        className="font-extrabold text-blue-imex "
+                        className="font-bold text-primary "
                         style={{
                           width: "100%",
                           fontSize: "14px",

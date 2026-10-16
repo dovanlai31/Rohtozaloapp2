@@ -1,64 +1,15 @@
-import { Box, Button, Icon, Text } from "zmp-framework/react"
+import { Icon } from "zmp-framework/react"
+import AppHeader from "./AppHeader"
 
-const HeaderBox = ({
-  iconName = "",
-  icon = <></>,
-  HeaderBoxName = "",
-  customBox = null,
-  bottomOnPress,
-}) => {
-  return (
-    <Box
-      className="HeaderBox pt-st"
-      noSpace={true}
-      flex
-      alignItems="center"
-      justifyContent="space-between"
-      slot="fixed"
-    //  style={{ height: 150 }}
-    >
-      <Box flex alignItems="center" mb="0" >
-        {!bottomOnPress ? (
-          <Box style={{ background: "#dcedf7dc", borderRadius: 5 }} p={2}>
-            {iconName.length > 0 ? (
-              <Icon className="text-blue-imex" icon={iconName} />
-            ) : (
-              icon
-            )}
-          </Box>
-        ) : (
-          <Button onClick={bottomOnPress} className="RoundIcon3">
-            {iconName.length > 0 ? (
-              <Icon
-                color="black"
-                size={20}
-                style={{ fontWeight: "bold", margin: 0, padding: 0 }}
-                zmp={iconName}
-              />
-            ) : (
-              icon
-            )}
-          </Button>
-        )}
+// Header trang tab chính (icon + tiêu đề). Có bottomOnPress thì icon là nút quay lại tự xử lý.
+const HeaderBox = ({ iconName = "", icon = <></>, HeaderBoxName = "", customBox = null, bottomOnPress }) => {
+  if (bottomOnPress) {
+    return <AppHeader title={customBox || HeaderBoxName} onBack={bottomOnPress} />
+  }
 
-        <Box pl={2}>
-          {customBox ? (
-            customBox
-          ) : (
-            <Box style={{ width: "200px" }}>
-              <Text
-                size="large"
-                style={{ fontWeight: "bold" }}
-                className="text-blue-imex my-0 overflow-ellipsis overflow-hidden whitespace-nowrap"
-              >
-                {HeaderBoxName}
-              </Text>
-            </Box>
-          )}
-        </Box>
-      </Box>
-    </Box>
-  )
+  const leftIcon = iconName.length > 0 ? <Icon className="text-primary" icon={iconName} /> : icon
+  return <AppHeader title={customBox || HeaderBoxName} icon={leftIcon} />
 }
 
+HeaderBox.displayName = "zmp-navbar"
 export default HeaderBox

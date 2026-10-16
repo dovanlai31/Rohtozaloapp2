@@ -5,11 +5,11 @@ import {
   SkeletonBlock,
   SkeletonText,
   Tabbar,
-  Box,
+  Icon,
+  Link,
 } from "zmp-framework/react"
 import DanhmucItem from "./DanhmucItem"
 
-import { Section } from "@components/common/Section"
 import { TbBackground } from "react-icons/tb"
 
 const Stories = () => {
@@ -26,23 +26,14 @@ const Stories = () => {
 
   if (data && data.length > 0)
     return (
-      <Section
-        title="Danh mục"
-        titleSecondShow={true}
-        titleSecond="Tất cả"
-        RouterSecond="/pagedanhmucAll"
-        padding="title-only"
-        style={{  padding: "0 0px"   }}
-    
-      >
-        <Box
-          className="wrapCatalogs      
-          justify-center 
-          flex-wrap flex
- 
-         
-          "
-        >
+      <div className="mx-4 my-3 rounded-2xl border border-[#E3EBF6] bg-white px-2 pb-3 pt-3">
+        <div className="mb-3 flex items-center justify-between px-2">
+          <span className="text-[15px] font-bold text-slate-800">Danh mục</span>
+          <Link href="/pagedanhmucAll" noLinkClass className="!flex items-center gap-0.5 text-xs font-semibold text-primary">
+            Tất cả <Icon zmp="zi-chevron-right" size={14} />
+          </Link>
+        </div>
+        <div className="flex flex-wrap gap-y-3">
           {data.map(
             (item, index) =>
               index < 8 && (
@@ -54,8 +45,8 @@ const Stories = () => {
                 />
               )
           )}
-        </Box>
-      </Section>
+        </div>
+      </div>
       //
 
       // <Box

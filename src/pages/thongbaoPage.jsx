@@ -122,7 +122,7 @@ const ThongbaoPage = ({ zmproute }) => {
                           style={{ width: 55, height: 55, }} src={icongif2}></img> */}
                     </Box>
                     <Box className="w-full">
-                      <Text className="font-extrabold text-blue-imex text-sm">
+                      <Text className="font-bold text-primary text-sm">
                         {km.TIEUDE}
                       </Text>
                       <Box
@@ -135,12 +135,12 @@ const ThongbaoPage = ({ zmproute }) => {
                         justifyContent="space-between"
                         className="gap-2"
                       >
-                        <Text mx="0" className="text-xs text-[#ccc]">
+                        <Text mx="0" className="text-xs text-slate-400">
                           {formatDateToDDMMYYYY(km.NGAYBATDAU, "/") +
                             " - " +
                             formatDateToDDMMYYYY(km.NGAYKETTHUC, "/")}
                         </Text>
-                        <Text mx="0" className="text-xs text-[#ccc] flex gap-2 items-center">
+                        <Text mx="0" className="text-xs text-slate-400 flex gap-2 items-center">
                           <BsClockFill size={15} />
                           {!!km?.NGAYTAO && moment(km.NGAYTAO).fromNow()}
                         </Text>
@@ -152,10 +152,10 @@ const ThongbaoPage = ({ zmproute }) => {
             )
           })}
         {!loading && !ListThongbao?.length && (
-          <Box className="min-h-[60vh] w-full flex flex-col justify-center items-center gap-2 text-[#808080]">
+          <Box className="min-h-[60vh] w-full flex flex-col justify-center items-center gap-2 text-slate-500">
             <BsBellFill size={30} color="#808080" />
-            <Text className="font-bold text-[#808080] text-base">Không có thông báo</Text>
-            <Text className="text-[#808080] text-sm text-center">
+            <Text className="font-bold text-slate-500 text-base">Không có thông báo</Text>
+            <Text className="text-slate-500 text-sm text-center">
               Bạn chưa có thông báo nào. Hãy quay lại sau nhé!
             </Text>
           </Box>

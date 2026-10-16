@@ -6,19 +6,9 @@ import { formatDateFromArray, validateString } from "@utils/util"
 import moment from "moment"
 import { useCallback, useEffect, useState } from "react"
 import { BsDashLg } from "react-icons/bs"
-import { IoIosArrowRoundForward } from "react-icons/io"
-import {
-  Box,
-  Card,
-  DatePicker,
-  Link,
-  Page,
-  Picker,
-  Text,
-  useStore,
-  zmp,
-  Icon,
-} from "zmp-framework/react"
+import { MdDateRange, MdInventory2, MdPayments, MdReceiptLong } from "react-icons/md"
+import { Box, DatePicker, Page, Picker, useStore, zmp } from "zmp-framework/react"
+import { Card, Grid, MenuGroup, MenuRow, SectionTitle } from "@components/ui"
 import "../styles/app.scss"
 
 const DoanhSoDetail = ({ zmproute }) => {
@@ -86,60 +76,26 @@ const DoanhSoDetail = ({ zmproute }) => {
   useEffect(() => {
     getDoanhSo()
   }, [fromDateDebounce, toDateDebounce, getDoanhSo])
-  const handleBack = () => {
-    const currentRouter = zmp.views?.current?.router
-    if (currentRouter?.history?.length > 1) {
-      currentRouter.back()
-      return
-    }
-
-    if (zmp.views?.main?.router?.history?.length > 1) {
-      zmp.views.main.router.back()
-      return
-    }
-
-    if (
-      typeof globalThis.window !== "undefined" &&
-      globalThis.window.history.length > 1
-    ) {
-      globalThis.window.history.back()
-    }
-  }
   return (
     <Page
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
-      className="detail-page relative customBackgound p-2 m-0"
-      style={{ background: "#F4F9FE" }}
+      className="detail-page bg-slate-50"
     >
-      <Box className="flex items-center justify-between p-0 m-0">
-        <Box className="flex items-center gap-3 m-0">
-          <Link
-            noLinkClass
-            className="h-9 w-9 rounded-full bg-white shadow-sm flex items-center justify-center "
-            onClick={handleBack}
-          >
-            <Icon zmp="zi-close" size={18} />
-          </Link>
-          <Text className="text-[20px] font-extrabold text-[#23408f]">Doanh số</Text>
-        </Box>
-      </Box>
-      <Card
-        className="!m-0 !mt-[50px] px-2 bg-white rounded-2xl shadow-lg shadow-inherit border border-[#E0E0E0]"
-        title="Báo cáo doanh số"
-      >
-        <Box m={0} p={0} className=" w-full border-b border-[#E0E0E0]" />
-        <Box className="flex gap-3 mt-5 items-center ">
-          <Box m="0" className="relative">
+      <Header back>Doanh số {timeLabel}</Header>
+
+      <div className="flex flex-col gap-3 px-4 pb-8 pt-3">
+        {/* Khoảng thời gian */}
+        <Card>
+          <SectionTitle icon={<MdDateRange size={16} />} className="!px-0">
+            Khoảng thời gian
+          </SectionTitle>
+          <div className="flex items-end gap-2">
+          <Box m="0" className="min-w-0 flex-1">
             {isYearMode && (
               <Box m="0">
-                <Box
-                  m="0"
-                  className="absolute left-[10px] top-[-10px] z-[2] bg-white px-[10px] text-[13px] font-medium text-[#2455b4]"
-                >
-                  Năm
-                </Box>
+                <div className="mb-1 text-[12px] text-slate-500">Từ năm</div>
                 <Picker
                   style={{ zIndex: 1, fontSize: "12px" }}
                   selected={[String(fromDate)]}
@@ -159,13 +115,7 @@ const DoanhSoDetail = ({ zmproute }) => {
             )}
             {!isYearMode && (
               <>
-                <Box
-                  m="0"
-                  className="absolute left-[10px] top-[-10px] z-[2] bg-white px-[10px] text-[13px] font-bold text-[#2455b4]"
-                >
-                  Từ ngày
-                </Box>
-
+                <div className="mb-1 text-[12px] text-slate-500">Từ ngày</div>
                 <DatePicker
                   title="Từ ngày"
                   value={fromDate}
@@ -184,16 +134,11 @@ const DoanhSoDetail = ({ zmproute }) => {
               </>
             )}
           </Box>
-          <BsDashLg fontWeight={"bold"} />
-          <Box m="0" className="relative">
+          <BsDashLg className="mb-3 shrink-0 text-slate-400" />
+          <Box m="0" className="min-w-0 flex-1">
             {isYearMode && (
               <Box m="0">
-                <Box
-                  m="0"
-                  className="absolute left-[10px] top-[-10px] z-[2] bg-white px-[10px] text-[13px] font-medium text-[#2455b4]"
-                >
-                  Năm
-                </Box>
+                <div className="mb-1 text-[12px] text-slate-500">Đến năm</div>
                 <Picker
                   style={{ zIndex: 1, fontSize: "12px" }}
                   selected={[String(toDate)]}
@@ -213,12 +158,7 @@ const DoanhSoDetail = ({ zmproute }) => {
             )}
             {!isYearMode && (
               <Box m="0">
-                <Box
-                  m="0"
-                  className="absolute left-[10px] top-[-10px] z-[2] bg-white px-[10px] text-[13px] font-bold text-[#2455b4]"
-                >
-                  Đến ngày
-                </Box>
+                <div className="mb-1 text-[12px] text-slate-500">Đến ngày</div>
                 <DatePicker
                   className="text-base font-bold"
                   title="Đến ngày"
@@ -238,71 +178,40 @@ const DoanhSoDetail = ({ zmproute }) => {
               </Box>
             )}
           </Box>
-        </Box>
-        <Box
-          className="BoxLine mb-8 h-[5px] w-full"
-          style={{
-            WebkitBoxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-            boxShadow: "inset 0 -1px 0 0 rgba(100, 121, 143, 0.122)",
-          }}
-        />
-        <Box className="min-h-[30%]">
-          <Box m="0" className="bg-[#D5E6F5] rounded-2xl h-[200px]">
-            <Box p="5" className="w-full">
-              <Box
-                m="0"
-                my="4"
-                flexWrap
-                className="flex justify-between items-center relative"
-              >
-                <Text className="text-base font-bold text-[#111]">
-                  Doanh số {timeLabel}
-                </Text>
-                <Text className="text-xl font-semibold text-primary">
-                  {formatCurrency(data[1]?.soluong ? data[1]?.soluong : 0, true)} đ
-                </Text>
-              </Box>
-              <Box
-                m="0"
-                my="4"
-                flexWrap
-                className="flex justify-between items-center relative mt-16"
-              >
-                <Text className="text-base font-bold text-[#111]">
-                  Số lượng SKU {timeLabel}
-                </Text>
-                <Text className="text-xl font-semibold text-primary">
-                  {formatCurrency(data[0]?.soluong ? data[0]?.soluong : "0", true)}
-                </Text>
-              </Box>
-              <Box className="BoxLine h-[5px] border-b border-[#E0E0E0] !mb-4 w-full" />
-              <Link
-                animate
-                noLinkClass
-                href={`/listdonhang/?tungay=${fromDate}&denngay=${toDate}&loaids=${zmproute.query?.loai}&frombc=1`}
-              >
-                <Box className="mt-4 flex items-end" flex justifyContent="flex-end">
-                  <Box
-                    m="0"
-                    flex
-                    pr="2"
-                    justifyContent="center"
-                    alignItems="center"
-                    className="h-[30px] rounded-[5px]"
-                  >
-                    <Box className="text-[13px] italic text-primary font-bold">
-                      Chi tiết đơn hàng
-                    </Box>
-                    <IoIosArrowRoundForward size={20} color="#2455b4" />
-                  </Box>
-                </Box>
-              </Link>
-            </Box>
-          </Box>
-        </Box>
-      </Card>
+          </div>
+        </Card>
 
-      {/* <Box m="0" className="pt-5 customBackgound" style={{ minHeight: 300 }}></Box> */}
+        {/* Kết quả */}
+        <Grid cols={2}>
+          <Card>
+            <div className="flex items-center gap-1.5 text-[12px] text-slate-500">
+              <MdPayments size={15} className="text-primary" />
+              Doanh số {timeLabel}
+            </div>
+            <div className="mt-1.5 text-[19px] font-bold tabular-nums text-[#e5232a]">
+              {formatCurrency(data[1]?.soluong ? data[1]?.soluong : 0, true)}đ
+            </div>
+          </Card>
+          <Card>
+            <div className="flex items-center gap-1.5 text-[12px] text-slate-500">
+              <MdInventory2 size={15} className="text-primary" />
+              Số lượng SKU {timeLabel}
+            </div>
+            <div className="mt-1.5 text-[19px] font-bold tabular-nums text-primary">
+              {formatCurrency(data[0]?.soluong ? data[0]?.soluong : "0", true)}
+            </div>
+          </Card>
+        </Grid>
+
+        <MenuGroup>
+          <MenuRow
+            icon={<MdReceiptLong size={18} />}
+            label="Chi tiết đơn hàng"
+            sub="Các đơn hàng trong khoảng thời gian đã chọn"
+            href={`/listdonhang/?tungay=${fromDate}&denngay=${toDate}&loaids=${zmproute.query?.loai}&frombc=1`}
+          />
+        </MenuGroup>
+      </div>
     </Page>
   )
 }

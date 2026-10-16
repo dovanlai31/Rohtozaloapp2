@@ -1,20 +1,14 @@
-import React, { forwardRef, useRef, useImperativeHandle } from "react"
-import { SkeletonBlock, Text } from "zmp-framework/react"
-import { Box } from "zmp-ui"
+import { forwardRef } from "react"
 import "../../styles/banner.scss"
-const Category = forwardRef(({ loading, url }, ref) => {
-  const elRef = useRef(null)
-  // console.log('url      ccccccccccccccccc ',url)
-  useImperativeHandle(ref, () => elRef.current)
-  if (loading) {
-    return (
-      <Box my={0} mr={0} ml={10} ref={elRef} className="banner image-card">
-        <SkeletonBlock className="image-card"></SkeletonBlock>
-      </Box>
-    )
-  }
 
-  return <img loading="lazy" className="image-card" src={url} />
-})
+// Tỉ lệ khung banner cố định (rộng : cao = 16 : 7) để khung không co giãn theo từng ảnh khi tự chuyển
+export const BANNER_RATIO = "43.75%"
+
+// Ảnh banner: khung cố định tỉ lệ, ảnh phủ kín khung
+const Category = forwardRef(({ url }, ref) => (
+  <div ref={ref} className="relative w-full overflow-hidden bg-[#eef4fb]" style={{ paddingTop: BANNER_RATIO }}>
+    <img loading="lazy" src={url} alt="" className="absolute left-0 top-0 h-full w-full object-cover" />
+  </div>
+))
 
 export default Category

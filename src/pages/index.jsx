@@ -10,9 +10,8 @@ import {
   getDataCusFromSevice,
 } from "../services/services"
 import store from "../store"
-import HeaderHello from "./homecomponent/HeaderHello"
-import PaddingSection from "./homecomponent/PaddingSection"
-import SearchBox from "./homecomponent/SearchBox"
+import HomeHeader from "./homecomponent/HomeHeader"
+import { HomePromos, HomeShortcuts, HomeTodo, useHomeSummary } from "./homecomponent/HomeSections"
 import logoMain from "@static/images/opclogo.png"
 import Banner from "@components/Categories/Banner"
 import withOverlay from "@components/HOC/withOverlay"
@@ -39,6 +38,8 @@ const HomePage = ({ showToast }) => {
   const [mucduyet, setMucDuyet] = useState(0)
 
   const CusInfo = useStore("getCusInfo")
+  const ListKM = useStore("ListKM")
+  const homeSummary = useHomeSummary(CusInfo)
   const logged = useStore("getLogged")
   const user = useStore("user") || ""
 
@@ -352,10 +353,17 @@ const HomePage = ({ showToast }) => {
   return (
     <Page
       ptr
-      onPtrRefresh={() => {
-        handleReload()
-        FetchInitData(CusInfo?.KHACHHANG_fk).then(() => {
-          zmp.ptr.done()
+      onPtrRefresh={(done) => {
+        // Kéo để làm mới: tải lại dữ liệu trang chủ, luôn tắt vòng xoay khi xong (kể cả khi lỗi)
+        const safe = (fn) => Promise.resolve().then(fn).catch((e) => console.log("refresh fail", e))
+        Promise.all([
+          safe(() => FetchInitData(CusInfo?.KHACHHANG_fk)),
+          safe(() => store.dispatch("getBanner")),
+          safe(() => store.dispatch("getDanhmucSp")),
+        ]).finally(() => {
+          store.dispatch("setRefres", Date.now()) // làm mới số liệu Lối tắt / Cần làm hôm nay
+          if (typeof done === "function") done()
+          else zmp.ptr.done()
         })
       }}
       onPageBeforeIn={onPageBeforeIn}
@@ -363,43 +371,27 @@ const HomePage = ({ showToast }) => {
       name="home"
       className={logged && "home-page"}
     >
-      <Box className="headerHome" m="0" p="0" style={{}}>
-        <Box
-          className="HeaderBoxHome"
-          noSpace={true}
-          flex
-          alignItems="center"
-          justifyContent="space-between"
-          slot="fixed"
-          backgroundColor="#fff"
-          padding="0 16px"
-          height="116px"
-          
-        >
-          <Box
-            flex
-            justifyContent="space-between"
-            style={{ width: "100%" }}
-            mt={6}
-            pt={9}
-          >
-            <HeaderHello CusInfo={CusInfo} logoMain={logoMain} user={user} />
-          </Box>
-        </Box>
-        <Box p={0} flex flexDirection="row" alignItems="center" justifyContent="center">
-          {/*section search */}
-          <SearchBox />
-        </Box>
-        {/*section slider */}
-        <Box my="5" mx="5" p="0">
+      <div className="min-h-full bg-slate-50 pb-6">
+        {/* Header: lời chào cuộn đi, logo nhỏ hiện dần, ô tìm kiếm luôn giữ lại ở đầu màn hình */}
+        <HomeHeader CusInfo={CusInfo} user={user} logoMain={logoMain} />
+
+        {/* Cần làm hôm nay (chỉ hiện khi có việc) */}
+        {/* <HomeTodo summary={homeSummary} /> */}
+
+        {/* Lối tắt */}
+        <HomeShortcuts summary={homeSummary} kmCount={(ListKM || []).length} />
+
+        {/* Banner */}
+        <div className="mx-4 mt-3 overflow-hidden rounded-2xl">
           <Banner user={user} cusInfo={CusInfo} />
-        </Box>
-      </Box>
-      <Box className="bg-slate-50" mt="3">
+        </div>
+
+        {/* Khuyến mãi sắp hết hạn */}
+        <HomePromos ListKM={ListKM} />
+
         <DanhMucSP />
-        <PaddingSection />
         <Latest CusInfo={CusInfo} mucduyet={mucduyet} />
-      </Box>
+      </div>
       {chonkh.current && (
         <ChonKhachHang
           isVisible={chonkh.current}

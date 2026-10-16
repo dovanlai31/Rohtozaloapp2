@@ -113,13 +113,13 @@ const LichSuTichDiem = ({ zmproute }) => {
             >
               <Icon zmp="zi-close" color="#6b7280" size={18} />
             </Link>
-            <Text className="text-[20px] font-extrabold text-[#23408f]">
+            <Text className="text-[20px] font-bold text-primary">
               Lịch sử điểm
             </Text>
           </Box>
           <Box className="text-right">
-            <Text className="text-[13px] font-medium text-[#6b7280]">Tổng điểm</Text>
-            <Text className="text-[24px] leading-none font-extrabold text-[#23408f]">
+            <Text className="text-[13px] font-medium text-slate-500">Tổng điểm</Text>
+            <Text className="text-[24px] leading-none font-bold text-primary">
               {formatPoints(totalPoints)}
             </Text>
           </Box>
@@ -143,15 +143,15 @@ const LichSuTichDiem = ({ zmproute }) => {
                       <BsArrowUp color="#3D9A5B" size={16} />
                     </Box>
                     <Box className="flex-1 m-0">
-                      <Text className="text-[17px] leading-6 font-bold text-[#1f2937] m-0">
+                      <Text className="text-[17px] leading-6 font-bold text-slate-800 m-0">
                         {resolveTitle(item)}
                       </Text>
-                      <Text className="mt-1 text-[13px] text-[#9ca3af] m-0">
+                      <Text className="mt-1 text-[13px] text-slate-400 m-0">
                         {resolveDateText(item)}
                       </Text>
                     </Box>
                   </Box>
-                  <Text className="text-[18px] font-extrabold text-[#3D9A5B]">
+                  <Text className="text-[18px] font-bold text-[#3D9A5B]">
                     +{formatPoints(points)}
                   </Text>
                 </Box>
@@ -161,7 +161,7 @@ const LichSuTichDiem = ({ zmproute }) => {
 
         {!loading && !listHistory.length && (
           <Box className="min-h-[45vh] flex items-center justify-center">
-            <Text className="text-sm text-[#9ca3af]">Chưa có lịch sử điểm</Text>
+            <Text className="text-sm text-slate-400">Chưa có lịch sử điểm</Text>
           </Box>
         )}
       </Box>

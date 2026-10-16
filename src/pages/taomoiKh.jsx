@@ -241,7 +241,7 @@ const CreateCus = ({ zmproute, showToast }) => {
       <Box mx="2">
         <Card inset>
           <Text
-            className="text-blue-imex"
+            className="text-primary"
             style={{ fontSize: 18, fontWeight: "bold" }}
           >
             Thông tin tài khoản

@@ -5,7 +5,7 @@ import {
   useStore,
   zmp,
 } from "zmp-framework/react"
-import { getAppInfo, openShareSheet } from "zmp-sdk/apis"
+import { getAppInfo, openChat, openShareSheet } from "zmp-sdk/apis"
 
 import { getAPI, request } from "@utils/networking"
 import { validateString } from "@utils/util"
@@ -19,7 +19,6 @@ import ImageBanner from "@components/Detail/ImageBanner"
 import ProductInfo from "@components/Detail/ProductInfo"
 import ProductTabs from "@components/Detail/ProductTabs"
 import DetailFooter from "@components/Detail/DetailFooter"
-import KhuyenMai from "@components/Detail/KhuyenMai"
 import RelatedProducts from "@components/Detail/RelatedProducts"
 
 const Detail = ({ zmproute, showToast }) => {
@@ -149,8 +148,7 @@ const Detail = ({ zmproute, showToast }) => {
         zmp.toolbar.hide("#main-nav")
       }}
       onPageBeforeOut={onPageBeforeOut}
-      style={{ background: "#f5f6f8" }}
-      className="detail-page"
+      className="detail-page bg-slate-50"
     >
       <ImageBanner
         Product={Product}
@@ -161,27 +159,25 @@ const Detail = ({ zmproute, showToast }) => {
         }}
       />
 
-      {/* Khối nội dung chính (1 khối trắng liền mạch) */}
-      <div style={{ background: "#fff", marginTop: 8 }}>
+      {/* Tên, giá */}
+      <div className="mx-3 -mt-3 relative rounded-2xl border border-[#E3EBF6] bg-white">
         <ProductInfo Product={Product} loading={loading} CusInfo={CusInfo} />
       </div>
 
-      <div style={{ background: "#fff", marginTop: 8 }}>
+      {/* Mô tả / Chi tiết / Hướng dẫn */}
+      <div className="mx-3 mt-3 rounded-2xl border border-[#E3EBF6] bg-white">
         <ProductTabs Product={Product} />
       </div>
 
-      <KhuyenMai />
-
-      <RelatedProducts 
-        list_sp_tt={list_sp_tt}
-        onProductClick={(sp) => {
-          let x = { ...sp };
-          x.title = sp.ten;
-          x.HinhAnh = sp.HinhAnh;
-          setProduct(sp);
-          document.getElementById("topSection")?.scrollIntoView({ behavior: "smooth" });
-        }}
-      />
+      <div className="mx-3 mt-3 rounded-2xl border border-[#E3EBF6] bg-white">
+        <RelatedProducts
+          list_sp_tt={list_sp_tt}
+          onProductClick={(sp) => {
+            setProduct(sp)
+            document.getElementById("topSection")?.scrollIntoView({ behavior: "smooth" })
+          }}
+        />
+      </div>
 
       {/* Spacer để không bị footer che */}
       <Box noSpace style={{ width: "100%", height: 160 }} />

@@ -167,7 +167,7 @@ const CTTichLuy = ({ loai, data, tenCTTL }) => {
                       <Box alignItems="center">
                         <Text
                           size="normal"
-                          className="font-extrabold text-blue-imex "
+                          className="font-bold text-primary "
                           style={{
                             width: "100%",
                             fontSize: "13px",

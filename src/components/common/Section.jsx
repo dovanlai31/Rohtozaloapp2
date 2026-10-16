@@ -23,7 +23,7 @@ export const Section = ({
       <Box flex justifyContent="space-between" alignItems="center">
         <Text.Title
           size="Large"
-          className={`!font-extrabold text-primary ${padding === "title-only" ? "px-4" : ""}`}
+          className={`!font-bold text-primary ${padding === "title-only" ? "px-4" : ""}`}
         >
           {title}
         </Text.Title>
@@ -33,7 +33,7 @@ export const Section = ({
             className={` ${padding === "title-only" ? "px-4" : ""}`}
           >
             <Link
-              className="!text-primary !font-extrabold"
+              className="!text-primary !font-bold"
               href={RouterSecond}> {titleSecond}</Link>
           </Text.Title>
         )}

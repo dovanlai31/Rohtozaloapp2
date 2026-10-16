@@ -89,6 +89,13 @@ body * {
   box-sizing: border-box;
 }
 
+/* Màu chữ mặc định thống nhất (slate-800), chữ phụ dùng text-slate-500 / text-slate-400 */
+body,
+.page {
+  color: #1e293b;
+  --zmp-text-color: #1e293b;
+}
+
 .typo-body-xlarge {
   line-height: normal;
 }
