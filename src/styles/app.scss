@@ -104,7 +104,11 @@ body,
   margin-bottom: 0;
 }
 
-.home-page {
+// Chỉ giỏ hàng (vùng cuộn tự bỏ padding, thanh thanh toán nằm ở đáy khung) và tab danh mục mới cần khung trang
+// chừa chỗ cho thanh tab. Trang chủ / Khách hàng / Tài khoản đã được chừa ở cuối nội dung
+// (--zmp-page-toolbar-bottom-offset), nếu khung trang chừa thêm thì khi thanh tab ẩn lúc cuộn sẽ còn dải trống 80px.
+#cart-page.home-page,
+.tabs.home-page {
   padding-bottom: 80px;
 }
 
@@ -273,7 +277,7 @@ danhmuc.page-content- {
 }
 
 .logo-imex {
-  background-image: url("/src/static/images/opclogo.png");
+  background-image: url("/src/static/images/logoRohto.png");
   width: 130px;
   object-fit: contain;
   background-size: contain;
@@ -756,13 +760,151 @@ danhmuc.page-content- {
   }
 }
 
+// Thanh tab dưới cùng: nền trắng, viền trên mảnh, icon viền/đặc + màu primary khi chọn (kiểu app thương mại điện tử)
+// Phần icon/chữ (.toolbar-inner) được zmp đặt `bottom: var(--zmp-safe-area-bottom)` nên luôn nằm trên
+// thanh vuốt iPhone / thanh điều hướng Android; nền trắng của thanh tab phủ xuống hết vùng đó.
+$app-tabbar-height: 70px;
+
+// Nội dung trang chừa chỗ đúng bằng chiều cao thanh tab (mặc định zmp chỉ chừa 44–48px nên cuối trang bị đè)
+#main-nav ~ * {
+  --zmp-page-toolbar-bottom-offset: #{$app-tabbar-height};
+}
+
 .app-tabbar {
   width: 100%;
-  height: 82px;
-  border: none;
+  height: calc(#{$app-tabbar-height} + var(--zmp-safe-area-bottom, 0px));
+  // viền cùng màu viền thẻ (#E3EBF6), bo tròn 2 góc trên như một tấm thẻ nổi ở đáy màn hình
+  border: 1px solid #e3ebf6;
+  border-bottom: none;
+  border-radius: 18px 18px 0 0;
+  background: #fff;
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.05);
+  box-sizing: border-box;
+
+  transition: transform 0.25s ease;
+
+  &::before,
+  &::after {
+    display: none; // bỏ đường kẻ/bóng mặc định của zmp, đã có border
+  }
+
+  // cuộn xuống thì trượt xuống ẩn (thêm 20px để giấu luôn phần bóng phía trên), cuộn lên thì trượt lên lại
+  &.is-scroll-hidden {
+    transform: translate3d(0, calc(100% + 20px), 0);
+  }
 
   .tab-link-highlight {
     display: none;
+  }
+
+  .toolbar-inner {
+    background: transparent;
+  }
+
+  // ghi đè rule chung `a.link.tab-link(.tab-link-active)` của các tab trong trang
+  a.app-tabbar-item,
+  a.app-tabbar-item.tab-link-active {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+    color: #94a3b8; // slate-400
+    font-size: 11px;
+    font-weight: 500;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.2s ease;
+
+    &:active .app-tabbar-pill {
+      transform: scale(0.92);
+    }
+  }
+
+  a.app-tabbar-item.is-active {
+    color: #005daa; // primary
+  }
+
+  // nền "viên thuốc" sau icon, chỉ hiện ở tab đang chọn
+  .app-tabbar-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 30px;
+    border-radius: 999px;
+    background: transparent;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  }
+
+  // tab đang chọn: nền xanh thương hiệu đậm + icon trắng + bóng xanh nhẹ để làm điểm nhấn của app
+  .is-active .app-tabbar-pill {
+    background: #005daa;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(0, 93, 170, 0.28);
+    animation: app-tabbar-pill-pop 0.3s ease;
+  }
+
+  .app-tabbar-badge {
+    position: absolute;
+    top: -6px;
+    left: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    background: #e5232a;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    box-sizing: border-box;
+    animation: app-tabbar-badge-pop 0.25s ease;
+  }
+
+  .app-tabbar-label {
+    font-size: 11px;
+    line-height: 1;
+    color: #64748b; // slate-500
+    white-space: nowrap;
+    transition: color 0.2s ease;
+  }
+
+  .is-active .app-tabbar-label {
+    color: #005daa;
+    font-weight: 700;
+  }
+}
+
+// nảy nhẹ khi vừa chọn tab
+@keyframes app-tabbar-pill-pop {
+  0% {
+    transform: scale(0.75);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes app-tabbar-badge-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 

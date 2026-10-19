@@ -20,6 +20,7 @@ import App from "./components/app.jsx"
 import appConfig from "../app-config.json"
 import "zmp-ui/zaui.css"
 import "./styles/FixZmp-framework.css";
+import "./styles/dialog.scss" // giao diện hộp thoại / toast dùng chung (ghi đè zmp)
 // Import MomentJs and setLocale
 import moment from "moment"
 import "moment/locale/vi"

@@ -16,6 +16,7 @@ import {
 import { formatCurrency } from "@utils/networking"
 import { LEVEL, daysLeftText, fmtDate, timeInfo } from "@utils/promoTime"
 import store from "../../store"
+import { goToCartTab } from "@utils/navigation"
 
 const money = (n) => `${formatCurrency(Math.round(Number(n) || 0), true)}đ`
 const num = (n) => Number(n) || 0
@@ -158,14 +159,8 @@ const CTKhuyenMai = ({ data, CTKM }) => {
     toast("Đã thêm vào giỏ hàng, đơn đã đủ điều kiện")
   }
 
-  const backHome = () => {
-    zmp.views.current.router.back()
-    zmp.views.main?.router?.clearPreviousHistory()
-    if (zmp.views.main?.router?.currentRoute?.path !== "/") {
-      zmp.views.main.router.navigate("/", { reloadCurrent: true })
-    }
-    setTimeout(() => zmp.tab.show("#view-giohang"), 250)
-  }
+  // Về trang gốc của tab hiện tại rồi sang tab Giỏ hàng (một lệnh điều hướng, tránh kẹt router)
+  const backHome = goToCartTab
 
   const one = progress?.add.length === 1 ? progress.add[0] : null
   const ctaText = !progress

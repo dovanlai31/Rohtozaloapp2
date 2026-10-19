@@ -165,7 +165,10 @@ const Product = (item) => {
         thanhphan,
       })
     })
-    zmp.views.main.router.navigate("/detail/?id=" + id)
+    // Mở trong view (tab) đang hiển thị: từ Giỏ hàng > Thêm > tìm kiếm thì trang chi tiết phải nằm ở view Giỏ hàng,
+    // không đẩy vào view Trang chủ đang ẩn (sẽ bị chìm phía dưới và chồng nhiều trang khi quay về Trang chủ).
+    const router = zmp.views.current?.router || zmp.views.main.router
+    router.navigate("/detail/?id=" + id)
   }
 
   const priceText = CusInfo?.active !== "0" ? formatCurrency(dongia, true) + "đ" : "Liên hệ"

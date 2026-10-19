@@ -1,7 +1,16 @@
 import { forwardRef, useRef, useState } from "react"
 import { zmp } from "zmp-framework/react"
 import { Sheet } from "zmp-ui"
-import { MdCardGiftcard, MdCasino, MdChevronRight, MdLocalOffer, MdSearch, MdWarningAmber } from "react-icons/md"
+import {
+  MdCardGiftcard,
+  MdCasino,
+  MdChevronRight,
+  MdExpandLess,
+  MdExpandMore,
+  MdLocalOffer,
+  MdSearch,
+  MdWarningAmber,
+} from "react-icons/md"
 import { formatCurrency } from "@utils/networking"
 import { Button, QtyStepper } from "@components/ui"
 import { useHideMainNav } from "../../../hooks/useHideMainNav"
@@ -17,6 +26,38 @@ const RewardLine = ({ icon, children, right }) => (
     {right}
   </div>
 )
+
+const SO_DONG_HIEN_SAN = 5 // danh sách sản phẩm trả dài thì chỉ hiện sẵn 5 dòng, còn lại bấm "Xem thêm"
+
+// Danh sách sản phẩm trả có nút ẩn/hiện: mặc định hiện SO_DONG_HIEN_SAN dòng
+const CollapsibleRows = ({ items, renderItem }) => {
+  const [expanded, setExpanded] = useState(false)
+  const hidden = items.length - SO_DONG_HIEN_SAN
+  const list = expanded || hidden <= 0 ? items : items.slice(0, SO_DONG_HIEN_SAN)
+
+  return (
+    <>
+      {list.map(renderItem)}
+      {hidden > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-0.5 flex w-auto items-center gap-0.5 border-0 bg-transparent p-0 py-1 text-[12px] font-semibold text-primary"
+        >
+          {expanded ? (
+            <>
+              Thu gọn <MdExpandLess size={16} />
+            </>
+          ) : (
+            <>
+              Xem thêm {hidden} sản phẩm <MdExpandMore size={16} />
+            </>
+          )}
+        </button>
+      )}
+    </>
+  )
+}
 
 const giftIcon = <MdCardGiftcard size={16} className="text-[#c26a00]" />
 const discountIcon = <MdLocalOffer size={15} className="text-[#e5232a]" />
@@ -210,8 +251,10 @@ const RowItemKMBanhang = forwardRef((data, ref) => {
             <div className={`mb-1 text-[12px] ${tongChia === quota ? "text-slate-500" : "text-[#9a5a00]"}`}>
               Chọn quà: <b className="tabular-nums">{tongChia}</b>/{quota}
             </div>
-            {(value.spTra || []).map((sp, k) =>
-              conTon(sp) ? (
+            <CollapsibleRows
+              // giữ vị trí gốc k trong value.spTra vì setSoLuongChia cập nhật theo vị trí
+              items={(value.spTra || []).map((sp, k) => ({ sp, k })).filter(({ sp }) => conTon(sp))}
+              renderItem={({ sp, k }) => (
                 <div key={sp.MA || sp.ma || k} className="flex items-center justify-between gap-2 py-1">
                   <div className="min-w-0">
                     <div className="text-[12px] leading-snug text-slate-600">{sp.TEN ?? sp.ten}</div>
@@ -221,28 +264,38 @@ const RowItemKMBanhang = forwardRef((data, ref) => {
                   </div>
                   <QtyStepper value={Number(sp.soluong) || 0} min={0} onChange={(v) => setSoLuongChia(value, k, v)} />
                 </div>
-              ) : null
-            )}
+              )}
+            />
           </div>
         )}
 
-        {spTang.map((sp, k) => (
-          <div key={sp.MA || k} className="ml-6 flex items-start justify-between gap-2 py-0.5 text-[12px] text-slate-500">
-            <span className="min-w-0">{sp.TEN}</span>
-            <span className="shrink-0 font-semibold tabular-nums text-slate-700">× {sp.soluong}</span>
+        {spTang.length > 0 && (
+          <div className="ml-6">
+            <CollapsibleRows
+              items={spTang}
+              renderItem={(sp, k) => (
+                <div key={sp.MA || k} className="flex items-start justify-between gap-2 py-0.5 text-[12px] text-slate-500">
+                  <span className="min-w-0">{sp.TEN}</span>
+                  <span className="shrink-0 font-semibold tabular-nums text-slate-700">× {sp.soluong}</span>
+                </div>
+              )}
+            />
           </div>
-        ))}
+        )}
 
         {chonQua && (
           <div className="ml-6 mt-1">
             {daChon.length > 0 ? (
               <div className="mb-1.5 flex flex-col gap-0.5">
-                {daChon.map((sp, k) => (
-                  <div key={sp.MA || k} className="flex items-start justify-between gap-2 text-[12px] text-slate-500">
-                    <span className="min-w-0">{sp.TEN}</span>
-                    <span className="shrink-0 font-semibold tabular-nums text-slate-700">× {sp.soluong}</span>
-                  </div>
-                ))}
+                <CollapsibleRows
+                  items={daChon}
+                  renderItem={(sp, k) => (
+                    <div key={sp.MA || k} className="flex items-start justify-between gap-2 text-[12px] text-slate-500">
+                      <span className="min-w-0">{sp.TEN}</span>
+                      <span className="shrink-0 font-semibold tabular-nums text-slate-700">× {sp.soluong}</span>
+                    </div>
+                  )}
+                />
               </div>
             ) : (
               <div className="mb-1.5 flex items-center gap-1 text-[12px] text-[#9a5a00]">

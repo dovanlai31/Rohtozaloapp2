@@ -1,131 +1,164 @@
-import React, { useMemo, useRef, useState, useEffect, use } from "react"
-import propTypes from "prop-types"
-import { Link, Tabbar, Text, zmp, Icon, Box, useStore } from "zmp-framework/react"
+import React, { useEffect, useMemo, useRef } from "react"
+import { Link, Tabbar, useStore } from "zmp-framework/react"
 import {
-  ArticleIcon,
-  HomeIcon,
-  MenuIcon,
-  SearchIcon,
-  Giohang,
-  Bookmark,
-  Like,
-  ChatIcon,
-  Time,
-} from "@components/Icons"
-import store from "../../store"
+  IoCart,
+  IoCartOutline,
+  IoHome,
+  IoHomeOutline,
+  IoPeople,
+  IoPeopleOutline,
+  IoPersonCircle,
+  IoPersonCircleOutline,
+} from "react-icons/io5"
+import { TbRosetteDiscount, TbRosetteDiscountFilled } from "react-icons/tb"
 
-const NavigationBar = ({ activeTab, NotifyGH }) => {
-  //const Giohangw = store.getters.getGioHang.value || []
+// Khuyến mãi: huy hiệu có dấu % (ký hiệu sale quen thuộc), nét mỏng lại cho đều với bộ Ionicons của các tab khác
+const KhuyenMaiIcon = (props) => <TbRosetteDiscount strokeWidth={1.6} {...props} />
+
+// Một ô trên thanh tab: icon viền khi chưa chọn, icon đặc + màu primary khi đang chọn (kiểu app thương mại điện tử)
+const TabItem = ({ tabLink, active, Icon, IconActive, label, badge, ...rest }) => (
+  <Link noLinkClass tabLink={tabLink} className={"app-tabbar-item" + (active ? " is-active" : "")} {...rest}>
+    <span className="app-tabbar-pill">
+      <span className="relative flex h-6 w-6 items-center justify-center">
+        {active ? <IconActive size={22} /> : <Icon size={22} />}
+        {badge > 0 && (
+          // key đổi theo số lượng để hiệu ứng "nảy" chạy lại mỗi khi thêm/bớt sản phẩm
+          <span key={badge} className="app-tabbar-badge">{badge > 99 ? "99+" : badge}</span>
+        )}
+      </span>
+    </span>
+    <span className="app-tabbar-label">{label}</span>
+  </Link>
+)
+
+const SCROLL_TOP_ALWAYS_SHOW = 40 // gần đầu trang thì luôn hiện
+const SCROLL_DISTANCE = 24 // phải cuộn liên tục quá khoảng này mới đổi trạng thái, tránh nhấp nháy khi cuộn nhẹ
+
+// Cuộn xuống thì ẩn thanh tab, cuộn lên hoặc cuộn tới cuối trang thì hiện lại (kiểu app thương mại điện tử).
+// Dùng class riêng (không gọi zmp.toolbar.hide/show) để không đụng tới các trang đang cố ý ẩn thanh tab
+// như chi tiết sản phẩm, tìm kiếm...
+// Bật/tắt class thẳng trên DOM, KHÔNG qua className của <Tabbar>: Tabbar có hidden={true} nên mỗi lần React
+// render lại sẽ gắn lại class `toolbar-hidden`, đè lên zmp.toolbar.show() và làm thanh tab mất hẳn.
+const useHideOnScroll = (activeTab) => {
+  const hiddenRef = useRef(false)
+
+  const update = (value) => {
+    if (hiddenRef.current === value) return
+    hiddenRef.current = value
+    document.getElementById("main-nav")?.classList.toggle("is-scroll-hidden", value)
+  }
+
+  // đổi tab thì luôn hiện lại
+  useEffect(() => update(false), [activeTab])
+
+  useEffect(() => {
+    const anchors = new WeakMap() // mỗi vùng cuộn nhớ vị trí bắt đầu đổi hướng
+
+    const onScroll = (e) => {
+      const el = e.target
+      // chỉ xét vùng cuộn chính của trang trong các tab, bỏ qua sheet/popup và các slider cuộn ngang
+      if (!(el instanceof Element) || !el.classList.contains("page-content")) return
+      if (!el.closest(".view") || el.closest(".sheet-modal, .popup, .popover, .dialog")) return
+      // giỏ hàng có thanh thanh toán cố định ở đáy, ẩn thanh tab sẽ lộ dải trống bên dưới nên giữ nguyên
+      if (el.closest("#cart-page")) return
+
+      const top = el.scrollTop
+      const maxTop = el.scrollHeight - el.clientHeight
+      if (top < 0 || top > maxTop) return // bỏ qua hiệu ứng nảy khi kéo quá đầu/cuối trang (iOS)
+
+      // gần đầu trang, hoặc đã tới cuối trang (thanh tab lấp đúng khoảng chừa sẵn ở cuối, không để trống)
+      if (top < SCROLL_TOP_ALWAYS_SHOW || top >= maxTop - SCROLL_DISTANCE) {
+        anchors.set(el, top)
+        update(false)
+        return
+      }
+
+      const anchor = anchors.has(el) ? anchors.get(el) : top
+      const delta = top - anchor
+      if (hiddenRef.current) {
+        // đang ẩn: nhớ điểm sâu nhất, cuộn ngược lên đủ xa thì hiện
+        if (delta > 0) anchors.set(el, top)
+        else if (-delta > SCROLL_DISTANCE) {
+          anchors.set(el, top)
+          update(false)
+        }
+      } else {
+        // đang hiện: nhớ điểm cao nhất, cuộn xuống đủ xa thì ẩn
+        if (delta < 0) anchors.set(el, top)
+        else if (delta > SCROLL_DISTANCE) {
+          anchors.set(el, top)
+          update(true)
+        }
+      }
+    }
+
+    // sang trang mới thì hiện lại
+    const onPageIn = () => update(false)
+
+    // sự kiện scroll không nổi bọt nên phải bắt ở pha capture
+    document.addEventListener("scroll", onScroll, true)
+    document.addEventListener("page:beforein", onPageIn)
+    return () => {
+      document.removeEventListener("scroll", onScroll, true)
+      document.removeEventListener("page:beforein", onPageIn)
+    }
+  }, [])
+}
+
+const NavigationBar = ({ activeTab }) => {
   const Giohangx = useStore("getGioHang")
   const ListKM = useStore("ListKM")
   const ListCTTLXu = useStore("ListCTTLXu")
   const ListCTTLDiem = useStore("ListCTTLDiem")
   const CusInfo = useStore("getCusInfo")
   const cartItemCount = useMemo(() => {
-    const list = Giohangx || [];
-    return list.reduce(
-      (sum, it) => sum + (Number(it.soluong) > 0 ? Number(it.soluong) : 1),
-      0
-    );
-  }, [Giohangx, JSON.stringify(Giohangx)]);
+    const list = Giohangx || []
+    return list.reduce((sum, it) => sum + (Number(it.soluong) > 0 ? Number(it.soluong) : 1), 0)
+  }, [Giohangx, JSON.stringify(Giohangx)])
+  useHideOnScroll(activeTab)
 
-
-  //console.log('CusInfo__log', CusInfo);
-  // console.log('activeTabx', activeTab);
   return (
-    <Tabbar id="main-nav" bottom className="app-tabbar " hidden={true}>
-      <Link
-        noLinkClass
-        className="flex flex-col items-center	"
+    <Tabbar id="main-nav" bottom className="app-tabbar" hidden={true}>
+      <TabItem
         tabLink="#view-main"
         tabLinkActive
-      >
-        <HomeIcon active={activeTab === "main"} />
-        <Text
-          size="xxxsmall"
-          className="navbar-item-label navbar-item-label text-gray-dark font-bold"
-        >
-          Trang chủ
-        </Text>
-      </Link>
-
-      <Link
-        noLinkClass
-        className="flex flex-col items-center	"
+        active={activeTab === "main"}
+        Icon={IoHomeOutline}
+        IconActive={IoHome}
+        label="Trang chủ"
+      />
+      <TabItem
         tabLink="#view-search"
-        force={
-          ListKM.length == 0 || ListCTTLDiem.length == 0 || ListCTTLXu.length == 0
-        }
-      >
-        <Bookmark active={activeTab === "khuyenMaiList"} />
-        <Text
-          size="xxxsmall"
-          className="navbar-item-label text-gray-dark font-bold"
-        >
-          Khuyến mãi
-        </Text>
-      </Link>
-      {/* <Link
-        noLinkClass
-        className="flex flex-col items-center	"
-        tabLink="#view-menu"
-        badge="2"
-      >
-
-          <Giohang active={activeTab === "menu"} />
-
-        <Text
-          size="xxxsmall"
-          className="navbar-item-label text-gray-dark font-bold"
-        >
-          Đơn hàng
-        </Text>
-      </Link> */}
+        force={ListKM.length == 0 || ListCTTLDiem.length == 0 || ListCTTLXu.length == 0}
+        active={activeTab === "khuyenMaiList"}
+        Icon={KhuyenMaiIcon}
+        IconActive={TbRosetteDiscountFilled}
+        label="Khuyến mãi"
+      />
       {CusInfo?.active !== "0" && (
-        <Link
-          noLinkClass
-          className="flex flex-col items-center"
+        <TabItem
           tabLink="#view-giohang"
-        >
-          <span className="relative noti-icon-wrapper h-auto">
-            {cartItemCount > 0 && (
-              <span className="absolute giohang-tab-badge border-2 border-white  leading-none text-white bg-red">
-                {cartItemCount > 99 ? "99+" : cartItemCount}
-              </span>
-            )}
-            <Giohang active={activeTab === "giohang"} />
-          </span>
-          <Text
-            size="xxxsmall"
-            className="navbar-item-label text-gray-dark font-bold"
-          >
-            Giỏ hàng
-          </Text>
-        </Link>
+          active={activeTab === "giohang"}
+          Icon={IoCartOutline}
+          IconActive={IoCart}
+          label="Giỏ hàng"
+          badge={cartItemCount}
+        />
       )}
-
-      <Link noLinkClass className="flex flex-col items-center	" tabLink="#khachhang">
-        <ChatIcon active={activeTab === "khachhang"} />
-        <Text
-          size="xxxsmall"
-          className="navbar-item-label text-gray-dark font-bold"
-        >
-          Khách hàng
-        </Text>
-      </Link>
-      <Link
-        noLinkClass
-        className="flex flex-col items-center	"
+      <TabItem
+        tabLink="#khachhang"
+        active={activeTab === "khachhang"}
+        Icon={IoPeopleOutline}
+        IconActive={IoPeople}
+        label="Khách hàng"
+      />
+      <TabItem
         tabLink="#view-account"
-      >
-        <MenuIcon active={activeTab === "taikhoan"} />
-        <Text
-          size="xxxsmall"
-          className="navbar-item-label text-gray-dark font-bold"
-        >
-          Tài khoản
-        </Text>
-      </Link>
+        active={activeTab === "taikhoan"}
+        Icon={IoPersonCircleOutline}
+        IconActive={IoPersonCircle}
+        label="Tài khoản"
+      />
     </Tabbar>
   )
 }

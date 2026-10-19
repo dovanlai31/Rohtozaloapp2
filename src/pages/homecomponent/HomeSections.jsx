@@ -19,13 +19,14 @@ import { orderCountParts } from "@utils/accountHelpers"
 import { parseDate } from "@utils/promoTime"
 import { validateString } from "@utils/util"
 import { getPosmSummary } from "../../services/posmService"
+import { demChuaDoc } from "@utils/thongbaoRead"
 
 /* ------------------------------ Số liệu trang chủ ------------------------------ */
 
 // POSM chưa kiểm tra, phiếu thưởng chưa nhận, đơn chờ xác nhận (tải lại khi store "refres" đổi)
 export const useHomeSummary = (CusInfo) => {
   const refres = useStore("refres")
-  const [summary, setSummary] = useState({ chuaKiemTra: 0, tongPosm: 0, phieuChuaTra: 0, donChoXacNhan: 0 })
+  const [summary, setSummary] = useState({ chuaKiemTra: 0, tongPosm: 0, phieuChuaTra: 0, donChoXacNhan: 0, thongBaoMoi: 0 })
   const khId = CusInfo?.KHACHHANG_fk
 
   useEffect(() => {
@@ -38,13 +39,19 @@ export const useHomeSummary = (CusInfo) => {
         .then((r) => r.json())
         .then((r) => (r?.result ? orderCountParts(r.message)[0] : "0"))
         .catch(() => "0"),
-    ]).then(([posm, sl0]) => {
+      // thông báo chưa đọc (so với danh sách đã đọc lưu trên máy)
+      request("POST", "khachhang/getListThongbao", { userId })
+        .then((r) => r.json())
+        .then((r) => (r?.result ? demChuaDoc(JSON.parse(r.message || "[]")) : 0))
+        .catch(() => 0),
+    ]).then(([posm, sl0, tbMoi]) => {
       if (!alive) return
       setSummary({
         chuaKiemTra: Number(posm?.chuaKiemTra) || 0,
         tongPosm: Number(posm?.tongPosm) || 0,
         phieuChuaTra: Number(posm?.phieuChuaTra) || 0,
         donChoXacNhan: Number(sl0) || 0,
+        thongBaoMoi: Number(tbMoi) || 0,
       })
     })
     return () => {
@@ -139,7 +146,7 @@ export const HomeShortcuts = ({ summary, kmCount }) => {
         <Shortcut icon={<MdCardGiftcard size={22} />} label="Đổi quà" tint={ORANGE} href="/DoiQua/" />
         <Shortcut icon={<MdStars size={22} />} label="Tích lũy" tint={ORANGE} href="/TichLuyList/" />
         <Shortcut icon={<FaGift size={18} />} label="Phiếu thưởng" tint={GREEN} badge={summary.phieuChuaTra} href="/phieutrathuong/" />
-        <Shortcut icon={<MdNotifications size={22} />} label="Thông báo" tint={BLUE} href="/thongbaoPage/" />
+        <Shortcut icon={<MdNotifications size={22} />} label="Thông báo" tint={BLUE} badge={summary.thongBaoMoi} href="/thongbaoPage/" />
       </Grid>
     </div>
   )

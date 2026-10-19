@@ -1,21 +1,17 @@
-import Sheet_SelectGift from "@components/DoiQua/Sheet_SelectGift"
-import Sheet_TypeGift from "@components/DoiQua/Sheet_TypeGift"
+import Sheet_SelectGift, { giaQua } from "@components/DoiQua/Sheet_SelectGift"
 import ViewListSpChon from "@components/DoiQua/ViewListSpChon"
 import HeaderBack from "@components/Header/HeaderBack"
 import LoadingSpinner from "@components/LoadingSpinner"
-import Color from "@components/common/Color"
-import { formatCurrency, request } from "@utils/networking"
+import { Button, EmptyState, PillTabs } from "@components/ui"
+import { formatCurrency, getAPI, request } from "@utils/networking"
 import { validateString } from "@utils/util"
 import { useEffect, useRef, useState } from "react"
 import { FaStar } from "react-icons/fa"
-import { FaCheck, FaCoins } from "react-icons/fa6"
-import { GoPlus } from "react-icons/go"
-import { MdTune } from "react-icons/md"
+import { FaCoins } from "react-icons/fa6"
+import { MdAdd, MdCardGiftcard, MdCheck } from "react-icons/md"
 import { TbPackageImport } from "react-icons/tb"
-import { Card, Page, zmp } from "zmp-framework/react"
-import { Box, Text } from "zmp-ui"
+import { Page, zmp } from "zmp-framework/react"
 import store from "../store"
-import "../styles/notifypage.scss"
 
 const thongbaoPage = ({ zmproute }) => {
   const CusInfo = store.getters.getCusInfo.value || []
@@ -269,7 +265,7 @@ const thongbaoPage = ({ zmproute }) => {
     let arr = JSON.parse(JSON.stringify(x ? x : dataListChose))
     let xu = 0
     arr.map((p) => {
-      xu += p.diem * p.soluong
+      xu += giaQua(p) * (Number(p.soluong) || 0)
     })
 
     setdataListChose(x)
@@ -406,7 +402,7 @@ const thongbaoPage = ({ zmproute }) => {
               return getAPI(
                 "donhang/nhanhangquatang",
                 "POST",
-                { id: id, userId: CusInfo?.KHACHHANG_fk },
+                { id: IdDH, userId: CusInfo?.KHACHHANG_fk },
                 {}
               )
                 .then(({ data, error }) => {
@@ -448,184 +444,165 @@ const thongbaoPage = ({ zmproute }) => {
       .open()
   }
 
+  const laXu = curItem.id == "0"
+  const donVi = laXu ? "xu" : "điểm"
+  const conLai = xu - XuDH
+  const choSua = IdDH == "" || trangthaidH == 0 // tạo mới hoặc đơn chưa xử lý
+  const phanTram = xu > 0 ? Math.min(100, (XuDH * 100) / xu) : XuDH > 0 ? 100 : 0
+  const doiLoai = (key) => {
+    if (IdDH || key === curItem.id) return
+    if (dataListChose.length) {
+      zmp.dialog.confirm("Đổi loại sẽ bỏ các quà đã chọn. Tiếp tục?", "Thông báo", () => SheetActions(Number(key)))
+    } else SheetActions(Number(key))
+  }
+
   return (
     <Page
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
-      className="detail-page"
-      // style={{backgroundColor:'white'}}
+      className="detail-page bg-[#f5f7fb]"
     >
-      <HeaderBack slot="fixed" title={"Đổi quà"}></HeaderBack>
-      <Box className="" style={{ background: "" }}>
-        <Card inset className="">
-          <Box m="0" className="view-center-gh4 " style={{ marginBottom: 1 }}>
-            <Box m="0" flex justifyContent="space-between">
-              <button
-                disabled={IdDH}
-                className="flex items-center gap-2"
-                onClick={() => setActionSheetVisible(true)}
-              >
-                <MdTune color={Color.primary} size={30} />
-                <Text style={{ color: Color.primary }}>Chọn Đổi Xu/Điểm</Text>
-              </button>
-            </Box>
+      <HeaderBack slot="fixed" title={IdDH ? `Đơn đổi quà #${IdDH}` : "Đổi quà"} />
 
-            <Box
-              m="0"
-              style={{
-                background: "white",
-                borderWidth: 1,
-                borderColor: "#eeee",
-                borderRadius: 5,
-              }}
+      <div className="flex flex-col gap-3 px-4 pt-3" style={{ paddingBottom: "calc(120px + env(safe-area-inset-bottom, 0px))" }}>
+        {/* Đổi bằng xu / điểm (đơn đã tạo thì không đổi loại được) */}
+        {!IdDH && (
+          <PillTabs
+            variant="segmented"
+            tabs={[
+              { key: "0", label: "Đổi bằng Xu", icon: FaCoins },
+              { key: "1", label: "Đổi bằng Điểm", icon: FaStar },
+            ]}
+            value={curItem.id}
+            onChange={doiLoai}
+          />
+        )}
+
+        {/* Số dư */}
+        <div className="rounded-xl border border-[#E3EBF6] bg-white px-4 py-3.5">
+          <div className="flex items-center gap-3">
+            <span
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                laXu ? "bg-[#fdf3e6] text-[#c26a00]" : "bg-[#fdeeee] text-[#e5232a]"
+              }`}
             >
-              <Box p={2} flex justifyContent="flex-start" alignItems="center">
-                {curItem.id == 0 ? (
-                  <Box m={0} p="0">
-                    <span className="RoundIcon2">
-                      <FaCoins size={20} color={Color.primary} />
-                    </span>
-                  </Box>
-                ) : (
-                  <Box m={0} p="0">
-                    <span className="RoundIcon2">
-                      <FaStar size={20} color={Color.textAPPRed}></FaStar>
-                    </span>
-                  </Box>
-                )}
-                <Text
-                  size="normal"
-                  className=""
-                  style={{
-                    fontWeight: 800,
-                    margin: "0 10px",
-                    color: curItem.id == 0 ? Color.primary : Color.textAPPRed,
-                  }}
-                >
-                  {curItem.lable}
-                </Text>
-              </Box>
-              <Box p={2} flex alignItems="center">
-                {/* <AiFillPieChart color="#016CF5" size={20} /> */}
-                <Text style={{ textTransform: "capitalize", marginRight: 5 }}>
-                  {" "}
-                  {curItem.id == "0" ? "xu" : "điểm"} khách hàng:{" "}
-                </Text>
-                <Text bold className="color-gia">
-                  {"  "}
-                  {formatCurrency(xu, true)}
-                </Text>
-              </Box>
-              <Box p={2} flex alignItems="center">
-                {/* <AiFillThunderbolt color="#016CF5" size={20} /> */}
-                <Text style={{ textTransform: "capitalize", marginRight: 5 }}>
-                  {" "}
-                  {curItem.id == "0" ? "xu" : "điểm"} đơn hàng:{" "}
-                </Text>
-                <Text bold className="color-gia">
-                  {"  "}
-                  {formatCurrency(XuDH, true)}
-                </Text>
-              </Box>
-              <Box p={2} flex alignItems="center">
-                {/* <AiFillSafetyCertificate color="#016CF5" size={20} /> */}
-                <Text style={{ textTransform: "capitalize", marginRight: 5 }}>
-                  {" "}
-                  {curItem.id == "0" ? "xu" : "điểm"} còn lại:{" "}
-                </Text>
-                <Text
-                  bold
-                  className="color-gia"
-                  style={{ color: Color.textAPPGreen }}
-                >
-                  {"  "}
-                  {formatCurrency(xu - XuDH, true)}
-                </Text>
-              </Box>
-            </Box>
+              {laXu ? <FaCoins size={20} /> : <FaStar size={20} />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[12px] text-slate-500">{laXu ? "Xu" : "Điểm"} hiện có</div>
+              <div className="text-[22px] font-bold leading-tight tabular-nums text-slate-800">
+                {formatCurrency(xu, true)} <span className="text-[13px] font-semibold text-slate-500">{donVi}</span>
+              </div>
+            </div>
+          </div>
 
-            <Box className="gap-7" p={2} flex justifyContent="space-between">
-              {/* <Button iconZMP="zi-plus" onClick={() => setSheetGiftVisible(true)} text="Chọn quà">
-              </Button> */}
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#edf1f7]">
+            <div
+              className={`h-full rounded-full ${conLai < 0 ? "bg-[#e5232a]" : "bg-primary"}`}
+              style={{ width: `${phanTram}%`, transition: "width 300ms ease-out" }}
+            />
+          </div>
+          <div className="mt-2 grid gap-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
+            <div className="rounded-lg bg-[#f7f9fc] px-3 py-2">
+              <div className="text-[11px] text-slate-500">Dùng cho đơn này</div>
+              <div className="text-[15px] font-bold tabular-nums text-[#c26a00]">
+                {formatCurrency(XuDH, true)} {donVi}
+              </div>
+            </div>
+            <div className="rounded-lg bg-[#f7f9fc] px-3 py-2">
+              <div className="text-[11px] text-slate-500">Còn lại</div>
+              <div className={`text-[15px] font-bold tabular-nums ${conLai < 0 ? "text-[#e5232a]" : "text-[#1f8a4c]"}`}>
+                {formatCurrency(conLai, true)} {donVi}
+              </div>
+            </div>
+          </div>
+          {conLai < 0 && (
+            <div className="mt-2 text-[12px] text-[#c23a3a]">Không đủ {donVi} để đổi, vui lòng bớt quà.</div>
+          )}
+        </div>
 
+        {/* Quà đã chọn */}
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-2 px-1">
+            <span className="flex items-center gap-1.5 text-[14px] font-semibold text-slate-700">
+              <MdCardGiftcard size={16} className="text-[#c26a00]" />
+              Quà đã chọn ({dataListChose.length})
+            </span>
+            {choSua && (
               <button
-                onClick={() => setSheetGiftVisible(true)}
                 type="button"
-                className="w-1/2 flex items-center justify-center p-2 gap-2"
+                onClick={() => setSheetGiftVisible(true)}
+                className="flex w-auto items-center gap-1 rounded-full border-0 bg-[#e3edf8] px-3 py-1.5 text-[12px] font-semibold text-primary"
               >
-                <GoPlus size={30} />
-                <Text style={{}}>Chọn quà</Text>
+                <MdAdd size={14} /> Chọn quà
               </button>
-              {(IdDH == "" || trangthaidH == 0) && (
-                <button
-                  disabled={loading}
-                  onClick={() => {
-                    save(true)
-                  }}
-                  className="w-1/2 flex items-center justify-center p-2 gap-2 outline"
-                >
-                  <FaCheck size={30} />
-                  <Text style={{ fontWeight: "bold" }}>
-                    {trangthaidH == 0 && IdDH != "" ? "Cập nhật" : "Lưu"}
-                  </Text>
-                </button>
-              )}
+            )}
+          </div>
 
-              {trangthaidH == 4 && !isNhanHang && (
-                <button
-                  onClick={handleNhanHang}
-                  type="button"
-                  style={{
-                    backgroundColor: "#e3ffc4",
-                    borderColor: Color.textAPPGreen,
-                    borderWidth: 2,
-                    color: Color.textAPPGreen,
-                    zIndex: 999,
-                  }}
-                  className="w-auto flex items-center justify-center p-1 rounded shadow-lg"
-                >
-                  <TbPackageImport size={25} color={Color.textAPPGreen} />
-                  <Text
-                    style={{
-                      color: Color.textAPPGreen,
-                      fontWeight: "bold",
-                      marginLeft: 8,
-                    }}
-                  >
-                    Nhận hàng
-                  </Text>
-                </button>
-              )}
-            </Box>
-          </Box>
-        </Card>
-        {loading && <LoadingSpinner></LoadingSpinner>}
-        <Box m="0">
-          <ViewListSpChon
-            refres={refresh}
-            plus={(item, index) => plus(item, index)}
-            diff={(item, index) => diff(item, index)}
-            removeItem={(item, index) => removeItem(item, index)}
-            dataListChose={dataListChose}
-          ></ViewListSpChon>
-        </Box>
-      </Box>
-      <Box
-        className=""
-        noSpace={true}
-        flex
-        alignItems="center"
-        justifyContent="space-between"
-      >
-        <Box flex alignItems="center" m={5} py={7}></Box>
-      </Box>
+          {loading ? (
+            <LoadingSpinner />
+          ) : dataListChose.length === 0 ? (
+            <div className="rounded-xl border border-[#E3EBF6] bg-white">
+              <EmptyState
+                icon={<MdCardGiftcard size={28} />}
+                title="Chưa chọn quà nào"
+                desc={`Chọn quà muốn đổi bằng ${donVi} của bạn`}
+                action={
+                  choSua && (
+                    <Button icon={<MdAdd size={16} />} onClick={() => setSheetGiftVisible(true)}>
+                      Chọn quà
+                    </Button>
+                  )
+                }
+              />
+            </div>
+          ) : (
+            <ViewListSpChon
+              refres={refresh}
+              plus={(item, index) => plus(item, index)}
+              diff={(item, index) => diff(item, index)}
+              removeItem={(item, index) => removeItem(item, index)}
+              dataListChose={dataListChose}
+              donVi={donVi}
+              disabled={!choSua}
+            />
+          )}
+        </div>
+      </div>
 
-      <Sheet_TypeGift
-        setActionSheetVisible={setActionSheetVisible}
-        actionSheetVisible={actionSheetVisible}
-        SheetActions={(t) => SheetActions(t)}
-      ></Sheet_TypeGift>
+      {/* Thanh tổng + lưu cố định đáy màn hình */}
+      {(choSua || (trangthaidH == 4 && !isNhanHang)) && (
+        <div
+          className="fixed bottom-0 left-0 z-[999] w-full border-t border-[#e6ebf2] bg-white px-4 pt-3"
+          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}
+        >
+          {choSua && (
+            <>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[13px] text-slate-500">Tổng {donVi} đổi quà</span>
+                <span className="text-[19px] font-bold tabular-nums text-[#c26a00]">
+                  {formatCurrency(XuDH, true)} {donVi}
+                </span>
+              </div>
+              <Button
+                full
+                className="mt-2.5"
+                icon={<MdCheck size={18} />}
+                disabled={loading || !dataListChose.length || conLai < 0}
+                onClick={() => save(true)}
+              >
+                {IdDH ? "Cập nhật đơn đổi quà" : "Đổi quà"}
+              </Button>
+            </>
+          )}
+          {trangthaidH == 4 && !isNhanHang && (
+            <Button full variant="success" className="mt-2.5" icon={<TbPackageImport size={18} />} onClick={handleNhanHang}>
+              Đã nhận được quà
+            </Button>
+          )}
+        </div>
+      )}
 
       <Sheet_SelectGift
         saveDataChose={saveDataChose}
@@ -635,10 +612,12 @@ const thongbaoPage = ({ zmproute }) => {
         SheetGiftVisible={SheetGiftVisible}
         setSheetGiftVisible={setSheetGiftVisible}
         xu_diem={xu}
+        donVi={donVi}
       />
     </Page>
   )
 }
+
 const styles = {
   ButtonBack: {
     position: "absolute",

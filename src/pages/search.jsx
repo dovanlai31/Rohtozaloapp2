@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Box, Page, useStore, zmp } from "zmp-framework/react"
 import useDebounce from "../hooks/useDebounce"
 import store from "../store"
+import { goToCartTab } from "@utils/navigation"
 import "./../styles/giohang.scss"
 import withOverlay from "@components/HOC/withOverlay"
 import AppHeader from "@components/Header/AppHeader"
@@ -209,39 +210,66 @@ const SearchPage = ({ zmproute, showToast }) => {
     Searching(false)
   }, [keywordDebounce, sortKey, brandId])
 
-  // Tải thêm khi cuộn tới cuối: theo dõi mốc ở cuối danh sách
-  // (trang cuộn trong .page-content chứ không phải window nên không dùng window.scroll)
-  const sentinelRef = useRef(null)
+  // Tải thêm khi cuộn gần cuối: theo dõi cuộn của .page-content (trang cuộn trong vùng này, không phải window).
+  // Không dùng IntersectionObserver: nó chỉ báo khi mốc chuyển trạng thái, sau 1 lần tải mà mốc vẫn trong vùng
+  // thì không báo nữa nên dừng tải. Sau mỗi lần tải xong cũng kiểm tra lại (danh sách chưa đủ dài để cuộn).
+  const contentRef = useRef(null)
+  const searchingRef = useRef(null) // luôn gọi bản Searching mới nhất từ sự kiện cuộn
+  searchingRef.current = Searching
+  const [bottomGap, setBottomGap] = useState(0) // phần vùng cuộn bị đẩy xuống dưới mép màn hình
+  const bottomGapRef = useRef(0)
+  bottomGapRef.current = bottomGap
+  const nearBottom = () => {
+    const sc = contentRef.current?.closest(".page-content")
+    if (!sc) return false
+    return sc.scrollHeight - sc.scrollTop - sc.clientHeight < 600 + bottomGapRef.current
+  }
+  const loadMoreIfNeeded = () => {
+    if (listRef.current.length === 0 || loadingRef.current || lastPageRef.current) return
+    if (nearBottom()) searchingRef.current(true)
+  }
+
   useEffect(() => {
-    const el = sentinelRef.current
-    if (!el || typeof IntersectionObserver === "undefined") return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) Searching(true)
-      },
-      { rootMargin: "0px 0px 300px 0px" }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [listData.length > 0])
+    const sc = contentRef.current?.closest(".page-content")
+    if (!sc) return
+    // Header + thanh lọc (slot fixed) chiếm chỗ phía trên nhưng vùng cuộn vẫn cao 100%:
+    // đo phần vùng cuộn nằm dưới mép màn hình để chừa thêm khoảng trống cuối danh sách
+    const measure = () => {
+      const lo = sc.getBoundingClientRect().bottom - window.innerHeight
+      setBottomGap(lo > 0 ? Math.ceil(lo) : 0)
+    }
+    measure()
+    let frame = 0
+    const onScroll = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        loadMoreIfNeeded()
+      })
+    }
+    sc.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", measure)
+    const t = setTimeout(measure, 400) // đo lại sau khi trang chạy xong hiệu ứng mở
+    return () => {
+      sc.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", measure)
+      clearTimeout(t)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [])
+
+  // Tải xong một trang mà vẫn ở gần cuối (danh sách ngắn, màn hình dài) thì tải tiếp
+  useEffect(() => {
+    if (!loading) {
+      const t = setTimeout(loadMoreIfNeeded, 50)
+      return () => clearTimeout(t)
+    }
+  }, [loading, listData.length, lastPage])
 
   // Sang tab Giỏ hàng giống Banner / CTKhuyenMai: quay lại trang trước rồi chuyển tab.
   // Không gọi navigate("/giohang/") trên router của tab giỏ hàng: router đó chỉ được tạo khi tab hiện lần đầu
   // (initRouterOnTabShow) và tab tự cập nhật URL trong onTabShow.
-  const goToCart = () => {
-    try {
-      zmp.views.current?.router?.back()
-    } catch (e) {
-      console.log("back fail", e)
-    }
-    setTimeout(() => {
-      try {
-        zmp.tab.show("#view-giohang")
-      } catch (e) {
-        console.log("open cart tab fail", e)
-      }
-    }, 250)
-  }
+  const goToCart = goToCartTab
 
   const brandName = brands.find((b) => b.id === brandId)?.ten
   const showHistory = !keyword && history.length > 0
@@ -363,7 +391,7 @@ const SearchPage = ({ zmproute, showToast }) => {
         onChange={setBrandId}
       />
 
-      <div className="px-3" style={{ paddingBottom: showCartBar ? 110 : 40 }}>
+      <div ref={contentRef} className="px-3" style={{ paddingBottom: (showCartBar ? 110 : 40) + bottomGap }}>
         {/* Tìm kiếm gần đây */}
         {showHistory && (
           <div className="mt-3 rounded-xl border border-[#E3EBF6] bg-white px-3 py-2.5">
@@ -403,8 +431,6 @@ const SearchPage = ({ zmproute, showToast }) => {
               ))}
             </div>
 
-            {/* Mốc cuối danh sách: cuộn tới đây thì tự tải thêm */}
-            <div ref={sentinelRef} className="h-px w-full" />
 
             {loading && (
               <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
@@ -413,7 +439,7 @@ const SearchPage = ({ zmproute, showToast }) => {
             )}
 
             {/* Dự phòng khi máy không hỗ trợ tự tải thêm */}
-            {!loading && !lastPage && typeof IntersectionObserver === "undefined" && (
+            {!loading && !lastPage && (
               <button
                 type="button"
                 className="mx-auto block w-auto border-0 bg-transparent py-3 text-[13px] font-medium text-primary"

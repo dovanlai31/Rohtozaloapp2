@@ -10,8 +10,8 @@ import { TbPackageImport } from "react-icons/tb"
 import { Page, useStore, zmp } from "zmp-framework/react"
 import { Button as UiButton, SectionTitle } from "@components/ui"
 import { MdEdit, MdLocalOffer, MdShoppingBag } from "react-icons/md"
-import Logo from "../static/images/logoMain.webp"
 import store from "../store"
+import { goToCartTab } from "@utils/navigation"
 import "../styles/app.scss"
 import "./../styles/giohang.scss"
 import "./../styles/output.css"
@@ -45,6 +45,9 @@ const Capnhatdonhang = ({ zmproute }) => {
   const user = useStore("user")
   const CusInfo = useStore("getCusInfo")
   const id = zmproute.query?.id
+  // Chỉ đơn mới tạo (DONHANG.TRANGTHAI = 0) mới được sửa / xoá.
+  // Lấy trạng thái thật từ API chi tiết đơn (tham số isgiaohang trên link là trạng thái đồng bộ, không phải trạng thái đơn)
+  const laDonMoi = donHang?.tt !== undefined && donHang?.tt !== null && String(donHang.tt) === "0"
 
   useEffect(() => {
     getThongTinDonHang(zmproute.query.id)
@@ -401,7 +404,7 @@ const Capnhatdonhang = ({ zmproute }) => {
 
   // Sửa đơn (trạng thái 0): đưa sản phẩm của đơn vào giỏ hàng (giá hiện hành), tính lại khuyến mãi rồi cập nhật đơn
   const onClickSuaDon = () => {
-    if (isGiaoHang != 0) {
+    if (!laDonMoi) {
       zmp.dialog.alert("Đơn hàng đã được xử lý, không thể chỉnh sửa", "Thông báo")
       return
     }
@@ -448,10 +451,7 @@ const Capnhatdonhang = ({ zmproute }) => {
       }
       await store.dispatch("AddAllGioHang", list)
       store.dispatch("setDhDangSua", id)
-      const goToCart = () => {
-        zmp.views.current.router.back()
-        setTimeout(() => zmp.tab.show("#view-giohang"), 300)
-      }
+      const goToCart = goToCartTab
       if (thieu.length) {
         zmp.dialog.alert("Một số sản phẩm không còn bán nên không đưa vào giỏ: " + thieu.join(", "), "Thông báo", goToCart)
       } else {
@@ -465,7 +465,7 @@ const Capnhatdonhang = ({ zmproute }) => {
 
   // Huỷ đơn (chỉ đơn trạng thái 0): dùng API huỷ đơn của Rohto, hoàn lại tồn kho và phân bổ khuyến mãi
   const onClickXoaDonHang = async () => {
-    if (isGiaoHang != 0) {
+    if (!laDonMoi) {
       zmp.dialog.alert("Đơn hàng đã được xử lý, không thể xoá", "Thông báo")
       return
     }
@@ -494,7 +494,7 @@ const Capnhatdonhang = ({ zmproute }) => {
 
   const HIEN_SAN = 3 // số sản phẩm hiện sẵn, còn lại bấm "Xem thêm"
   const listSp = Array.isArray(Giohang) ? Giohang : []
-  const canChot = isGiaoHang == 0
+  const canChot = laDonMoi
   const tienHang = Number(TongTien) || 0
   const tienKm = Number(TongtieKm) || 0
 

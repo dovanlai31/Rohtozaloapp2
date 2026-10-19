@@ -1,7 +1,7 @@
 import SuccessButton from "@components/common/SuccessButton"
 import React, { useState } from "react"
 import { Icon, Link, List, Text } from "zmp-framework/react"
-import Logo from "../../static/images/logoMain.webp"
+import Logo from "../../static/images/logoRohto.png"
 
 type IProps = {
   login?: (username: string, password: string) => void

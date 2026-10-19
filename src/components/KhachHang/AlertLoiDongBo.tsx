@@ -1,6 +1,6 @@
 import React from "react"
 import { Box, Button, Sheet, Text, Modal } from "zmp-ui"
-import logoMain from "../../static/images/opclogo.png"
+import logoMain from "../../static/images/logoRohto.png"
 
 import "../../styles/app.scss"
 

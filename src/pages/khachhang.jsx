@@ -198,7 +198,7 @@ const Khachhang = () => {
         </Box>
       </Card>
 
-      {CusInfo?.active !== "0" && <SubTitle
+      {/* {CusInfo?.active !== "0" && <SubTitle
         title="Liên kết khách hàng"
         rightContent={
           <div className="relative h-1.5 w-14 rounded-full bg-[#cfcfd6] overflow-hidden">
@@ -208,8 +208,8 @@ const Khachhang = () => {
             />
           </div>
         }
-      />}
-      <div
+      />} */}
+      {/* <div
         ref={linksRef}
         onScroll={onLinksScroll}
         className="mx-4 mb-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1"
@@ -231,10 +231,10 @@ const Khachhang = () => {
                 style={{ background: 'white' }}
               />
             </span>
-            {/* <div className="text-[17px] font-bold text-slate-800">{item.title}</div> */}
+           
           </button>
         ))}
-      </div>
+      </div> */}
     </Page>
   )
 }

@@ -101,7 +101,8 @@ const TichLuyDetail = ({ zmproute }) => {
       //   setTenCTTL(store.getters.ListCTTLXu?.value[index]?.ten)
       // }
     } else {
-      setCTKM(store.getters.ListKM?.value[index])
+      const ListKM = store.getters.ListKM?.value || []
+      setCTKM((ListKM[index]?.pk_seq == item ? ListKM[index] : ListKM.find((k) => k.pk_seq == item)) || ListKM[index])
       setLoading(true)
       Promise.all([getKhuyenMaiDetail(), getSPKhuyenMai()])
         .then((res) => {

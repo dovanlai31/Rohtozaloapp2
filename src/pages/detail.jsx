@@ -20,6 +20,7 @@ import ProductInfo from "@components/Detail/ProductInfo"
 import ProductTabs from "@components/Detail/ProductTabs"
 import DetailFooter from "@components/Detail/DetailFooter"
 import RelatedProducts from "@components/Detail/RelatedProducts"
+import KhuyenMaiSP from "@components/Detail/KhuyenMai"
 
 const Detail = ({ zmproute, showToast }) => {
   const toast = useRef(null)
@@ -27,6 +28,7 @@ const Detail = ({ zmproute, showToast }) => {
 
   const [soluong, setSoluongsp] = useState(1)
   const [list_sp_tt, setlist_sp_tt] = useState([])
+  const [listKM, setListKM] = useState([]) // khuyến mãi áp dụng khi mua sản phẩm này
   const [Product, setProduct] = useState({})
   const [loading, setLoading] = useState(false)
 
@@ -51,16 +53,22 @@ const Detail = ({ zmproute, showToast }) => {
       loai: "2",
     }
     try {
-      const response = await (
-        await request("POST", "khachhang/getListSP", {}, queryString)
-      ).json()
+      // Sản phẩm liên quan: cùng nhãn hàng / ngành hàng (không chặn việc tải chi tiết nếu lỗi)
+      request("POST", "khachhang/getSPLienQuan", { userId: queryString.userId, spId: queryString.spId, top: 12 })
+        .then((r) => r.json())
+        .then((r) => {
+          const p = r?.result ? JSON.parse(r.message || "[]") : []
+          setlist_sp_tt(Array.isArray(p) ? p : [])
+        })
+        .catch(() => setlist_sp_tt([]))
 
-      if (response) {
-        let p = JSON.parse(response.message)
-        setlist_sp_tt(p)
-      } else {
-        setlist_sp_tt([])
-      }
+      request("POST", "khuyenmai/getKMTheoSP", { userId: queryString.userId, spId: queryString.spId })
+        .then((r) => r.json())
+        .then((r) => {
+          const p = r?.result ? JSON.parse(r.message || "[]") : []
+          setListKM(Array.isArray(p) ? p : [])
+        })
+        .catch(() => setListKM([]))
 
       const { data, error } = await getAPI(
         "khachhang/getSpDetail",
@@ -90,7 +98,8 @@ const Detail = ({ zmproute, showToast }) => {
         showToast("Thêm vào giỏ hàng thành công", "success", 1000, "top")
 
         setTimeout(() => {
-          zmp.views.main.router.back()
+          const router = zmp.views.current?.router || zmp.views.main.router
+          router.back()
         }, 500)
       }
     } catch (err) {
@@ -164,6 +173,13 @@ const Detail = ({ zmproute, showToast }) => {
         <ProductInfo Product={Product} loading={loading} CusInfo={CusInfo} />
       </div>
 
+      {/* Khuyến mãi áp dụng khi mua sản phẩm (ẩn nếu không có) */}
+      {listKM.length > 0 && (
+        <div className="mx-3 mt-3 rounded-2xl border border-[#E3EBF6] bg-white">
+          <KhuyenMaiSP key={Product?.id || ""} list={listKM} />
+        </div>
+      )}
+
       {/* Mô tả / Chi tiết / Hướng dẫn */}
       <div className="mx-3 mt-3 rounded-2xl border border-[#E3EBF6] bg-white">
         <ProductTabs Product={Product} />
@@ -173,7 +189,9 @@ const Detail = ({ zmproute, showToast }) => {
         <RelatedProducts
           list_sp_tt={list_sp_tt}
           onProductClick={(sp) => {
+            // tải đầy đủ thông tin (mô tả, hướng dẫn...) và danh sách liên quan của sản phẩm vừa chọn
             setProduct(sp)
+            getInfoProduct(sp.id || sp.pk_seq)
             document.getElementById("topSection")?.scrollIntoView({ behavior: "smooth" })
           }}
         />

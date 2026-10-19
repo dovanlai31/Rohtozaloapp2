@@ -12,7 +12,7 @@ import {
 import store from "../store"
 import HomeHeader from "./homecomponent/HomeHeader"
 import { HomePromos, HomeShortcuts, HomeTodo, useHomeSummary } from "./homecomponent/HomeSections"
-import logoMain from "@static/images/opclogo.png"
+import logoMain from "@static/images/logoRohto.png"
 import Banner from "@components/Categories/Banner"
 import withOverlay from "@components/HOC/withOverlay"
 import AlertNoUser from "@components/KhachHang/AlertNoUser"
@@ -56,6 +56,11 @@ const HomePage = ({ showToast }) => {
 
     console.log("mức duyệt: ", CusInfo?.mucduyet)
   }, [])
+
+  // Thông tin KH đổi (đăng ký / đồng bộ xong) thì cập nhật mức duyệt hiển thị sản phẩm
+  useEffect(() => {
+    if (CusInfo?.KHACHHANG_fk && CusInfo?.mucduyet !== undefined) setMucDuyet(CusInfo.mucduyet)
+  }, [CusInfo?.KHACHHANG_fk, CusInfo?.mucduyet])
 
   const showDialog = (sms, btn) => {
     dialog.current = zmp.dialog.create({

@@ -194,7 +194,26 @@ const KiemTraPosmDetail = ({ zmproute }) => {
         onRightClick={save}
       />
 
-      <Box mx="3" mt="3" pb="8">
+      {/* Nút lưu cố định ở đáy màn hình để không bị che khi cuộn / bàn phím / thanh dưới */}
+      {!loading && item && activeTab === "kt" && (
+        <div
+          className="fixed bottom-0 left-0 z-[999] w-full border-t border-[#e6ebf2] bg-white px-4 pt-3"
+          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <button
+            type="button"
+            disabled={saving}
+            onClick={save}
+            className={`w-full rounded-xl border-0 bg-primary p-3 text-sm font-semibold text-white ${
+              saving ? "opacity-50" : "active:opacity-70"
+            }`}
+          >
+            {saving ? "Đang lưu..." : "Lưu kiểm tra"}
+          </button>
+        </div>
+      )}
+
+      <Box mx="3" mt="3" style={{ paddingBottom: activeTab === "kt" ? 110 : 32 }}>
         {/* Tab Kiểm tra / Lịch sử */}
         <PillTabs
           className="mb-3"
@@ -360,16 +379,6 @@ const KiemTraPosmDetail = ({ zmproute }) => {
               />
             </div>
 
-            <button
-              type="button"
-              disabled={saving}
-              onClick={save}
-              className={`w-full rounded-xl border-0 bg-primary p-3 text-sm font-semibold text-white ${
-                saving ? "opacity-50" : "active:opacity-70"
-              }`}
-            >
-              {saving ? "Đang lưu..." : "Lưu kiểm tra"}
-            </button>
           </div>
         )}
 

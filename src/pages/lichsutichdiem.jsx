@@ -1,40 +1,44 @@
 import { useEffect, useMemo, useState } from "react"
+import { Page, useStore, zmp } from "zmp-framework/react"
+import { MdArrowDownward, MdArrowUpward, MdStars } from "react-icons/md"
+import HeaderBack from "@components/Header/HeaderBack"
 import LoadingSpinner from "@components/LoadingSpinner"
+import { EmptyState, StatusBadge } from "@components/ui"
 import { request } from "@utils/networking"
 import { validateString } from "@utils/util"
-import { BsArrowUp } from "react-icons/bs"
-import { Box, Icon, Link, Page, Text, useStore, zmp } from "zmp-framework/react"
 
-const formatPoints = (value) => {
-  const num = Number(value || 0)
-  return new Intl.NumberFormat("vi-VN").format(Number.isNaN(num) ? 0 : num)
-}
+const formatPoints = (value) => new Intl.NumberFormat("vi-VN").format(Math.abs(Number(value) || 0))
 
 const resolvePointValue = (item) => {
-  const candidates = [item?.DIEM, item?.TONGDIEM, item?.TONGGIATRI, item?.GIATRI]
-  const found = candidates.find((v) => v !== undefined && v !== null && v !== "")
+  const found = [item?.DIEM, item?.TONGDIEM, item?.TONGGIATRI, item?.GIATRI].find(
+    (v) => v !== undefined && v !== null && v !== ""
+  )
   const num = Number(found || 0)
   return Number.isNaN(num) ? 0 : num
 }
 
 const resolveTitle = (item) =>
-  item?.TIEUDE ||
-  item?.NOIDUNG ||
-  item?.DIENGIAI ||
-  item?.TEN ||
-  `Giao dịch ${item?.MADH || ""}`
+  item?.GHICHU || item?.TIEUDE || item?.NOIDUNG || item?.DIENGIAI || item?.TEN || `Giao dịch #${item?.MADH || ""}`
 
-const resolveDateText = (item) => {
-  const raw = item?.NGAYTAO || item?.NGAYDH || item?.ngaytao || item?.ngaydh
-  if (!raw) return ""
+// Ngày giờ theo giờ máy (không lệch múi giờ với chuỗi "yyyy-mm-dd HH:mm:ss" / ISO không có Z)
+const parseDate = (raw) => {
+  const m = String(raw || "").match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/)
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0))
   const d = new Date(raw)
-  if (Number.isNaN(d.getTime())) return String(raw)
-  const hh = String(d.getHours()).padStart(2, "0")
-  const mm = String(d.getMinutes()).padStart(2, "0")
-  const dd = String(d.getDate()).padStart(2, "0")
-  const MM = String(d.getMonth() + 1).padStart(2, "0")
-  const yyyy = d.getFullYear()
-  return `${hh}:${mm} - ${dd}/${MM}/${yyyy}`
+  return Number.isNaN(d.getTime()) ? null : d
+}
+const pad = (n) => String(n).padStart(2, "0")
+const dateOf = (item) => parseDate(item?.NGAYTAO || item?.NGAYDH || item?.ngaytao || item?.ngaydh)
+const timeText = (d) => (d ? `${pad(d.getHours())}:${pad(d.getMinutes())} · ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}` : "")
+const monthKey = (d) => (d ? `Tháng ${d.getMonth() + 1}/${d.getFullYear()}` : "Khác")
+
+// Trạng thái đơn đổi quà (nếu có)
+const statusTone = (text) => {
+  const t = String(text || "").toLowerCase()
+  if (t.includes("hủy") || t.includes("huỷ")) return "danger"
+  if (t.includes("hoàn thành")) return "success"
+  if (t.includes("giao")) return "info"
+  return "warning"
 }
 
 const LichSuTichDiem = ({ zmproute }) => {
@@ -42,130 +46,118 @@ const LichSuTichDiem = ({ zmproute }) => {
   const [loading, setLoading] = useState(false)
   const CusInfo = useStore("getCusInfo")
 
-  const getPointHistory = async () => {
-    setLoading(true)
-    try {
-      const response = await (
-        await request("POST", "khachhang/getListDonQatang", {
-          userId: validateString(CusInfo?.KHACHHANG_fk + "", true),
-          dhId: "",
-          trangthai: "",
-          tungay: "",
-          denngay: "",
-        })
-      ).json()
-      if (response) {
-        let p = JSON.parse(response.message)
-        setListHistory(Array.isArray(p) ? p : [])
-      } else {
-        setListHistory([])
-      }
-    } catch (error) {
-      console.log("Error get point history", error)
-      setListHistory([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    getPointHistory()
+    setLoading(true)
+    request("POST", "khachhang/getListDonQatang", {
+      userId: validateString(CusInfo?.KHACHHANG_fk + "", true),
+      dhId: "",
+      trangthai: "",
+      tungay: "",
+      denngay: "",
+    })
+      .then((r) => r.json())
+      .then((r) => {
+        const p = r?.result ? JSON.parse(r.message || "[]") : []
+        setListHistory(Array.isArray(p) ? p : [])
+      })
+      .catch((e) => {
+        console.log("Error get point history", e)
+        setListHistory([])
+      })
+      .finally(() => setLoading(false))
   }, [zmproute?.url])
 
-  const totalPoints = useMemo(
-    () => listHistory.reduce((sum, item) => sum + resolvePointValue(item), 0),
-    [listHistory]
-  )
-  const handleBack = () => {
-    const currentRouter = zmp.views?.current?.router
-    if (currentRouter?.history?.length > 1) {
-      currentRouter.back()
-      return
-    }
+  const totalPoints = useMemo(() => listHistory.reduce((sum, item) => sum + resolvePointValue(item), 0), [listHistory])
 
-    if (zmp.views?.main?.router?.history?.length > 1) {
-      zmp.views.main.router.back()
-      return
-    }
-
-    if (
-      typeof globalThis.window !== "undefined" &&
-      globalThis.window.history.length > 1
-    ) {
-      globalThis.window.history.back()
-    }
-  }
+  // Gom theo tháng, mới nhất lên đầu
+  const groups = useMemo(() => {
+    const sorted = [...listHistory].sort((a, b) => (dateOf(b)?.getTime() || 0) - (dateOf(a)?.getTime() || 0))
+    const map = new Map()
+    sorted.forEach((item) => {
+      const k = monthKey(dateOf(item))
+      if (!map.has(k)) map.set(k, [])
+      map.get(k).push(item)
+    })
+    return [...map.entries()]
+  }, [listHistory])
 
   return (
     <Page
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
-      className="detail-page bg-[#f3f4f6] p-2 m-0"
+      className="detail-page bg-[#f5f7fb]"
     >
-      <Box className="p-0 pt-6 pb-3 m-0">
-        <Box className="flex items-center justify-between p-0 m-0">
-          <Box className="flex items-center gap-3 m-0">
-            <Link
-              noLinkClass
-              className="h-9 w-9 rounded-full bg-white shadow-sm flex items-center justify-center"
-              onClick={handleBack}
-            >
-              <Icon zmp="zi-close" color="#6b7280" size={18} />
-            </Link>
-            <Text className="text-[20px] font-bold text-primary">
-              Lịch sử điểm
-            </Text>
-          </Box>
-          <Box className="text-right">
-            <Text className="text-[13px] font-medium text-slate-500">Tổng điểm</Text>
-            <Text className="text-[24px] leading-none font-bold text-primary">
-              {formatPoints(totalPoints)}
-            </Text>
-          </Box>
-        </Box>
-      </Box>
+      <HeaderBack slot="fixed" title="Lịch sử điểm" />
 
-      <Box className=" pb-6">
-        {loading && <LoadingSpinner />}
+      <div className="flex flex-col gap-3 px-4 pb-10 pt-3">
+        {/* Tổng quan */}
+        <div className="flex items-center gap-3 rounded-xl border border-[#E3EBF6] bg-white px-4 py-3.5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fdf3e6] text-[#c26a00]">
+            <MdStars size={24} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[12px] text-slate-500">Tổng điểm</div>
+            <div className="text-[22px] font-bold leading-tight tabular-nums text-slate-800">
+              {formatPoints(totalPoints)} <span className="text-[13px] font-semibold text-slate-500">điểm</span>
+            </div>
+          </div>
+          <div className="shrink-0 text-right text-[12px] text-slate-500">
+            {listHistory.length} giao dịch
+          </div>
+        </div>
 
-        {!loading &&
-          listHistory.map((item, index) => {
-            const points = resolvePointValue(item)
-            return (
-              <Box
-                key={item?.MADH || item?.id || `${index}`}
-                className="mb-3 rounded-2xl bg-white p-2 shadow-[0_2px_8px_rgba(0,0,0,0.08)] m-0"
-              >
-                <Box className="flex items-start justify-between gap-3">
-                  <Box className="flex flex-1 items-start gap-3 m-0">
-                    <Box className="h-9 w-9 rounded-full bg-[#f3f4f6] flex items-center justify-center mt-[2px] m-0">
-                      <BsArrowUp color="#3D9A5B" size={16} />
-                    </Box>
-                    <Box className="flex-1 m-0">
-                      <Text className="text-[17px] leading-6 font-bold text-slate-800 m-0">
-                        {resolveTitle(item)}
-                      </Text>
-                      <Text className="mt-1 text-[13px] text-slate-400 m-0">
-                        {resolveDateText(item)}
-                      </Text>
-                    </Box>
-                  </Box>
-                  <Text className="text-[18px] font-bold text-[#3D9A5B]">
-                    +{formatPoints(points)}
-                  </Text>
-                </Box>
-              </Box>
-            )
-          })}
-
-        {!loading && !listHistory.length && (
-          <Box className="min-h-[45vh] flex items-center justify-center">
-            <Text className="text-sm text-slate-400">Chưa có lịch sử điểm</Text>
-          </Box>
+        {loading ? (
+          <LoadingSpinner />
+        ) : listHistory.length === 0 ? (
+          <EmptyState
+            icon={<MdStars size={28} />}
+            title="Chưa có lịch sử điểm"
+            desc="Điểm tích được và điểm đã dùng sẽ hiển thị tại đây"
+          />
+        ) : (
+          groups.map(([thang, items]) => (
+            <div key={thang}>
+              <div className="mb-1.5 px-1 text-[12px] font-semibold text-slate-500">{thang}</div>
+              <div className="divide-y divide-[#edf0f5] overflow-hidden rounded-xl border border-[#E3EBF6] bg-white">
+                {items.map((item, index) => {
+                  const points = resolvePointValue(item)
+                  const tru = points < 0
+                  return (
+                    <div key={item?.MADH || item?.id || index} className="flex items-center gap-3 px-3.5 py-3">
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                          tru ? "bg-[#fdeeee] text-[#c23a3a]" : "bg-[#e9f6f1] text-[#1f8a4c]"
+                        }`}
+                      >
+                        {tru ? <MdArrowDownward size={18} /> : <MdArrowUpward size={18} />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="line-clamp-2 text-[14px] font-medium leading-snug text-slate-700">{resolveTitle(item)}</div>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-400">
+                          <span>{timeText(dateOf(item))}</span>
+                          {item?.MADH ? <span>#{item.MADH}</span> : null}
+                        </div>
+                        {item?.Trangthai && (
+                          <StatusBadge tone={statusTone(item.Trangthai)} className="mt-1">
+                            {item.Trangthai}
+                          </StatusBadge>
+                        )}
+                      </div>
+                      <span className={`shrink-0 text-[15px] font-bold tabular-nums ${tru ? "text-[#c23a3a]" : "text-[#1f8a4c]"}`}>
+                        {tru ? "-" : "+"}
+                        {formatPoints(points)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))
         )}
-      </Box>
+      </div>
     </Page>
   )
 }
+
 export default LichSuTichDiem

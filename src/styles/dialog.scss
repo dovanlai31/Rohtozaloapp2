@@ -1,0 +1,168 @@
+/* =========================================================================
+   Hộp thoại & toast dùng chung cho toàn app (zmp.dialog.alert / confirm / create, zmp.toast)
+   Chỉ đổi giao diện bằng CSS, không phải sửa từng chỗ gọi.
+   Import sau zmp-bundle, app.scss và FixZmp-framework.css để ghi đè.
+   ========================================================================= */
+
+$dlg-primary: #005daa;
+$dlg-text: #1e293b;
+$dlg-muted: #64748b;
+
+// Nền mờ phía sau
+.dialog-backdrop.backdrop-in,
+.dialog-backdrop {
+  background: rgba(15, 23, 42, 0.45) !important;
+}
+
+.dialog {
+  --zmp-dialog-width: min(320px, calc(100vw - 48px));
+  --zmp-dialog-border-radius: 20px;
+  background: #fff !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.22) !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+
+// Nội dung: biểu tượng chuông ở trên, tiêu đề + nội dung căn giữa
+.dialog .dialog-inner {
+  padding: 26px 22px 18px !important;
+  text-align: center !important;
+  border-radius: 0 !important;
+
+  &::after {
+    display: none !important; // bỏ đường kẻ mảnh mặc định
+  }
+
+  &::before {
+    content: "";
+    display: block;
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 12px;
+    border-radius: 9999px;
+    background-color: #eaf2fb;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 26px 26px;
+    // icon chuông (màu chủ đạo)
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23005daa'%3E%3Cpath d='M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-1.7 1.7A1 1 0 0 0 4 19.4h16a1 1 0 0 0 .7-1.7z'/%3E%3C/svg%3E");
+    box-shadow: 0 0 0 6px #f4f8fd;
+  }
+}
+
+// Hộp thoại chỉ có preloader / progress (đang xử lý) thì không cần icon
+.dialog-preloader .dialog-inner::before,
+.dialog-progress .dialog-inner::before {
+  display: none;
+}
+
+.dialog .dialog-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  color: $dlg-text !important;
+  text-align: center !important;
+}
+
+.dialog .dialog-text {
+  margin-top: 6px !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+  color: $dlg-muted !important;
+  text-align: center !important;
+  white-space: pre-line;
+  word-break: break-word;
+
+  // nội dung truyền vào dạng '<div class="dialog-text">...</div>' bị lồng 2 lớp
+  .dialog-text {
+    margin-top: 0 !important;
+  }
+}
+
+// Nút: dạng viên thuốc đặt cạnh nhau, nút cuối là nút chính
+.dialog .dialog-buttons {
+  display: flex !important;
+  gap: 8px;
+  height: auto !important;
+  padding: 0 16px 16px !important;
+
+  &::before,
+  &::after {
+    display: none !important;
+  }
+}
+
+.dialog.dialog-no-buttons .dialog-buttons {
+  display: none !important;
+}
+
+.dialog .dialog-buttons-vertical {
+  flex-direction: column;
+}
+
+.dialog .dialog-button {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  padding: 0 12px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  text-align: center !important;
+  color: #475569 !important;
+  background: #f1f5f9 !important;
+  border: 0 !important;
+  transition: opacity 0.15s, transform 0.15s;
+
+  &::before,
+  &::after {
+    display: none !important; // bỏ đường kẻ ngăn giữa các nút
+  }
+
+  &:active,
+  &.active-state {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+
+  // nút chính (OK / Xác nhận / Đóng khi chỉ có 1 nút)
+  &:last-child,
+  &.dialog-button-bold {
+    color: #fff !important;
+    background: $dlg-primary !important;
+  }
+}
+
+// Hiệu ứng mở: phóng nhẹ, mượt hơn mặc định
+.dialog.modal-in {
+  transition-duration: 0.25s !important;
+}
+
+/* ------------------------------- Toast -------------------------------- */
+.toast {
+  border-radius: 14px !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.toast .toast-content {
+  padding: 12px 16px !important;
+  align-items: center !important;
+}
+
+.toast .toast-text {
+  font-size: 13.5px !important;
+  line-height: 1.45 !important;
+  font-weight: 500;
+  color: #fff !important;
+  text-align: center;
+  width: 100%;
+}

@@ -288,10 +288,16 @@ const listdonhang = ({ zmproute }) => {
             }}
           />
         </Box>
+        {/* Khối tab + lọc thời gian (slot fixed) chiếm chỗ phía trên nhưng vùng cuộn vẫn cao 100%,
+            nên chừa thêm khoảng trống cuối danh sách để item cuối không bị khuất dưới mép màn hình */}
         <Box
           m="0"
           p="0"
-          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            paddingBottom: "calc(130px + env(safe-area-inset-bottom, 0px))",
+          }}
         >
           {/* <Box px="5" mb="0" style={{ backgroundColor: "transparent" }}>
             <Card inset className="shadown-app-1 ">

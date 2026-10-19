@@ -6,7 +6,7 @@ import store from "../store"
 
 import HeaderBox from "@components/Header/HeaderBox"
 import LoadingSpinner from "@components/LoadingSpinner"
-import { MdDiscount } from "react-icons/md"
+import { TbRosetteDiscountFilled } from "react-icons/tb"
 import { FaInbox } from "react-icons/fa6"
 import "../styles/notifypage.scss"
 import { parseDate } from "@utils/promoTime"
@@ -51,7 +51,8 @@ const KhuyenMaiPage = ({ zmproute }) => {
 
   return (
     <Page className="detail-page bg-slate-50">
-      <HeaderBox slot="fixed" icon={<MdDiscount />} HeaderBoxName="Khuyến mãi" />
+      {/* cùng icon huy hiệu % với tab Khuyến mãi ở thanh menu dưới */}
+      <HeaderBox slot="fixed" icon={<TbRosetteDiscountFilled />} HeaderBoxName="Khuyến mãi" />
 
       {/* Tabs: đặt ở vùng cố định dưới header, không trôi khi cuộn danh sách */}
       <Box slot="fixed" m="0" p="0" className="bg-slate-50 px-4 pb-2 pt-3">

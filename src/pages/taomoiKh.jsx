@@ -1,28 +1,46 @@
-import Header from "@components/Header"
-import iconSalesUp from "@static/images/salesup.png"
+import HeaderBack from "@components/Header/HeaderBack"
+import LoadingSpinner from "@components/LoadingSpinner"
+import { Button } from "@components/ui"
 import { request, request3 } from "@utils/networking"
 import { useEffect, useRef, useState } from "react"
-import {
-  Box,
-  Button,
-  Card,
-  List,
-  ListInput,
-  Page,
-  Preloader,
-  Text,
-  useStore,
-  zmp,
-} from "zmp-framework/react"
-import { getPhoneNumber } from "zmp-sdk/apis"
+import { MdInfoOutline, MdLock, MdPhoneIphone, MdPlace, MdStorefront, MdVerifiedUser } from "react-icons/md"
+import { Page, useStore, zmp } from "zmp-framework/react"
+import { getPhoneNumber, getUserID } from "zmp-sdk/apis"
 import store from "../store"
 import withOverlay from "@components/HOC/withOverlay"
+import logoRohto from "@static/images/logoRohto.png"
 import {
+  CapNhatDonHang,
   FetchInitData,
   follow,
   getDataCusFromId,
   requestSendNotifications,
 } from "../services/services"
+
+// Ô nhập của form: nhãn phía trên, khung bo góc, icon bên trái
+const Field = ({ label, required, icon, hint, error, children }) => (
+  <label className="block">
+    <span className="mb-1.5 flex items-center gap-1 text-[13px] font-medium text-slate-600">
+      {label}
+      {required && <span className="text-[#e5232a]">*</span>}
+    </span>
+    <span
+      className={`flex min-h-[48px] items-center gap-2.5 rounded-xl border bg-white px-3.5 transition-colors focus-within:border-primary ${
+        error ? "border-[#e5232a]" : "border-[#d9e3ef]"
+      }`}
+    >
+      {icon && <span className="flex shrink-0 text-slate-400">{icon}</span>}
+      {children}
+    </span>
+    {error ? (
+      <span className="mt-1 block text-[12px] text-[#e5232a]">{error}</span>
+    ) : hint ? (
+      <span className="mt-1 block text-[12px] text-slate-400">{hint}</span>
+    ) : null}
+  </label>
+)
+
+const inputStyle = { border: "none", boxShadow: "none", borderRadius: 0, padding: 0, background: "transparent", outline: "none" }
 
 const CreateCus = ({ zmproute, showToast }) => {
   const dialog = useRef(null)
@@ -45,8 +63,15 @@ const CreateCus = ({ zmproute, showToast }) => {
     })
   }, [])
 
+  const [loiTen, setLoiTen] = useState("")
+
   const handleOnSubmitForm = (e) => {
-    e.preventDefault()
+    e?.preventDefault?.()
+    if (!(formData.hoten || "").trim()) {
+      setLoiTen("Vui lòng nhập tên cửa hàng / họ tên")
+      return
+    }
+    setLoiTen("")
 
     if (CusInfo.chuadk == 1 && CusInfo.mafast.length > 0) {
       return zmp.dialog
@@ -157,17 +182,49 @@ const CreateCus = ({ zmproute, showToast }) => {
     }
   }
 
+  const layZaloId = async () => {
+    if (user?.id) return user.id
+    try {
+      return (await getUserID({})) || ""
+    } catch (e) {
+      return ""
+    }
+  }
+
+  // Đăng ký xong: lưu thông tin KH trước rồi mới tải dữ liệu theo KH đó (giá, khuyến mãi, sản phẩm, banner...)
+  const taiLaiDuLieu = async (zaloId) => {
+    const cusInfoLocal = await getDataCusFromId(zaloId)
+    const kh = cusInfoLocal?.[0]
+    if (kh) {
+      await store.dispatch("setCusInfo", kh)
+      await store.dispatch("setLogged", true)
+      store.dispatch("login")
+      const safe = (fn) => Promise.resolve().then(fn).catch((e) => console.log("reload fail", e))
+      await Promise.all([
+        safe(() => FetchInitData(kh.KHACHHANG_fk)),
+        safe(() => CapNhatDonHang(kh.KHACHHANG_fk)),
+        safe(() => store.dispatch("getBanner")),
+        safe(() => store.dispatch("getDanhmucSp")),
+        safe(() => store.dispatch("getLatestBlogs", { limit: 20, skip: 0, reset: true })),
+      ])
+    }
+    // làm mới số liệu trang chủ / tài khoản (đơn chờ, POSM, thông báo...)
+    await store.dispatch("setRefres", Date.now())
+  }
+
   const onClickSenddangky = async (dataparam) => {
     setLoading(true)
+    const zaloId = await layZaloId()
     const {
       sodienthoai,
-      userId,
+      userId: _userId,
       diachigiaohang,
       diachixuathoadon,
       masothe,
       tenkh,
       isOverwrite,
     } = dataparam
+    const userId = _userId || zaloId
     let params = {
       sodienthoai: sodienthoai,
       userId: userId,
@@ -193,19 +250,14 @@ const CreateCus = ({ zmproute, showToast }) => {
       if (response) {
         let p = JSON.parse(response.message)
         if (p[0].RESULT == 1) {
-          await store.dispatch("getLatestBlogs", {  limit: 20, skip: 0, reset: true })
           await store.dispatch("setPhoneNumber", PhoneNumner)
-          await store.dispatch("setRefres", PhoneNumner)
-
-          const cusInfoLocal = await getDataCusFromId(user.id)
-          if (cusInfoLocal.length) {
-            FetchInitData(cusInfoLocal[0]?.KHACHHANG_fk)
-            await store.dispatch("setCusInfo", cusInfoLocal[0])
-          }
+          await taiLaiDuLieu(userId)
 
           await follow()
           await requestSendNotifications()
 
+          showToast("Đăng ký thành công", "success")
+          zmp.toolbar.show("#main-nav")
           zmp.views.current.router.back("", {
             animate: true,
           })
@@ -213,7 +265,7 @@ const CreateCus = ({ zmproute, showToast }) => {
           showToast(p[0].MSG, "danger")
         }
       } else {
-        showToast(p[0].MSG, "danger")
+        showToast("Không lưu được thông tin đăng ký, vui lòng thử lại", "danger")
       }
     } catch (error) {
       showToast(
@@ -227,119 +279,122 @@ const CreateCus = ({ zmproute, showToast }) => {
     return
   }
 
+  const daCoMaKH = CusInfo?.chuadk == 1 && (CusInfo?.mafast || "").length > 0
+
   return (
     <Page
-      className="menu-page"
+      className="detail-page bg-[#f5f7fb]"
       onPageBeforeIn={() => {
         zmp.toolbar.hide("#main-nav")
       }}
       id={`register`}
     >
-      <Header back force={true}>
-        Đăng ký{" "}
-      </Header>
-      <Box mx="2">
-        <Card inset>
-          <Text
-            className="text-primary"
-            style={{ fontSize: 18, fontWeight: "bold" }}
+      <HeaderBack slot="fixed" title="Đăng ký tài khoản" />
+
+      <form
+        onSubmit={handleOnSubmitForm}
+        className="flex flex-col gap-3 px-4 pt-3"
+        style={{ paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))" }}
+      >
+        {/* Giới thiệu */}
+        <div className="flex items-center gap-3 rounded-xl border border-[#E3EBF6] bg-white px-4 py-3.5">
+          <span className="flex h-12 w-[84px] shrink-0 items-center justify-center rounded-xl bg-white">
+            <img src={logoRohto} alt="Rohto" className="h-auto w-full object-contain" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-[15px] font-semibold leading-snug text-slate-800">Liên kết cửa hàng với Rohto</div>
+            <div className="mt-0.5 text-[12px] leading-snug text-slate-500">
+              Điền thông tin để bắt đầu đặt hàng, nhận khuyến mãi và tích lũy.
+            </div>
+          </div>
+        </div>
+
+        {/* Số điện thoại này đã có mã khách hàng trên hệ thống */}
+        {daCoMaKH && (
+          <div className="flex items-start gap-2 rounded-xl border border-[#cfe0f5] bg-[#f3f8fd] px-3.5 py-3 text-[13px] leading-snug text-slate-600">
+            <MdInfoOutline size={18} className="mt-[1px] shrink-0 text-primary" />
+            <span>
+              Số điện thoại này đã có trên hệ thống: <b className="text-slate-800">{CusInfo.mafast}</b>
+              {CusInfo?.tenkh ? ` - ${CusInfo.tenkh}` : ""}. Khi lưu, bạn có thể chọn cập nhật lại thông tin.
+            </span>
+          </div>
+        )}
+
+        {/* Thông tin */}
+        <div className="flex flex-col gap-4 rounded-xl border border-[#E3EBF6] bg-white px-4 py-4">
+          <Field
+            label="Số điện thoại"
+            icon={<MdPhoneIphone size={19} />}
+            hint={PhoneNumner ? "Lấy tự động từ tài khoản Zalo" : ""}
           >
-            Thông tin tài khoản
-          </Text>
-          <List
-            style={{
-              listStyle: "none",
-            }}
-            form
-            id="my-form"
-            noHairlines
-          >
-            <ListInput
-              label="Số điện thoại"
+            {PhoneNumner ? (
+              <>
+                <input
+                  type="tel"
+                  value={PhoneNumner}
+                  readOnly
+                  className="h-11 min-w-0 flex-1 text-[15px] font-semibold tabular-nums text-slate-800"
+                  style={inputStyle}
+                />
+                <MdLock size={16} className="shrink-0 text-slate-300" />
+              </>
+            ) : (
+              <span className="flex flex-1 items-center gap-2 py-3 text-[13px] text-slate-400">
+                <span className="scale-75">
+                  <LoadingSpinner />
+                </span>
+                Đang lấy số điện thoại từ Zalo…
+              </span>
+            )}
+          </Field>
+
+          <Field label="Tên cửa hàng / Họ tên" required icon={<MdStorefront size={19} />} error={loiTen}>
+            <input
               type="text"
-              style={{ marginBottom: 8 }}
-              // placeholder='Enter your age'
-              // clearButton
-              required
-              name="dienthoai"
-              value={PhoneNumner}
-              readonly
-              // validate
-            ></ListInput>
-            <ListInput
-              label="Họ và tên"
-              type="text"
-              style={{ marginBottom: 8 }}
-              placeholder="Enter your full name"
-              info="Tên đầy đủ của bạn"
               name="fullName"
-              required
-              validate
               value={formData.hoten}
-              onChange={(e) => setFormData({ ...formData, hoten: e.target.value })}
-            ></ListInput>
-            <ListInput
-              label="Địa chỉ giao hàng "
+              maxLength={200}
+              placeholder="Ví dụ: Nhà thuốc An Khang"
+              onChange={(e) => {
+                setFormData({ ...formData, hoten: e.target.value })
+                if (loiTen) setLoiTen("")
+              }}
+              className="h-11 min-w-0 flex-1 text-[15px] text-slate-800 placeholder:text-slate-400"
+              style={inputStyle}
+            />
+          </Field>
+
+          <Field label="Địa chỉ cửa hàng" icon={<MdPlace size={19} />} hint="Số nhà, đường, phường / xã, quận / huyện, tỉnh / thành">
+            <input
               type="text"
-              style={{ marginBottom: 8, display: "none" }}
-              placeholder="Địa chỉ giao hàng"
-              // info="Địa chỉ giao hàng của bạn"
-              name="diachigiaohang"
-              required
-              validate
-              value={formData.diachigiaohang}
-              onChange={(e) =>
-                setFormData({ ...formData, diachigiaohang: e.target.value })
-              }
-            ></ListInput>
-            <ListInput
-              label="Địa chỉ khách hàng"
-              type="text"
-              style={{ marginBottom: 8 }}
-              placeholder="Địa chỉ khách hàng"
-              // info="Địa chỉ khách hàng"
               name="diachixuathoadon"
               value={formData.diachixuathoadon}
-              onChange={(e) =>
-                setFormData({ ...formData, diachixuathoadon: e.target.value })
-              }
-            ></ListInput>
-            <ListInput
-              label="Mã số thuế"
-              type="text"
-              style={{ marginBottom: 8, display: "none" }}
-              placeholder="Mã số thuế"
-              // info="Mã số thuế"
-              name="masothe"
-              value={formData.masothue}
-              onChange={(e) =>
-                setFormData({ ...formData, masothue: e.target.value })
-              }
-            ></ListInput>
-            <Box m="0" p="0" style={{ marginTop: 24 }}>
-              {loading ? (
-                <Box my="4">
-                  <div style={{ display: "flex", justifyContent: "center" }}>
-                    <Preloader size={35} logo={iconSalesUp} />
-                  </div>
-                </Box>
-              ) : (
-                <Button
-                  type="submit"
-                  typeName="secondary"
-                  responsive
-                  className="filter-button3"
-                  onClick={handleOnSubmitForm}
-                  style={{ backgroundColor: "#136f43", padding: 24 }}
-                >
-                  Lưu đăng ký
-                </Button>
-              )}
-            </Box>
-          </List>
-        </Card>
-      </Box>
+              maxLength={300}
+              placeholder="Nhập địa chỉ"
+              onChange={(e) => setFormData({ ...formData, diachixuathoadon: e.target.value })}
+              className="h-11 min-w-0 flex-1 text-[15px] text-slate-800 placeholder:text-slate-400"
+              style={inputStyle}
+            />
+          </Field>
+        </div>
+
+        <div className="flex items-start gap-2 px-1 text-[12px] leading-snug text-slate-500">
+          <MdVerifiedUser size={16} className="mt-[1px] shrink-0 text-[#1f8a4c]" />
+          Thông tin chỉ dùng để xác nhận cửa hàng và giao hàng, không chia sẻ cho bên thứ ba.
+        </div>
+      </form>
+
+      {/* Nút lưu cố định đáy màn hình */}
+      <div
+        className="fixed bottom-0 left-0 z-[999] w-full border-t border-[#e6ebf2] bg-white px-4 pt-3"
+        style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}
+      >
+        <Button full disabled={loading || !PhoneNumner} onClick={handleOnSubmitForm}>
+          {loading ? "Đang lưu…" : "Hoàn tất đăng ký"}
+        </Button>
+      </div>
     </Page>
   )
 }
+
 export default withOverlay(CreateCus)
