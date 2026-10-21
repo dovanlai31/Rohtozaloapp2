@@ -10,7 +10,8 @@ import CategoryThumb from "./CategoryThumb"
 
 
 
-const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
+// fullWidth: chiếm hết ô cha (khi bên ngoài đã tự chia cột)
+const DanhmucItem = ({ item, seen, loading, index, col, loai, fullWidth = false }) => {
   const classes = classNames("absolute avatar-border", {
     "avatar-seen": seen,
     "avatar-not-seen": !seen,
@@ -62,10 +63,11 @@ const DanhmucItem = ({ item, seen, loading, index, col,loai }) => {
 
   return (
     <Link
-      href={`/pagedanhmuc?index=${i}&loai=${loai}`}
+      // nhãn hàng -> trang sản phẩm của nhãn hàng (trang tìm kiếm lọc sẵn nhãn hàng); danh mục -> trang danh mục
+      href={loai === "NHANHANG" ? `/search?brandId=${item.PK_SEQ}` : `/pagedanhmuc?index=${i}&loai=${loai}`}
       noLinkClass
       className="!flex min-w-0 flex-col items-center overflow-hidden px-1"
-      style={{ width: "25%" }}
+      style={{ width: fullWidth ? "100%" : "25%" }}
     >
       {okList.length > 1 ? (
         // Nhiều ảnh: ảnh cũ mờ ra trước (300ms), xong mới hiện ảnh mới (trễ 300ms)

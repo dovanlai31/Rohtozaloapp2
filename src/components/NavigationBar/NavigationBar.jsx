@@ -107,6 +107,8 @@ const useHideOnScroll = (activeTab) => {
 
 const NavigationBar = ({ activeTab }) => {
   const Giohangx = useStore("getGioHang")
+  // đổi số lượng trong giỏ chỉ sửa phần tử của mảng, theo dõi thêm phiên bản để badge cập nhật ngay
+  const gioHangVer = useStore("gioHangVer")
   const ListKM = useStore("ListKM")
   const ListCTTLXu = useStore("ListCTTLXu")
   const ListCTTLDiem = useStore("ListCTTLDiem")
@@ -114,7 +116,7 @@ const NavigationBar = ({ activeTab }) => {
   const cartItemCount = useMemo(() => {
     const list = Giohangx || []
     return list.reduce((sum, it) => sum + (Number(it.soluong) > 0 ? Number(it.soluong) : 1), 0)
-  }, [Giohangx, JSON.stringify(Giohangx)])
+  }, [Giohangx, gioHangVer, JSON.stringify(Giohangx)])
   useHideOnScroll(activeTab)
 
   return (

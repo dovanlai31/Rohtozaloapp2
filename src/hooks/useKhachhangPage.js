@@ -1,15 +1,19 @@
 import { request } from "@utils/networking"
 import { useEffect, useRef, useState } from "react"
-import { zmp } from "zmp-framework/react"
+import { useStore, zmp } from "zmp-framework/react"
 import { openChat } from "zmp-sdk/apis"
 import config from "../config"
+import { getCttbDaDangKy } from "../services/trungbayService"
 import store from "../store"
 
 export function useKhachhangPage() {
   const dialog = useRef(null)
   const CusInfo = store.getters.getCusInfo.value || []
+  const refres = useStore("refres")
   const [loading, setLoading] = useState(true)
   const [dataTichLuy, setDataTichLuy] = useState([])
+  const [loadingTrungBay, setLoadingTrungBay] = useState(true)
+  const [dataTrungBay, setDataTrungBay] = useState([])
   const [isCallModalOpen, setIsCallModalOpen] = useState(false)
   const hotline = "02877752275"
   const hotlineText =
@@ -44,6 +48,17 @@ export function useKhachhangPage() {
     }
   }
 
+  const getTrungBay = async () => {
+    try {
+      setDataTrungBay(await getCttbDaDangKy(CusInfo?.KHACHHANG_fk))
+    } catch (error) {
+      console.log("Lỗi API getCttbDaDangKy:", error)
+      setDataTrungBay([])
+    } finally {
+      setLoadingTrungBay(false)
+    }
+  }
+
   const openChatScreen = async () => {
     console.log("Opening chat screen with OA ID:", config.OA_ID)
     try {
@@ -75,10 +90,17 @@ export function useKhachhangPage() {
     getTichLuyTham()
   }, [])
 
+  // tải lại khi chụp ảnh trưng bày xong (store "refres" đổi)
+  useEffect(() => {
+    getTrungBay()
+  }, [refres])
+
   return {
     CusInfo,
     loading,
     dataTichLuy,
+    loadingTrungBay,
+    dataTrungBay,
     isCallModalOpen,
     hotlineText,
     openCallScreen,

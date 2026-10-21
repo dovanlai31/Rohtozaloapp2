@@ -1,7 +1,7 @@
 import LoadingSpinner from "@components/LoadingSpinner"
 import { PillTabs } from "@components/ui"
 import Color from "@components/common/Color"
-import { formatCurrency, requestWithAbortController } from "@utils/networking"
+import { requestWithAbortController } from "@utils/networking"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Box, Page, useStore, zmp } from "zmp-framework/react"
 import useDebounce from "../hooks/useDebounce"
@@ -12,8 +12,9 @@ import withOverlay from "@components/HOC/withOverlay"
 import AppHeader from "@components/Header/AppHeader"
 import { TiShoppingCart } from "react-icons/ti"
 import Post from "@components/Product"
-import { MdArrowDownward, MdArrowUpward, MdChevronRight, MdClose, MdFilterList, MdHistory, MdSearch } from "react-icons/md"
+import { MdArrowDownward, MdArrowUpward, MdClose, MdFilterList, MdHistory, MdSearch } from "react-icons/md"
 import BrandPickerSheet from "@components/Search/BrandPickerSheet"
+import CartFloatingBar, { CART_BAR_SPACE, useCartSummary } from "@components/Cart/CartFloatingBar"
 
 const PAGE_SIZE_SEARCH = 20
 
@@ -76,26 +77,19 @@ const SearchPage = ({ zmproute, showToast }) => {
   const [loading, setLoading] = useState(false)
   const [lastPage, setLastPage] = useState(false)
   const [sortKey, setSortKey] = useState("new")
-  const [brandId, setBrandId] = useState("")
+  // ?brandId=: mở từ ô nhãn hàng ở trang danh mục -> trang sản phẩm của nhãn hàng
+  const brandFromRoute = (zmproute?.query?.brandId || "") + ""
+  const [brandId, setBrandId] = useState(brandFromRoute)
   const [brandSheet, setBrandSheet] = useState(false)
   const [history, setHistory] = useState(readHistory)
   const SInput = useRef(null)
   const CusInfo = useStore("getCusInfo")
-  const ListGiohang = useStore("getGioHang")
   const categories = useStore("categories")
   const brands = useMemo(() => collectBrands(categories), [categories])
 
-  const cartItemCount = useMemo(() => {
-    const list = ListGiohang || []
-    return list.reduce((sum, it) => sum + (Number(it?.soluong) > 0 ? Number(it.soluong) : 1), 0)
-  }, [ListGiohang])
-  const cartTotal = useMemo(
-    () => (ListGiohang || []).reduce((sum, it) => sum + (Number(it?.dongia) || 0) * (Number(it?.soluong) || 1), 0),
-    [ListGiohang]
-  )
+  const { count: cartItemCount, canBuy, visible: showCartBar } = useCartSummary()
   const keywordDebounce = useDebounce(keyword, 400)
   const Giohangx = store.getters.getGioHang.value || []
-  const canBuy = CusInfo?.active !== "0"
 
   useEffect(() => {
     if (Giohangx?.length > 0) {
@@ -272,8 +266,9 @@ const SearchPage = ({ zmproute, showToast }) => {
   const goToCart = goToCartTab
 
   const brandName = brands.find((b) => b.id === brandId)?.ten
-  const showHistory = !keyword && history.length > 0
-  const showCartBar = canBuy && cartItemCount > 0
+  const showHistory = !keyword && history.length > 0 && !brandFromRoute
+  // mở từ nhãn hàng (và vẫn đang lọc nhãn hàng đó): tiêu đề là tên nhãn hàng
+  const brandPage = !!brandFromRoute && brandId === brandFromRoute && !!brandName
 
   return (
     <Page
@@ -286,7 +281,7 @@ const SearchPage = ({ zmproute, showToast }) => {
       className="detail-page bg-slate-50"
     >
       <AppHeader
-        title={`${quantity} Sản phẩm`}
+        title={brandPage ? `${brandName} · ${quantity} SP` : `${quantity} Sản phẩm`}
         back
         bordered={false}
         onBackClick={() => {
@@ -325,7 +320,7 @@ const SearchPage = ({ zmproute, showToast }) => {
               onKeyDown={(e) => {
                 if (e.key === "Enter") e.currentTarget.blur() // ẩn bàn phím, kết quả đã tự tìm khi gõ
               }}
-              placeholder="Tìm tên hoặc mã sản phẩm"
+              placeholder={brandPage ? `Tìm trong ${brandName}` : "Tìm tên hoặc mã sản phẩm"}
               // tắt viền/bóng mặc định của zmp-ui và app.scss (input[type=text], :focus)
               style={{ border: "none", boxShadow: "none", borderRadius: 0, padding: 0, background: "transparent", outline: "none" }}
               className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[14px] text-slate-800 outline-none placeholder:text-slate-400"
@@ -391,7 +386,7 @@ const SearchPage = ({ zmproute, showToast }) => {
         onChange={setBrandId}
       />
 
-      <div ref={contentRef} className="px-3" style={{ paddingBottom: (showCartBar ? 110 : 40) + bottomGap }}>
+      <div ref={contentRef} className="px-3" style={{ paddingBottom: (showCartBar ? CART_BAR_SPACE : 40) + bottomGap }}>
         {/* Tìm kiếm gần đây */}
         {showHistory && (
           <div className="mt-3 rounded-xl border border-[#E3EBF6] bg-white px-3 py-2.5">
@@ -508,32 +503,7 @@ const SearchPage = ({ zmproute, showToast }) => {
       </div>
 
       {/* Thanh giỏ hàng nổi */}
-      {showCartBar && (
-        <div
-          className="fixed bottom-0 left-0 z-[999] w-full px-3 pt-2"
-          style={{ paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))" }}
-        >
-          <button
-            type="button"
-            onClick={goToCart}
-            className="flex w-full items-center gap-3 rounded-2xl border-0 bg-primary px-4 py-3 text-white shadow-[0_6px_16px_rgba(0,93,170,0.35)] active:opacity-90"
-          >
-            <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
-              <TiShoppingCart size={20} />
-              <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-[#e5232a] px-1 text-[10px] font-bold leading-[18px]">
-                {cartItemCount > 99 ? "99+" : cartItemCount}
-              </span>
-            </span>
-            <span className="min-w-0 flex-1 text-left">
-              <span className="block text-[11px] text-white/80">{cartItemCount} sản phẩm trong giỏ</span>
-              <span className="block text-[15px] font-bold tabular-nums">{formatCurrency(cartTotal, true)}đ</span>
-            </span>
-            <span className="flex items-center gap-0.5 text-[13px] font-semibold">
-              Xem giỏ hàng <MdChevronRight size={18} />
-            </span>
-          </button>
-        </div>
-      )}
+      <CartFloatingBar />
     </Page>
   )
 }

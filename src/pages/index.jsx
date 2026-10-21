@@ -316,7 +316,8 @@ const HomePage = ({ showToast }) => {
 
       // trinh duyệt thì mở cái này lên vi nó ko lấy dc user id
       if (!userId) {
-        userId = "7766309018809027302"
+       // userId = "7766309018809027302" // use ngoc
+        userId = "6802644555416690502" // use lai
 
         // user not registered yet 1269173850562980540
       }

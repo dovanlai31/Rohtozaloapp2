@@ -102,7 +102,10 @@ export const HomeTodo = ({ summary }) => {
 const Shortcut = ({ icon, label, badge, tint, href, onClick }) => {
   const inner = (
     <span className="flex flex-col items-center px-0.5 py-1">
-      <span className={`relative flex h-11 w-11 items-center justify-center rounded-2xl ${tint}`}>
+      {/* Ô icon trắng có bóng nhẹ, nổi trên nền kính mờ của khung */}
+      <span
+        className={`relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-[0_3px_10px_rgba(15,45,90,0.10)] ring-1 ring-white transition-transform active:scale-95 ${tint}`}
+      >
         {icon}
         {badge > 0 && (
           <span className="absolute -right-1.5 -top-1.5 min-w-[18px] rounded-full border-2 border-white bg-[#e5232a] px-1 text-center text-[10px] font-bold leading-[14px] text-white">
@@ -110,7 +113,7 @@ const Shortcut = ({ icon, label, badge, tint, href, onClick }) => {
           </span>
         )}
       </span>
-      <span className="mt-1.5 w-full truncate text-center text-[11px] text-slate-600">{label}</span>
+      <span className="mt-1.5 w-full truncate text-center text-[11px] font-medium text-slate-600">{label}</span>
     </span>
   )
   return href ? (
@@ -125,13 +128,19 @@ const Shortcut = ({ icon, label, badge, tint, href, onClick }) => {
 }
 
 export const HomeShortcuts = ({ summary, kmCount }) => {
-  const BLUE = "bg-[#eef4fb] text-primary"
-  const ORANGE = "bg-[#fdf3e6] text-[#c26a00]"
-  const GREEN = "bg-[#e9f6f1] text-[#1f7a55]"
-  const RED = "bg-[#fdeeee] text-[#e5232a]"
+  // màu icon (ô icon nền trắng)
+  const BLUE = "text-primary"
+  const ORANGE = "text-[#c26a00]"
+  const GREEN = "text-[#1f7a55]"
+  const RED = "text-[#e5232a]"
 
   return (
-    <div className="mx-4 mt-3 rounded-xl border border-[#E3EBF6] bg-white px-2 py-3">
+    // Nền kính mờ: vài mảng màu nhạt được làm mờ phía sau + lớp trắng trong mờ, để các ô icon trắng nổi lên
+    <div className="relative mx-4 mt-3 overflow-hidden rounded-xl border border-white/70 bg-[#f4f8fd]">
+      <span aria-hidden className="pointer-events-none absolute -left-6 -top-8 h-28 w-28 rounded-full bg-[#bcd6f2] opacity-70 blur-2xl" />
+      <span aria-hidden className="pointer-events-none absolute -right-4 top-2 h-24 w-24 rounded-full bg-[#fde3c2] opacity-70 blur-2xl" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-10 left-1/3 h-28 w-28 rounded-full bg-[#cdeee0] opacity-70 blur-2xl" />
+      <div className="relative bg-white/40 px-2 py-3 backdrop-blur-md">
       <Grid cols={4} gap={6}>
         <Shortcut icon={<MdShoppingCart size={22} />} label="Đặt hàng" tint={BLUE} href="/search?all=1" />
         <Shortcut icon={<MdReceiptLong size={22} />} label="Đơn hàng" tint={BLUE} badge={summary.donChoXacNhan} href="/listdonhang/?trangthai=-1" />
@@ -148,6 +157,7 @@ export const HomeShortcuts = ({ summary, kmCount }) => {
         <Shortcut icon={<FaGift size={18} />} label="Phiếu thưởng" tint={GREEN} badge={summary.phieuChuaTra} href="/phieutrathuong/" />
         <Shortcut icon={<MdNotifications size={22} />} label="Thông báo" tint={BLUE} badge={summary.thongBaoMoi} href="/thongbaoPage/" />
       </Grid>
+      </div>
     </div>
   )
 }

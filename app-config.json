@@ -56,7 +56,8 @@
     "/kiemtraposm",
     "/kiemtraposmdetail",
     "/phieutrathuong",
-    "/phieutrathuongdetail"
+    "/phieutrathuongdetail",
+    "/chupanhtrungbay"
   ],
   "template": {}
 }

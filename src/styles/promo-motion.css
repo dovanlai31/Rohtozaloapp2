@@ -1,0 +1,122 @@
+/* Hiệu ứng nhẹ cho trang Khuyến mãi / thẻ voucher (giữ phong cách nhẹ nhàng, không lòe loẹt) */
+
+/* Thẻ hiện dần + trượt lên, lệch thời gian theo thứ tự (--i) */
+@keyframes promo-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.promo-enter {
+  animation: promo-fade-up 0.32s ease-out both;
+  animation-delay: calc(min(var(--i, 0), 8) * 45ms);
+}
+
+/* Nhấn thẻ: thu nhỏ nhẹ */
+.promo-press {
+  transition: transform 0.15s ease;
+}
+.promo-press:active {
+  transform: scale(0.98);
+}
+
+/* Cuống phiếu có ưu đãi: vệt sáng lướt qua định kỳ */
+.promo-shine {
+  position: relative;
+  overflow: hidden;
+}
+.promo-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 60%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  transform: translateX(-160%) skewX(-12deg);
+  animation: promo-shine 4.5s ease-in-out 1s infinite;
+  pointer-events: none;
+}
+@keyframes promo-shine {
+  0%,
+  70% {
+    transform: translateX(-160%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(260%) skewX(-12deg);
+  }
+}
+
+/* Số ưu đãi bật nhẹ khi hiện */
+@keyframes promo-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.promo-pop {
+  display: inline-block;
+  animation: promo-pop 0.42s ease-out 0.12s both;
+}
+
+/* Thanh thời gian chạy từ 0 tới giá trị thật */
+@keyframes promo-bar {
+  from {
+    transform: scaleX(0);
+  }
+}
+.promo-bar {
+  transform-origin: left center;
+  animation: promo-bar 0.7s ease-out 0.15s both;
+}
+
+/* Chấm nhấp nháy ở nhãn "Còn N ngày" */
+@keyframes promo-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+.promo-dot {
+  position: relative;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: currentColor;
+}
+.promo-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: promo-ping 1.6s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-enter,
+  .promo-pop,
+  .promo-bar,
+  .promo-shine::after,
+  .promo-dot::after {
+    animation: none !important;
+  }
+  .promo-press:active {
+    transform: none;
+  }
+}

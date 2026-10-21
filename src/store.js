@@ -39,6 +39,7 @@ const store = createStore({
     categories: [],
     CurentProduct: null,
     ListGiohang: [],
+    gioHangVer: 0, // tăng khi đổi số lượng 1 dòng giỏ hàng (updateGiohang)
     ListKM: [],
     ListCTTLXu: [],
     ListCTTLDiem: [],
@@ -72,6 +73,9 @@ const store = createStore({
     },
     getGioHang({ state }) {
       return state.ListGiohang
+    },
+    gioHangVer({ state }) {
+      return state.gioHangVer
     },
     getCurentProduct({ state }) {
       return state.CurentProduct
@@ -218,6 +222,9 @@ const store = createStore({
       let index = state.ListGiohang.findIndex((w) => w.id == item.id)
       //let newgh =  state.ListGiohang;
       state.ListGiohang[index] = item
+      // Sửa trong mảng không làm store báo thay đổi -> tăng phiên bản để thanh tab cập nhật số lượng.
+      // (không gán mảng mới: useCart chạy lại effect theo mảng giỏ hàng và thu gọn "Xem thêm")
+      state.gioHangVer = state.gioHangVer + 1
 
       //  state.ListGiohang=newgh;
     },

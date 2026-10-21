@@ -11,6 +11,7 @@ import {
   MdTaskAlt,
 } from "react-icons/md"
 import { FaCoins } from "react-icons/fa"
+import KhachhangEmptyCard from "./KhachhangEmptyCard"
 
 function StateMessage({ children, className = "" }) {
   return <div className={className}>{children}</div>
@@ -127,10 +128,21 @@ export default function KhachhangTichLuyCard({ loading, dataTichLuy = null, cusI
     )
   }
 
+  if (!hasData) {
+    return (
+      <KhachhangEmptyCard
+        icon={<FaCoins size={24} />}
+        title="Chưa tham gia chương trình tích lũy"
+        desc="Đăng ký chương trình tích lũy để nhận thêm ưu đãi khi đặt hàng."
+        actionLabel="Xem chương trình tích lũy"
+        actionHref="/TichLuyList"
+      />
+    )
+  }
+
   return (
     <Card className="shadown-app-1  mx-4 overflow-hidden rounded-2xl bg-white">
       <div className="w-full p-4 text-left">
-        {hasData ? (
           <>
             <div className="mb-4 flex items-start gap-3">
               <span className="mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#3b5ea8] text-2xl text-white">
@@ -189,11 +201,6 @@ export default function KhachhangTichLuyCard({ loading, dataTichLuy = null, cusI
               />
             </div>
           </>
-        ) : (
-          <StateMessage className="py-3 text-center text-xs font-bold text-slate-600">
-            Hiện tại bạn chưa tham gia chương trình tích lũy nào
-          </StateMessage>
-        )}
       </div>
     </Card>
   )

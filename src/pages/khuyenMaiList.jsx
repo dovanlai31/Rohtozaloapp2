@@ -1,23 +1,39 @@
 import { useEffect, useState } from "react"
-import { PillTabs } from "@components/ui"
-import { Box, Link, Page, Text, useStore } from "zmp-framework/react"
+import { EmptyState, PillTabs, SectionTitle } from "@components/ui"
+import { Box, Link, Page, useStore } from "zmp-framework/react"
 
 import store from "../store"
 
 import HeaderBox from "@components/Header/HeaderBox"
 import LoadingSpinner from "@components/LoadingSpinner"
 import { TbRosetteDiscountFilled } from "react-icons/tb"
-import { FaInbox } from "react-icons/fa6"
+import { MdAccessTime, MdLocalOffer } from "react-icons/md"
 import "../styles/notifypage.scss"
-import { parseDate } from "@utils/promoTime"
+import "../styles/promo-motion.css"
+import { parseDate, timeInfo } from "@utils/promoTime"
 import VoucherCard, { PROMO_TYPES, loaiOf } from "@components/KhuyenMai/VoucherCard"
 import TichLuyProgramCard, { getTichLuyList } from "@components/TichLuy/TichLuyProgramCard"
+import KhachhangTrungBayCard from "@components/Account/KhachhangTrungBayCard"
+import { getCttbDaDangKy } from "../services/trungbayService"
 
 const TABS = PROMO_TYPES
+
+const EMPTY = {
+  km: { title: "Chưa có chương trình khuyến mãi", desc: "Các ưu đãi mới sẽ hiển thị tại đây." },
+  tichluy: {
+    title: "Chưa tham gia chương trình tích lũy",
+    desc: "Đăng ký chương trình tích lũy để nhận thêm ưu đãi khi đặt hàng.",
+  },
+  trungbay: {
+    title: "Chưa có chương trình trưng bày",
+    desc: "Liên hệ nhân viên bán hàng để đăng ký trưng bày và nhận thưởng.",
+  },
+}
 
 const KhuyenMaiPage = ({ zmproute }) => {
   const ListKM = store.getters.ListKM.value || []
   const CusInfo = useStore("getCusInfo") || {}
+  const refres = useStore("refres")
   const khId = CusInfo?.KHACHHANG_fk
   const [activeTab, setActiveTab] = useState("km")
 
@@ -32,22 +48,110 @@ const KhuyenMaiPage = ({ zmproute }) => {
       .finally(() => setLoadingTL(false))
   }, [khId])
 
+  // Tab Trưng bày: chương trình trưng bày KH đã đăng ký (tải lại sau khi chụp ảnh trưng bày)
+  const [trungBay, setTrungBay] = useState([])
+  const [loadingTB, setLoadingTB] = useState(false)
+  useEffect(() => {
+    if (!khId) return
+    setLoadingTB(true)
+    getCttbDaDangKy(khId)
+      .then(setTrungBay)
+      .catch((e) => {
+        console.log("getCttbDaDangKy error", e)
+        setTrungBay([])
+      })
+      .finally(() => setLoadingTB(false))
+  }, [khId, refres])
+
   // Lưu lại originalIndex để khi chuyển trang không bị lỗi index
   const withIndex = ListKM.map((km, index) => ({ ...km, originalIndex: index }))
   // Sắp hết hạn lên đầu
   const endTime = (km) => parseDate(km.DENNGAY)?.getTime() ?? Number.MAX_SAFE_INTEGER
-  const filteredList = withIndex
-    .filter((km) => loaiOf(km) === activeTab)
+  const kmList = withIndex
+    .filter((km) => loaiOf(km) === "km")
     .sort((a, b) => endTime(a) - endTime(b))
-  const countOf = (key) =>
-    key === "tichluy" ? tichLuy.length : withIndex.filter((km) => loaiOf(km) === key).length
+  const sapHetHan = kmList.filter((km) => timeInfo(km.TUNGAY, km.DENNGAY).level === "soon")
+  const dangDienRa = kmList.filter((km) => timeInfo(km.TUNGAY, km.DENNGAY).level !== "soon")
 
+  const countOf = (key) =>
+    key === "tichluy" ? tichLuy.length : key === "trungbay" ? trungBay.length : kmList.length
+
+  const tabInfo = TABS.find((t) => t.key === activeTab) || TABS[0]
   const empty = (
-    <div className="mt-20 flex flex-col items-center justify-center">
-      <FaInbox size={36} color="#cbd5e1" className="mb-2" />
-      <Text className="text-[13px] text-slate-400">Không có chương trình nào</Text>
-    </div>
+    <EmptyState
+      className="promo-enter"
+      icon={<tabInfo.Icon size={24} />}
+      title={EMPTY[activeTab].title}
+      desc={EMPTY[activeTab].desc}
+    />
   )
+
+  // Thẻ hiện dần lần lượt (--i: thứ tự, dùng cho độ trễ của hiệu ứng)
+  const enter = (i) => ({ className: "promo-enter", style: { "--i": i } })
+
+  const renderKmGroup = (title, icon, list, offset = 0) =>
+    list.length > 0 && (
+      <div className="mb-3">
+        <SectionTitle icon={icon} right={<span className="text-[12px] text-slate-500">{list.length}</span>}>
+          {title}
+        </SectionTitle>
+        <div className="flex flex-col gap-2.5">
+          {list.map((km, i) => (
+            <Link
+              key={km.scheme || km.originalIndex}
+              animate
+              noLinkClass
+              href={`/tichluydetail?loai=2&item=${km.pk_seq}&index=${km.originalIndex}`}
+              className="promo-enter block w-full"
+              style={{ "--i": offset + i }}
+            >
+              <VoucherCard km={km} />
+            </Link>
+          ))}
+        </div>
+      </div>
+    )
+
+  let content
+  if (activeTab === "tichluy") {
+    content = loadingTL ? (
+      <LoadingSpinner />
+    ) : tichLuy.length === 0 ? (
+      empty
+    ) : (
+      <div className="flex flex-col gap-2.5">
+        {tichLuy.map((item, i) => (
+          <div key={item.CTTL_FK} {...enter(i)}>
+            <TichLuyProgramCard item={item} ended={false} />
+          </div>
+        ))}
+      </div>
+    )
+  } else if (activeTab === "trungbay") {
+    content = loadingTB ? (
+      <LoadingSpinner />
+    ) : trungBay.length === 0 ? (
+      empty
+    ) : (
+      <div className="flex flex-col gap-2.5">
+        {trungBay.map((item, i) => (
+          <div key={item.id} {...enter(i)}>
+            <KhachhangTrungBayCard item={item} />
+          </div>
+        ))}
+      </div>
+    )
+  } else {
+    content =
+      kmList.length === 0 ? (
+        empty
+      ) : (
+        <>
+          {renderKmGroup("Sắp hết hạn", <MdAccessTime size={15} />, sapHetHan)}
+          {renderKmGroup("Đang diễn ra", <MdLocalOffer size={15} />, dangDienRa, sapHetHan.length)}
+        </>
+      )
+  }
 
   return (
     <Page className="detail-page bg-slate-50">
@@ -63,36 +167,9 @@ const KhuyenMaiPage = ({ zmproute }) => {
         />
       </Box>
 
-      <div className="px-4 pb-[150px] pt-1">
-        {activeTab === "tichluy" ? (
-          loadingTL ? (
-            <LoadingSpinner />
-          ) : tichLuy.length === 0 ? (
-            empty
-          ) : (
-            <div className="flex flex-col gap-2.5">
-              {tichLuy.map((item) => (
-                <TichLuyProgramCard key={item.CTTL_FK} item={item} ended={false} />
-              ))}
-            </div>
-          )
-        ) : filteredList.length === 0 ? (
-          empty
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            {filteredList.map((km) => (
-              <Link
-                key={km.scheme || km.originalIndex}
-                animate
-                noLinkClass
-                href={`/tichluydetail?loai=2&item=${km.pk_seq}&index=${km.originalIndex}`}
-                className="block w-full"
-              >
-                <VoucherCard km={km} />
-              </Link>
-            ))}
-          </div>
-        )}
+      {/* key theo tab: đổi tab thì các thẻ chạy lại hiệu ứng hiện dần */}
+      <div key={activeTab} className="px-4 pb-[150px] pt-1">
+        {content}
       </div>
     </Page>
   )

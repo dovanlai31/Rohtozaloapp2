@@ -1,13 +1,15 @@
 import KhachhangCallModal from "@components/Account/KhachhangCallModal"
 import KhachhangSupportHero from "@components/Account/KhachhangSupportHero"
 import KhachhangTichLuyCard from "@components/Account/KhachhangTichLuyCard"
+import KhachhangTrungBayCard from "@components/Account/KhachhangTrungBayCard"
 import SubTitle from "@components/common/SubTitle"
 import KhaoSatList from "@components/KhaoSat/KhaoSatList"
 import { useKhachhangPage } from "@hooks/useKhachhangPage"
 import { getAPI } from "@utils/networking"
 import { useEffect, useRef, useState } from "react"
 import { FaBook, FaGlobe, FaListAlt, FaRegComments, FaVideo } from "react-icons/fa"
-import { MdDescription } from "react-icons/md"
+import { MdDescription, MdStorefront } from "react-icons/md"
+import KhachhangEmptyCard from "@components/Account/KhachhangEmptyCard"
 import { Box, Card, Link, Page, Text } from "zmp-framework/react"
 import { openWebview } from "zmp-sdk"  // Thêm import ở đầu file
 const Khachhang = () => {
@@ -15,6 +17,8 @@ const Khachhang = () => {
     CusInfo,
     loading,
     dataTichLuy,
+    loadingTrungBay,
+    dataTrungBay,
     isCallModalOpen,
     hotlineText,
     openCallScreen,
@@ -152,6 +156,21 @@ const Khachhang = () => {
       <SubTitle title="Thông tin tích lũy" />
 
       {tichLuyContent}
+
+      <SubTitle title="Thông tin trưng bày" />
+      {loadingTrungBay ? (
+        <div className="py-3 text-center text-[12px] text-slate-500">Đang tải dữ liệu...</div>
+      ) : dataTrungBay.length > 0 ? (
+        <div className="mx-4 mb-4 flex flex-col gap-2.5">
+          {dataTrungBay.map((item) => <KhachhangTrungBayCard key={item.id} item={item} />)}
+        </div>
+      ) : (
+        <KhachhangEmptyCard
+          icon={<MdStorefront size={24} />}
+          title="Chưa có chương trình trưng bày"
+          desc="Liên hệ nhân viên bán hàng để đăng ký trưng bày và nhận thưởng."
+        />
+      )}
       <Card
         className="shadown-app-1 "
         inset
