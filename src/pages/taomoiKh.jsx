@@ -256,7 +256,8 @@ const CreateCus = ({ zmproute, showToast }) => {
           await follow()
           await requestSendNotifications()
 
-          showToast("Đăng ký thành công", "success")
+          // "Đăng ký thành công." hoặc "Đã liên kết với tài khoản cửa hàng có sẵn." (SĐT / Zalo đã có liên kết)
+          showToast(p[0].MSG || "Đăng ký thành công", "success")
           zmp.toolbar.show("#main-nav")
           zmp.views.current.router.back("", {
             animate: true,

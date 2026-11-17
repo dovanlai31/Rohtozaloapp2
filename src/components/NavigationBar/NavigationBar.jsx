@@ -19,7 +19,8 @@ const KhuyenMaiIcon = (props) => <TbRosetteDiscount strokeWidth={1.6} {...props}
 const TabItem = ({ tabLink, active, Icon, IconActive, label, badge, ...rest }) => (
   <Link noLinkClass tabLink={tabLink} className={"app-tabbar-item" + (active ? " is-active" : "")} {...rest}>
     <span className="app-tabbar-pill">
-      <span className="relative flex h-6 w-6 items-center justify-center">
+      {/* data-cart-target: đích của hiệu ứng "bay vào giỏ" (chỉ ở tab Giỏ hàng) */}
+      <span className="relative flex h-6 w-6 items-center justify-center" data-cart-target={tabLink === "#view-giohang" ? "" : undefined}>
         {active ? <IconActive size={22} /> : <Icon size={22} />}
         {badge > 0 && (
           // key đổi theo số lượng để hiệu ứng "nảy" chạy lại mỗi khi thêm/bớt sản phẩm

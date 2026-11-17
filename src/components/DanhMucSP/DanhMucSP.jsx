@@ -19,7 +19,7 @@ const Stories = () => {
   const [listChungloai, setlistChungloai] = useState(data)
 
 
-  console.log(data)
+  // console.log(data)
 
 
 

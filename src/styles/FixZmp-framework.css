@@ -52,3 +52,9 @@
     transform: translateY(0);
   }
 }
+
+/* Swiper của zmp-ui đặt touch-action: none cho khung trượt -> chạm vào banner / ảnh thì trang không cuộn lên xuống được.
+   pan-y: trình duyệt vẫn cuộn dọc, còn vuốt ngang vẫn do Swiper xử lý để chuyển ảnh. */
+.zaui-swiper-wrapper {
+  touch-action: pan-y !important;
+}

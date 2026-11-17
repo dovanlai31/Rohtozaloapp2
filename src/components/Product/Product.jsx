@@ -11,7 +11,8 @@ import {
   zmpready,
 } from "zmp-framework/react"
 import { FaPlus } from "react-icons/fa"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { flyToCart } from "@utils/flyToCart"
 
 const Product = (item) => {
   let {
@@ -37,9 +38,22 @@ const Product = (item) => {
     CusInfo,
     showToast,
     variant, // "grid": thẻ dọc dùng cho lưới 2 cột; mặc định: thẻ ngang
+    coKM, // 1 = sản phẩm đang có khuyến mãi (searchSP / getSPMuaLai)
+    kmCK, // % chiết khấu khuyến mãi cao nhất
   } = item
   const isGrid = variant === "grid"
   const [soluong, setSoluong] = useState(0)
+  const imgRef = useRef(null)
+  const qtyRef = useRef(0) // số lượng hiện tại (tham số soluong của onClickAddGH che mất state)
+  qtyRef.current = soluong
+
+  // Nhãn khuyến mãi ở góc ảnh: "-5%" nếu có chiết khấu %, không thì "KM"
+  const kmBadge =
+    Number(coKM) === 1 ? (
+      <span className="pointer-events-none absolute left-1.5 top-1.5 z-[1] rounded-md bg-[#e5232a] px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+        {Number(kmCK) > 0 ? `-${+Number(kmCK).toFixed(1)}%` : "KM"}
+      </span>
+    ) : null
 
 
   const Giohangx = store.getters.getGioHang.value || []
@@ -87,6 +101,8 @@ const Product = (item) => {
       thanhphan,
       soluong: soluong || 1,
     }
+    // thêm (không phải bớt) thì ảnh sản phẩm bay vào giỏ
+    if (soluong > (Number(qtyRef.current) || 0)) flyToCart(imgRef.current)
     try {
       const result = await store.dispatch("SetAddGioHang", product)
       if (result) {
@@ -216,9 +232,10 @@ const Product = (item) => {
         <button
           type="button"
           onClick={openDetail}
-          className="flex h-[110px] w-full items-center justify-center overflow-hidden rounded-lg !border-0 !bg-transparent !p-0 !shadow-none outline-none"
+          className="relative flex h-[110px] w-full items-center justify-center overflow-hidden rounded-lg !border-0 !bg-transparent !p-0 !shadow-none outline-none"
         >
-          <img src={HinhAnh} alt={ten} loading="lazy" className="h-full w-full object-contain" />
+          {kmBadge}
+          <img ref={imgRef} src={HinhAnh} alt={ten} loading="lazy" className="h-full w-full object-contain" />
         </button>
 
         <button
@@ -254,9 +271,10 @@ const Product = (item) => {
         <button
           type="button"
           onClick={openDetail}
-          className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg !border-0 !bg-transparent !p-0 !shadow-none outline-none"
+          className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg !border-0 !bg-transparent !p-0 !shadow-none outline-none"
         >
-          <img src={HinhAnh} alt={ten} loading="lazy" className="h-full w-full object-contain" />
+          {kmBadge}
+          <img ref={imgRef} src={HinhAnh} alt={ten} loading="lazy" className="h-full w-full object-contain" />
         </button>
 
         {/* Nội dung */}

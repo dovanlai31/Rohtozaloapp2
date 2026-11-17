@@ -40,7 +40,7 @@ const CartFloatingBar = () => {
         onClick={goToCartTab}
         className="flex w-full items-center gap-3 rounded-2xl border-0 bg-primary px-4 py-3 text-white shadow-[0_6px_16px_rgba(0,93,170,0.35)] active:opacity-90"
       >
-        <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
+        <span data-cart-target className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
           <TiShoppingCart size={20} />
           <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-[#e5232a] px-1 text-[10px] font-bold leading-[18px]">
             {count > 99 ? "99+" : count}
