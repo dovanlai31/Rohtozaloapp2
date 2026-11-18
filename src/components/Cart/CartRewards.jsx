@@ -4,7 +4,7 @@ import { MdChevronRight, MdStars } from "react-icons/md"
 import { formatCurrency } from "@utils/networking"
 import LoadingSpinner from "@components/LoadingSpinner"
 import { SectionTitle } from "@components/ui"
-import { LOAI_TRA_THUONG, tienTichLuy } from "../../hooks/useCartRewards"
+import { LOAI_TRA_THUONG, laTruTien, tienTichLuy } from "../../hooks/useCartRewards"
 
 const money = (n) => `${formatCurrency(Number(n) || 0, true)} ₫`
 
@@ -51,7 +51,7 @@ const CartRewards = ({ rewards }) => {
 
   const subTT = (x) => {
     const loai = LOAI_TRA_THUONG[x.loaitrathuong]?.label || "Trả thưởng"
-    if (x.loaitrathuong == 3) return [`${loai}: ${x.scheme}`, `-${money(x.tientrathuong)}`]
+    if (laTruTien(x.loaitrathuong)) return [`${loai}: ${x.scheme}`, `-${money(x.tientrathuong)}`]
     const sl = (x.sanpham || []).reduce((t, s) => t + (Number(s.soluong) || 0), 0)
     return [`${loai}: ${x.scheme}`, `${sl} sản phẩm`]
   }

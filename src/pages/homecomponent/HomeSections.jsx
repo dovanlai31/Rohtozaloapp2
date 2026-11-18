@@ -9,9 +9,11 @@ import {
   MdLocalOffer,
   MdNotifications,
   MdReceiptLong,
+  MdSchool,
   MdShoppingCart,
   MdStars,
 } from "react-icons/md"
+import { getDanhSachHoc } from "../../services/elearningService"
 import { Grid, MenuGroup, MenuRow } from "@components/ui"
 import VoucherCard, { promoHref } from "@components/KhuyenMai/VoucherCard"
 import { request } from "@utils/networking"
@@ -159,6 +161,67 @@ export const HomeShortcuts = ({ summary, kmCount }) => {
       </Grid>
       </div>
     </div>
+  )
+}
+
+/* ----------------------------- Học & nhận quà (E-learning) ----------------------------- */
+
+// Thẻ lối vào E-learning (bài khai báo ở Quản lý E-learning trên web): số bài chờ làm / lượt quay chưa dùng
+export const HomeElearning = ({ CusInfo }) => {
+  const refres = useStore("refres")
+  const khId = CusInfo?.KHACHHANG_fk
+  const [info, setInfo] = useState(null)
+
+  useEffect(() => {
+    if (!khId) return
+    let alive = true
+    getDanhSachHoc(validateString(khId + "", true))
+      .then((d) => {
+        if (!alive) return
+        const bai = d?.baiKiemTra || []
+        const coTheLam = bai.filter(
+          (b) => Number(b.dat) !== 1 && Number(b.conHan) === 1 && Number(b.soLanDaLam) < Number(b.soLanToiDa)
+        ).length
+        const luotQuay = bai.reduce((t, b) => t + (Number(b.luotQuay) || 0) + (Number(b.choChonQua) || 0), 0)
+        setInfo({ tong: bai.length + (d?.baiHoc || []).length, coTheLam, luotQuay })
+      })
+      .catch((e) => {
+        console.log("getDanhSachHoc", e)
+        if (alive) setInfo(null)
+      })
+    return () => {
+      alive = false
+    }
+  }, [khId, refres])
+
+  // Luôn hiện lối vào khi khách đã đồng bộ; số liệu chỉ hiện khi tải được
+  if (!khId) return null
+  const sub = !info
+    ? "Xem bài học, trả lời câu hỏi để nhận quà"
+    : info.luotQuay > 0
+      ? `Bạn có ${info.luotQuay} lượt quay may mắn chưa dùng`
+      : info.coTheLam > 0
+      ? `${info.coTheLam} bài đang chờ bạn — học xong trả lời đúng để nhận quà`
+      : "Xem bài học và phần quà đã nhận"
+
+  return (
+    <Link href="/elearning/" animate noLinkClass className="mx-4 mt-3 block">
+      <div className="flex items-center gap-3 rounded-xl border border-[#fde2c8] bg-[#fff8f0] px-3.5 py-3 active:opacity-80">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#c26a00]">
+          <MdSchool size={22} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14px] font-semibold text-slate-700">Học & nhận quà</span>
+          <span className="block text-[12px] text-slate-500">{sub}</span>
+        </span>
+        {!!info && info.coTheLam + info.luotQuay > 0 && (
+          <span className="min-w-[20px] rounded-full bg-[#e5232a] px-1.5 text-center text-[11px] font-bold leading-5 text-white">
+            {info.coTheLam + info.luotQuay}
+          </span>
+        )}
+        <MdChevronRight size={20} className="shrink-0 text-slate-400" />
+      </div>
+    </Link>
   )
 }
 

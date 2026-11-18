@@ -48,6 +48,7 @@ const store = createStore({
     ListKhaoSat: [],
     refres: "1",
     dhDangSua: "", // mã đơn hàng đang sửa trong giỏ hàng ("" = tạo đơn mới)
+    ttDangSua: [], // phiếu trả thưởng đã áp trên đơn đang sửa (dòng getThongTinDonHang.TraThuong), giỏ hàng chọn lại
     // dl từ api geso trả về
     CusInfo: {
       zaloID: "",
@@ -135,6 +136,9 @@ const store = createStore({
     dhDangSua({ state }) {
       return state.dhDangSua
     },
+    ttDangSua({ state }) {
+      return state.ttDangSua
+    },
     refres({ state }) {
       return state.refres
     },
@@ -167,8 +171,12 @@ const store = createStore({
     setRefres({ state }, data) {
       state.refres = data
     },
-    setDhDangSua({ state }, dhId) {
+    // payload: mã đơn ("" = thôi sửa) hoặc { dhId, traThuong } (phiếu trả thưởng đã áp trên đơn)
+    setDhDangSua({ state }, payload) {
+      const dhId = payload && typeof payload === "object" ? payload.dhId : payload
+      const traThuong = payload && typeof payload === "object" ? payload.traThuong : null
       state.dhDangSua = dhId ? String(dhId) : ""
+      state.ttDangSua = dhId && Array.isArray(traThuong) ? traThuong : []
     },
     setToken({ state }, Token) {
       state.Token = Token

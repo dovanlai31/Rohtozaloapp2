@@ -35,6 +35,7 @@ const Capnhatdonhang = ({ zmproute }) => {
   const [loading, updateLoading] = useState(false)
   const [appKm, updateAppKm] = useState(true)
   const [TongtieKm, updateTongtieKm] = useState(0)
+  const traThuongDon = useRef([]) // phiếu trả thưởng đã áp trên đơn (getThongTinDonHang.TraThuong)
   const [ViewMore, updateViewMore] = useState(false)
   const [isGiaoHang, setIsGiaoHang] = useState(zmproute.query?.isgiaohang)
   const [forceReload, setForceReload] = useState(false)
@@ -140,6 +141,12 @@ const Capnhatdonhang = ({ zmproute }) => {
           updateDatakm(listkm)
           setTongSoLuong(tongSoLuong)
           setDonHang(donHang[0])
+          // phiếu trả thưởng đã áp trên đơn: đưa vào giỏ khi sửa đơn
+          try {
+            traThuongDon.current = JSON.parse(data[0].TraThuong || "[]")
+          } catch (e) {
+            traThuongDon.current = []
+          }
           //store.dispatch("AddAllGioHang", p)
         }
       } else {
@@ -450,7 +457,7 @@ const Capnhatdonhang = ({ zmproute }) => {
         return
       }
       await store.dispatch("AddAllGioHang", list)
-      store.dispatch("setDhDangSua", id)
+      store.dispatch("setDhDangSua", { dhId: id, traThuong: traThuongDon.current })
       const goToCart = goToCartTab
       if (thieu.length) {
         zmp.dialog.alert("Một số sản phẩm không còn bán nên không đưa vào giỏ: " + thieu.join(", "), "Thông báo", goToCart)

@@ -57,7 +57,9 @@
     "/kiemtraposmdetail",
     "/phieutrathuong",
     "/phieutrathuongdetail",
-    "/chupanhtrungbay"
+    "/chupanhtrungbay",
+    "/elearning",
+    "/elearningbai"
   ],
   "template": {}
 }

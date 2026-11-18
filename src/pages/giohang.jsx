@@ -158,6 +158,7 @@ const GiohangPage = ({ zmproute }) => {
         list={rewards.ttList}
         daChon={rewards.ttChon}
         tongDon={Math.max(0, TongTien - TongtieKm - rewards.tienTL)}
+        dongHang={rewards.dongHang}
         onClose={() => rewards.setShowTT(false)}
         onApply={(list) => {
           rewards.setTtChon(list)

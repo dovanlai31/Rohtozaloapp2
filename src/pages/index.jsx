@@ -11,7 +11,7 @@ import {
 } from "../services/services"
 import store from "../store"
 import HomeHeader from "./homecomponent/HomeHeader"
-import { HomePromos, HomeShortcuts, HomeTodo, useHomeSummary } from "./homecomponent/HomeSections"
+import { HomeElearning, HomePromos, HomeShortcuts, HomeTodo, useHomeSummary } from "./homecomponent/HomeSections"
 import logoMain from "@static/images/logoRohto.png"
 import Banner from "@components/Categories/Banner"
 import withOverlay from "@components/HOC/withOverlay"
@@ -386,6 +386,9 @@ const HomePage = ({ showToast }) => {
 
         {/* Lối tắt */}
         <HomeShortcuts summary={homeSummary} kmCount={(ListKM || []).length} />
+
+        {/* Học & nhận quà (E-learning), chỉ hiện khi có bài */}
+        <HomeElearning CusInfo={CusInfo} />
 
         {/* Banner */}
         <div className="mx-4 mt-3 overflow-hidden rounded-2xl">
