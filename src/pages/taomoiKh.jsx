@@ -8,7 +8,7 @@ import { Page, useStore, zmp } from "zmp-framework/react"
 import { getPhoneNumber, getUserID } from "zmp-sdk/apis"
 import store from "../store"
 import withOverlay from "@components/HOC/withOverlay"
-import logoRohto from "@static/images/logoRohto.png"
+import logoRohto from "@static/images/logoRohto.js"
 import {
   CapNhatDonHang,
   FetchInitData,

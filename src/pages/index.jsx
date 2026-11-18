@@ -12,7 +12,7 @@ import {
 import store from "../store"
 import HomeHeader from "./homecomponent/HomeHeader"
 import { HomeElearning, HomePromos, HomeShortcuts, HomeTodo, useHomeSummary } from "./homecomponent/HomeSections"
-import logoMain from "@static/images/logoRohto.png"
+import logoMain from "@static/images/logoRohto.js"
 import Banner from "@components/Categories/Banner"
 import withOverlay from "@components/HOC/withOverlay"
 import AlertNoUser from "@components/KhachHang/AlertNoUser"
